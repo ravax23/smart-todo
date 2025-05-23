@@ -15,6 +15,15 @@ const USER_KEY = 'google_user_info';
  */
 export const initGoogleAuth = () => {
   return new Promise((resolve, reject) => {
+    // クライアントIDが設定されているか確認
+    if (!CLIENT_ID || CLIENT_ID === 'YOUR_CLIENT_ID_HERE') {
+      console.error('Google Client IDが設定されていません。.envファイルにREACT_APP_GOOGLE_CLIENT_IDを設定してください。');
+      reject(new Error('Google Client ID is not configured'));
+      return;
+    }
+
+    console.log('使用するクライアントID:', CLIENT_ID);
+
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
@@ -77,11 +86,28 @@ const handleCredentialResponse = (response) => {
  * ログイン処理
  */
 export const signIn = () => {
+  // クライアントIDが設定されているか確認
+  if (!CLIENT_ID || CLIENT_ID === 'YOUR_CLIENT_ID_HERE') {
+    alert('Google Client IDが設定されていません。.envファイルを確認してください。');
+    return false;
+  }
+
   if (window.google && window.google.accounts && window.google.accounts.id) {
     try {
       window.google.accounts.id.prompt((notification) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          console.log('ログインプロンプトが表示されませんでした:', notification.getNotDisplayedReason() || notification.getSkippedReason());
+        if (notification.isNotDisplayed()) {
+          console.log('ログインプロンプトが表示されませんでした:', notification.getNotDisplayedReason());
+          // 特定のエラーに対する処理
+          if (notification.getNotDisplayedReason() === 'credential_returned') {
+            // 既に認証情報が返されている場合は再度初期化
+            initGoogleAuth().then(() => {
+              window.google.accounts.id.prompt();
+            });
+          }
+        } else if (notification.isSkippedMoment()) {
+          console.log('ログインがスキップされました:', notification.getSkippedReason());
+        } else if (notification.isDismissedMoment()) {
+          console.log('ログインが閉じられました:', notification.getDismissedReason());
         }
       });
       return true;
@@ -91,6 +117,12 @@ export const signIn = () => {
     }
   } else {
     console.error('Google認証が初期化されていません');
+    // 初期化を再試行
+    initGoogleAuth().then(() => {
+      signIn();
+    }).catch(error => {
+      console.error('Google認証の初期化に失敗しました:', error);
+    });
     return false;
   }
 };
