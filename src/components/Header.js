@@ -1,15 +1,26 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Box, IconButton } from '@mui/material';
+import { AppBar, Toolbar, Typography, Box, IconButton, Avatar, Menu, MenuItem } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
+import { useState } from 'react';
 
 function Header({ title }) {
-  const { isAuthenticated, setIsAuthenticated } = useAuth();
+  const { isAuthenticated, user, signOut } = useAuth();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+
+  const handleMenu = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
 
   const handleLogout = () => {
-    // ログアウト処理
-    setIsAuthenticated(false);
+    handleClose();
+    signOut();
   };
 
   return (
@@ -36,7 +47,7 @@ function Header({ title }) {
         </Typography>
         
         {isAuthenticated && (
-          <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <IconButton 
               color="inherit"
               size="small"
@@ -44,14 +55,53 @@ function Header({ title }) {
             >
               <SettingsIcon />
             </IconButton>
+            
             <IconButton
-              color="inherit"
+              onClick={handleMenu}
               size="small"
-              onClick={handleLogout}
-              sx={{ color: 'text.secondary' }}
+              sx={{ p: 0.5 }}
             >
-              <LogoutIcon />
+              {user && user.picture ? (
+                <Avatar 
+                  alt={user.name} 
+                  src={user.picture} 
+                  sx={{ width: 32, height: 32 }}
+                />
+              ) : (
+                <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
+                  {user && user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                </Avatar>
+              )}
             </IconButton>
+            
+            <Menu
+              id="menu-appbar"
+              anchorEl={anchorEl}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+              open={open}
+              onClose={handleClose}
+            >
+              {user && (
+                <MenuItem disabled sx={{ opacity: 1 }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                    <Typography variant="subtitle2">{user.name}</Typography>
+                    <Typography variant="caption" color="text.secondary">{user.email}</Typography>
+                  </Box>
+                </MenuItem>
+              )}
+              <MenuItem onClick={handleLogout}>
+                <LogoutIcon fontSize="small" sx={{ mr: 1 }} />
+                ログアウト
+              </MenuItem>
+            </Menu>
           </Box>
         )}
       </Toolbar>
