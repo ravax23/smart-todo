@@ -7,14 +7,19 @@
     <meta name="theme-color" content="#000000" />
     <meta
       name="description"
-      content="Google Todoカレンダーと連携するカスタムUIのTodoアプリケーション"
+      content="Google Calendar Todo App"
+    />
+    <meta http-equiv="Content-Security-Policy" 
+      content="default-src 'self';
+               script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://apis.google.com;
+               style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+               font-src 'self' https://fonts.gstatic.com;
+               img-src 'self' https://*.googleusercontent.com data:;
+               connect-src 'self' https://accounts.google.com https://www.googleapis.com;
+               frame-src 'self' https://accounts.google.com;"
     />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
-    />
     <title>Todo App</title>
   </head>
   <body>
