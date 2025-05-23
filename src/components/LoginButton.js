@@ -1,25 +1,37 @@
-import React, { useEffect, useRef } from 'react';
-import { Typography, Box, CircularProgress } from '@mui/material';
+import React, { useEffect, useRef, useState } from 'react';
+import { Typography, Box, CircularProgress, Alert } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 
 function LoginButton() {
   const { loading } = useAuth();
   const googleButtonRef = useRef(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Google Sign-Inボタンをレンダリング
-    if (window.google && window.google.accounts && window.google.accounts.id) {
-      window.google.accounts.id.renderButton(
-        googleButtonRef.current,
-        { 
-          type: 'standard',
-          theme: 'outline',
-          size: 'large',
-          width: 280,
-          text: 'signin_with',
-          locale: 'ja'  // 日本語表示に設定
-        }
-      );
+    const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+    
+    if (!clientId) {
+      setError('Google Client IDが設定されていません。管理者に連絡してください。');
+      return;
+    }
+
+    if (window.google?.accounts?.id) {
+      try {
+        window.google.accounts.id.renderButton(
+          googleButtonRef.current,
+          { 
+            type: 'standard',
+            theme: 'outline',
+            size: 'large',
+            width: 280,
+            text: 'signin_with',
+            locale: 'ja'
+          }
+        );
+        setError(null);
+      } catch (err) {
+        setError('ログインボタンの表示に失敗しました。ページを再読み込みしてください。');
+      }
     }
   }, []);
 
@@ -32,6 +44,12 @@ function LoginButton() {
         Google Todoカレンダーと連携するカスタムUIのTodoアプリケーションです。
         始めるにはGoogleアカウントでログインしてください。
       </Typography>
+      
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
       
       {loading ? (
         <CircularProgress sx={{ mt: 2 }} />
