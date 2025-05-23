@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { Box, Paper } from '@mui/material';
+import { Box, Paper, CircularProgress } from '@mui/material';
 import Header from './components/Header';
 import TodoList from './components/TodoList';
 import AddTodo from './components/AddTodo';
 import Sidebar from './components/Sidebar';
 import CategoryManagement from './components/categories/CategoryManagement';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CategoryProvider } from './contexts/CategoryContext';
 import LoginButton from './components/LoginButton';
 
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#2196f3', // 青色をメインカラーに
+      main: '#2196f3',
     },
     secondary: {
       main: '#f50057',
@@ -74,9 +74,9 @@ const theme = createTheme({
   },
 });
 
-function App() {
+function AppContent() {
+  const { isAuthenticated, loading } = useAuth();
   const [todos, setTodos] = useState([]);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentView, setCurrentView] = useState('todos');
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [selectedDateFilter, setSelectedDateFilter] = useState('all');
@@ -188,6 +188,39 @@ function App() {
     return filterTodosByDate(filteredTodos);
   };
 
+  // 現在のビューに基づいてタイトルを取得
+  const getViewTitle = () => {
+    if (currentView === 'categories') {
+      return 'カテゴリ管理';
+    } else if (currentView === 'category' && selectedCategoryId) {
+      // カテゴリ名を取得するロジックが必要
+      return 'カテゴリ別タスク';
+    } else {
+      switch (selectedDateFilter) {
+        case 'today': return '今日';
+        case 'tomorrow': return '明日';
+        case 'after_tomorrow': return '明後日';
+        case 'past': return '過去のタスク';
+        default: return 'すべてのタスク';
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '100vh' 
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   const renderContent = () => {
     if (!isAuthenticated) {
       return (
@@ -233,68 +266,56 @@ function App() {
     }
   };
 
-  // 現在のビューに基づいてタイトルを取得
-  const getViewTitle = () => {
-    if (currentView === 'categories') {
-      return 'カテゴリ管理';
-    } else if (currentView === 'category' && selectedCategoryId) {
-      // カテゴリ名を取得するロジックが必要
-      return 'カテゴリ別タスク';
-    } else {
-      switch (selectedDateFilter) {
-        case 'today': return '今日';
-        case 'tomorrow': return '明日';
-        case 'after_tomorrow': return '明後日';
-        case 'past': return '過去のタスク';
-        default: return 'すべてのタスク';
-      }
-    }
-  };
+  return (
+    <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      {isAuthenticated && (
+        <Sidebar
+          onNavigate={handleNavigate}
+          selectedCategory={selectedCategoryId}
+          selectedDateFilter={selectedDateFilter}
+          todos={todos}
+        />
+      )}
+      
+      <Box sx={{ 
+        flexGrow: 1, 
+        display: 'flex', 
+        flexDirection: 'column',
+        overflow: 'hidden',
+        bgcolor: 'background.default'
+      }}>
+        <Header title={getViewTitle()} />
+        
+        <Box sx={{ 
+          p: 2, 
+          flexGrow: 1,
+          overflow: 'auto',
+        }}>
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              p: 2,
+              height: '100%',
+              borderRadius: 2,
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            {renderContent()}
+          </Paper>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
 
+function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AuthProvider value={{ isAuthenticated, setIsAuthenticated }}>
+      <AuthProvider>
         <CategoryProvider>
-          <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-            {isAuthenticated && (
-              <Sidebar
-                onNavigate={handleNavigate}
-                selectedCategory={selectedCategoryId}
-                selectedDateFilter={selectedDateFilter}
-                todos={todos}
-              />
-            )}
-            
-            <Box sx={{ 
-              flexGrow: 1, 
-              display: 'flex', 
-              flexDirection: 'column',
-              overflow: 'hidden',
-              bgcolor: 'background.default'
-            }}>
-              <Header title={getViewTitle()} />
-              
-              <Box sx={{ 
-                p: 2, 
-                flexGrow: 1,
-                overflow: 'auto',
-              }}>
-                <Paper 
-                  elevation={0} 
-                  sx={{ 
-                    p: 2,
-                    height: '100%',
-                    borderRadius: 2,
-                    display: 'flex',
-                    flexDirection: 'column'
-                  }}
-                >
-                  {renderContent()}
-                </Paper>
-              </Box>
-            </Box>
-          </Box>
+          <AppContent />
         </CategoryProvider>
       </AuthProvider>
     </ThemeProvider>
