@@ -1,33 +1,41 @@
 import React from 'react';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 import { TodoProvider } from './contexts/TodoContext';
 import LoginButton from './components/LoginButton';
 import TodoList from './components/TodoList';
-import { Box, Container } from '@mui/material';
+import { Box, Container, Typography } from '@mui/material';
+import { useAuth } from './contexts/AuthContext';
 
 // 認証状態に応じてコンテンツを表示するコンポーネント
-const AuthenticatedContent = () => {
-  const { isAuthenticated } = useAuth();
-  
+const AppContent = () => {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+        <Typography>読み込み中...</Typography>
+      </Box>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LoginButton />;
+  }
+
   return (
-    <>
-      {isAuthenticated ? (
-        <TodoProvider>
-          <TodoList />
-        </TodoProvider>
-      ) : (
-        <LoginButton />
-      )}
-    </>
+    <TodoProvider>
+      <TodoList />
+    </TodoProvider>
   );
 };
 
+// メインのAppコンポーネント
 function App() {
   return (
     <AuthProvider>
       <Container maxWidth="md">
         <Box sx={{ my: 4 }}>
-          <AuthenticatedContent />
+          <AppContent />
         </Box>
       </Container>
     </AuthProvider>
