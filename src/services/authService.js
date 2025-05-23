@@ -1,4 +1,4 @@
-import jwt_decode from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 
 // Google OAuth認証のためのクライアントID
 const CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
@@ -41,7 +41,7 @@ export const initGoogleAuth = () => {
 const handleCredentialResponse = (response) => {
   if (response.credential) {
     // JWTをデコードしてユーザー情報を取得
-    const userObject = jwt_decode(response.credential);
+    const userObject = jwtDecode(response.credential);
     
     // トークンとユーザー情報を保存
     localStorage.setItem(TOKEN_KEY, response.credential);
@@ -90,7 +90,7 @@ export const isAuthenticated = () => {
   
   try {
     // トークンの有効期限をチェック
-    const decoded = jwt_decode(token);
+    const decoded = jwtDecode(token);
     const currentTime = Date.now() / 1000;
     
     if (decoded.exp < currentTime) {
