@@ -1,0 +1,5 @@
+{
+  "title": "Google OAuth認証の実装",
+  "body": "## 説明\nGoogle APIとの連携のための認証機能の実装\n\n## タスク\n- [ ] Google Cloud Projectの作成\n- [ ] OAuth 2.0クライアントIDの取得\n- [ ] ログイン/ログアウト機能の実装\n- [ ] 認証状態の管理",
+  "milestone": 1
+}
