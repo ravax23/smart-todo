@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { Container, Box, Paper, IconButton } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
+import { Box, Paper } from '@mui/material';
 import Header from './components/Header';
 import TodoList from './components/TodoList';
 import AddTodo from './components/AddTodo';
@@ -15,13 +14,62 @@ import LoginButton from './components/LoginButton';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#1976d2',
+      main: '#2196f3', // 青色をメインカラーに
     },
     secondary: {
-      main: '#dc004e',
+      main: '#f50057',
     },
     background: {
       default: '#f5f5f5',
+      paper: '#ffffff',
+    },
+    text: {
+      primary: '#333333',
+      secondary: '#757575',
+    },
+  },
+  typography: {
+    fontFamily: [
+      '-apple-system',
+      'BlinkMacSystemFont',
+      '"Segoe UI"',
+      'Roboto',
+      '"Helvetica Neue"',
+      'Arial',
+      'sans-serif',
+    ].join(','),
+    h6: {
+      fontWeight: 500,
+    },
+  },
+  shape: {
+    borderRadius: 8,
+  },
+  components: {
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          boxShadow: 'none',
+          border: '1px solid #e0e0e0',
+        },
+      },
+    },
+    MuiListItem: {
+      styleOverrides: {
+        root: {
+          borderBottom: '1px solid #f0f0f0',
+          '&:last-child': {
+            borderBottom: 'none',
+          },
+        },
+      },
+    },
+    MuiCheckbox: {
+      styleOverrides: {
+        root: {
+          padding: 8,
+        },
+      },
     },
   },
 });
@@ -29,9 +77,9 @@ const theme = createTheme({
 function App() {
   const [todos, setTodos] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentView, setCurrentView] = useState('todos');
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
+  const [selectedDateFilter, setSelectedDateFilter] = useState('all');
 
   // 認証状態が変わったときにTodoを読み込む
   useEffect(() => {
@@ -72,8 +120,72 @@ function App() {
     setCurrentView(view);
     if (view === 'category') {
       setSelectedCategoryId(categoryId);
+      setSelectedDateFilter('all');
+    } else if (view.startsWith('date_')) {
+      setSelectedDateFilter(view.replace('date_', ''));
+      setSelectedCategoryId(null);
+      setCurrentView('todos');
+    } else {
+      setSelectedDateFilter('all');
     }
-    setSidebarOpen(false);
+  };
+
+  // 日付フィルターに基づいてTodoをフィルタリング
+  const filterTodosByDate = (todoList) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const afterTomorrow = new Date(today);
+    afterTomorrow.setDate(afterTomorrow.getDate() + 2);
+
+    switch (selectedDateFilter) {
+      case 'today':
+        return todoList.filter(todo => {
+          if (!todo.due) return false;
+          const dueDate = new Date(todo.due);
+          dueDate.setHours(0, 0, 0, 0);
+          return dueDate.getTime() === today.getTime();
+        });
+      case 'tomorrow':
+        return todoList.filter(todo => {
+          if (!todo.due) return false;
+          const dueDate = new Date(todo.due);
+          dueDate.setHours(0, 0, 0, 0);
+          return dueDate.getTime() === tomorrow.getTime();
+        });
+      case 'after_tomorrow':
+        return todoList.filter(todo => {
+          if (!todo.due) return false;
+          const dueDate = new Date(todo.due);
+          dueDate.setHours(0, 0, 0, 0);
+          return dueDate.getTime() === afterTomorrow.getTime();
+        });
+      case 'past':
+        return todoList.filter(todo => {
+          if (!todo.due) return false;
+          const dueDate = new Date(todo.due);
+          dueDate.setHours(0, 0, 0, 0);
+          return dueDate.getTime() < today.getTime();
+        });
+      default:
+        return todoList;
+    }
+  };
+
+  // 現在の表示に基づいてフィルタリングされたTodoを取得
+  const getFilteredTodos = () => {
+    let filteredTodos = [...todos];
+    
+    // カテゴリでフィルタリング
+    if (currentView === 'category' && selectedCategoryId) {
+      filteredTodos = filteredTodos.filter(todo => todo.categoryId === selectedCategoryId);
+    }
+    
+    // 日付でフィルタリング
+    return filterTodosByDate(filteredTodos);
   };
 
   const renderContent = () => {
@@ -96,26 +208,23 @@ function App() {
       case 'categories':
         return <CategoryManagement />;
       case 'category':
-        // カテゴリでフィルタリングされたTodoリスト
         return (
           <>
             <AddTodo onAddTodo={handleAddTodo} initialCategoryId={selectedCategoryId} />
             <TodoList
-              todos={todos.filter(todo => todo.categoryId === selectedCategoryId)}
+              todos={getFilteredTodos()}
               onToggle={handleToggleTodo}
               onDelete={handleDeleteTodo}
             />
           </>
         );
-      case 'settings':
-        return <div>設定画面（開発中）</div>;
       case 'todos':
       default:
         return (
           <>
             <AddTodo onAddTodo={handleAddTodo} />
             <TodoList
-              todos={todos}
+              todos={getFilteredTodos()}
               onToggle={handleToggleTodo}
               onDelete={handleDeleteTodo}
             />
@@ -124,38 +233,67 @@ function App() {
     }
   };
 
+  // 現在のビューに基づいてタイトルを取得
+  const getViewTitle = () => {
+    if (currentView === 'categories') {
+      return 'カテゴリ管理';
+    } else if (currentView === 'category' && selectedCategoryId) {
+      // カテゴリ名を取得するロジックが必要
+      return 'カテゴリ別タスク';
+    } else {
+      switch (selectedDateFilter) {
+        case 'today': return '今日';
+        case 'tomorrow': return '明日';
+        case 'after_tomorrow': return '明後日';
+        case 'past': return '過去のタスク';
+        default: return 'すべてのタスク';
+      }
+    }
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider value={{ isAuthenticated, setIsAuthenticated }}>
         <CategoryProvider>
-          <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-            <Header>
-              {isAuthenticated && (
-                <IconButton
-                  color="inherit"
-                  edge="start"
-                  onClick={() => setSidebarOpen(true)}
-                  sx={{ mr: 2 }}
-                >
-                  <MenuIcon />
-                </IconButton>
-              )}
-            </Header>
-            
+          <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
             {isAuthenticated && (
               <Sidebar
-                open={sidebarOpen}
-                onClose={() => setSidebarOpen(false)}
                 onNavigate={handleNavigate}
+                selectedCategory={selectedCategoryId}
+                selectedDateFilter={selectedDateFilter}
+                todos={todos}
               />
             )}
             
-            <Container maxWidth="md" sx={{ mt: 4, mb: 4, flex: 1 }}>
-              <Paper elevation={3} sx={{ p: 3 }}>
-                {renderContent()}
-              </Paper>
-            </Container>
+            <Box sx={{ 
+              flexGrow: 1, 
+              display: 'flex', 
+              flexDirection: 'column',
+              overflow: 'hidden',
+              bgcolor: 'background.default'
+            }}>
+              <Header title={getViewTitle()} />
+              
+              <Box sx={{ 
+                p: 2, 
+                flexGrow: 1,
+                overflow: 'auto',
+              }}>
+                <Paper 
+                  elevation={0} 
+                  sx={{ 
+                    p: 2,
+                    height: '100%',
+                    borderRadius: 2,
+                    display: 'flex',
+                    flexDirection: 'column'
+                  }}
+                >
+                  {renderContent()}
+                </Paper>
+              </Box>
+            </Box>
           </Box>
         </CategoryProvider>
       </AuthProvider>
