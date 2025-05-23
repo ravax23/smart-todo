@@ -3,8 +3,8 @@ import { jwtDecode } from 'jwt-decode';
 // Google OAuth認証のためのクライアントID
 const CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
-// 必要なスコープ
-const SCOPES = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events';
+// 必要なスコープ（最小限に設定）
+const SCOPES = 'profile email';
 
 // ローカルストレージのキー
 const TOKEN_KEY = 'google_auth_token';
@@ -20,15 +20,22 @@ export const initGoogleAuth = () => {
     script.async = true;
     script.defer = true;
     script.onload = () => {
-      window.google.accounts.id.initialize({
-        client_id: CLIENT_ID,
-        callback: handleCredentialResponse,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
-      resolve();
+      try {
+        window.google.accounts.id.initialize({
+          client_id: CLIENT_ID,
+          callback: handleCredentialResponse,
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+        console.log('Google認証の初期化が完了しました');
+        resolve();
+      } catch (error) {
+        console.error('Google認証の初期化に失敗しました:', error);
+        reject(error);
+      }
     };
     script.onerror = (error) => {
+      console.error('Google API scriptの読み込みに失敗しました:', error);
       reject(new Error('Google API script failed to load'));
     };
     document.body.appendChild(script);
@@ -39,21 +46,31 @@ export const initGoogleAuth = () => {
  * 認証レスポンスのハンドラ
  */
 const handleCredentialResponse = (response) => {
+  console.log('Google認証レスポンス:', response);
+  
   if (response.credential) {
-    // JWTをデコードしてユーザー情報を取得
-    const userObject = jwtDecode(response.credential);
-    
-    // トークンとユーザー情報を保存
-    localStorage.setItem(TOKEN_KEY, response.credential);
-    localStorage.setItem(USER_KEY, JSON.stringify(userObject));
-    
-    // カスタムイベントを発行して認証状態の変更を通知
-    const event = new CustomEvent('googleAuthStateChanged', { detail: { isAuthenticated: true } });
-    window.dispatchEvent(event);
-    
-    return userObject;
+    try {
+      // JWTをデコードしてユーザー情報を取得
+      const userObject = jwtDecode(response.credential);
+      console.log('デコードされたユーザー情報:', userObject);
+      
+      // トークンとユーザー情報を保存
+      localStorage.setItem(TOKEN_KEY, response.credential);
+      localStorage.setItem(USER_KEY, JSON.stringify(userObject));
+      
+      // カスタムイベントを発行して認証状態の変更を通知
+      const event = new CustomEvent('googleAuthStateChanged', { detail: { isAuthenticated: true } });
+      window.dispatchEvent(event);
+      
+      return userObject;
+    } catch (error) {
+      console.error('トークンのデコードに失敗しました:', error);
+      return null;
+    }
+  } else {
+    console.error('認証情報が含まれていません:', response);
+    return null;
   }
-  return null;
 };
 
 /**
@@ -61,10 +78,21 @@ const handleCredentialResponse = (response) => {
  */
 export const signIn = () => {
   if (window.google && window.google.accounts && window.google.accounts.id) {
-    window.google.accounts.id.prompt();
-    return true;
+    try {
+      window.google.accounts.id.prompt((notification) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          console.log('ログインプロンプトが表示されませんでした:', notification.getNotDisplayedReason() || notification.getSkippedReason());
+        }
+      });
+      return true;
+    } catch (error) {
+      console.error('ログインプロンプトの表示に失敗しました:', error);
+      return false;
+    }
+  } else {
+    console.error('Google認証が初期化されていません');
+    return false;
   }
-  return false;
 };
 
 /**
@@ -95,6 +123,7 @@ export const isAuthenticated = () => {
     
     if (decoded.exp < currentTime) {
       // トークンの期限切れ
+      console.log('トークンの期限が切れています');
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
       return false;
@@ -102,7 +131,7 @@ export const isAuthenticated = () => {
     
     return true;
   } catch (error) {
-    console.error('Invalid token', error);
+    console.error('無効なトークン:', error);
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     return false;
@@ -119,7 +148,7 @@ export const getUserInfo = () => {
   try {
     return JSON.parse(userInfo);
   } catch (error) {
-    console.error('Invalid user info', error);
+    console.error('無効なユーザー情報:', error);
     return null;
   }
 };
