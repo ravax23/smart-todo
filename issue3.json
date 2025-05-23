@@ -1,0 +1,5 @@
+{
+  "title": "Google Calendar APIとの連携",
+  "body": "## 説明\nGoogle Calendar APIを使用してTodoデータの取得と更新\n\n## タスク\n- [ ] Calendar APIの呼び出し機能の実装\n- [ ] Todoリストの取得機能\n- [ ] Todoの作成、更新、削除機能\n- [ ] APIレスポンスのエラーハンドリング",
+  "milestone": 1
+}
