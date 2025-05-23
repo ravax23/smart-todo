@@ -15,6 +15,10 @@ const USER_KEY = 'google_user_info';
  */
 export const initGoogleAuth = () => {
   return new Promise((resolve, reject) => {
+    // デバッグ情報: 環境変数
+    console.log('環境変数一覧:', process.env);
+    console.log('REACT_APP_GOOGLE_CLIENT_ID:', process.env.REACT_APP_GOOGLE_CLIENT_ID);
+    
     // クライアントIDが設定されているか確認
     if (!CLIENT_ID || CLIENT_ID === 'YOUR_CLIENT_ID_HERE') {
       console.error('Google Client IDが設定されていません。.envファイルにREACT_APP_GOOGLE_CLIENT_IDを設定してください。');
@@ -30,16 +34,30 @@ export const initGoogleAuth = () => {
     script.defer = true;
     script.onload = () => {
       try {
-        window.google.accounts.id.initialize({
+        console.log('Google API scriptの読み込みが完了しました');
+        
+        // Google APIが正しく読み込まれたか確認
+        if (!window.google || !window.google.accounts || !window.google.accounts.id) {
+          console.error('Google APIが正しく読み込まれていません:', window.google);
+          reject(new Error('Google API is not loaded correctly'));
+          return;
+        }
+        
+        // 初期化オプションをデバッグ出力
+        const initOptions = {
           client_id: CLIENT_ID,
           callback: handleCredentialResponse,
           auto_select: false,
           cancel_on_tap_outside: true,
-        });
+        };
+        console.log('初期化オプション:', initOptions);
+        
+        window.google.accounts.id.initialize(initOptions);
         console.log('Google認証の初期化が完了しました');
         resolve();
       } catch (error) {
         console.error('Google認証の初期化に失敗しました:', error);
+        console.error('エラースタック:', error.stack);
         reject(error);
       }
     };
@@ -74,6 +92,7 @@ const handleCredentialResponse = (response) => {
       return userObject;
     } catch (error) {
       console.error('トークンのデコードに失敗しました:', error);
+      console.error('エラースタック:', error.stack);
       return null;
     }
   } else {
@@ -92,9 +111,14 @@ export const signIn = () => {
     return false;
   }
 
+  console.log('ログイン処理を開始します');
+  console.log('Google API状態:', window.google);
+  
   if (window.google && window.google.accounts && window.google.accounts.id) {
     try {
       window.google.accounts.id.prompt((notification) => {
+        console.log('プロンプト通知:', notification);
+        
         if (notification.isNotDisplayed()) {
           console.log('ログインプロンプトが表示されませんでした:', notification.getNotDisplayedReason());
           // 特定のエラーに対する処理
@@ -113,6 +137,7 @@ export const signIn = () => {
       return true;
     } catch (error) {
       console.error('ログインプロンプトの表示に失敗しました:', error);
+      console.error('エラースタック:', error.stack);
       return false;
     }
   } else {
