@@ -6,6 +6,7 @@ const BASE_URL = 'https://www.googleapis.com/calendar/v3';
 
 /**
  * Google Calendar APIクライアント
+ * 読み取り専用の操作のみを提供
  */
 class CalendarService {
   /**
@@ -33,6 +34,7 @@ class CalendarService {
         timeMax: timeMax,
         singleEvents: true,
         orderBy: 'startTime',
+        maxResults: 100
       });
 
       const response = await fetch(`${BASE_URL}/calendars/${CALENDAR_ID}/events?${params}`, {
@@ -52,117 +54,21 @@ class CalendarService {
   }
 
   /**
-   * 新しいTodoを作成
-   * @param {Object} todo - Todoデータ
-   */
-  static async createTodo(todo) {
-    try {
-      const headers = await this.getHeaders();
-      const event = this.convertTodoToEvent(todo);
-
-      const response = await fetch(`${BASE_URL}/calendars/${CALENDAR_ID}/events`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(event),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Calendar API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return this.convertEventToTodo(data);
-    } catch (error) {
-      console.error('Failed to create todo:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Todoを更新
-   * @param {string} todoId - TodoのID
-   * @param {Object} todo - 更新するTodoデータ
-   */
-  static async updateTodo(todoId, todo) {
-    try {
-      const headers = await this.getHeaders();
-      const event = this.convertTodoToEvent(todo);
-
-      const response = await fetch(`${BASE_URL}/calendars/${CALENDAR_ID}/events/${todoId}`, {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify(event),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Calendar API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return this.convertEventToTodo(data);
-    } catch (error) {
-      console.error('Failed to update todo:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Todoを削除
-   * @param {string} todoId - 削除するTodoのID
-   */
-  static async deleteTodo(todoId) {
-    try {
-      const headers = await this.getHeaders();
-
-      const response = await fetch(`${BASE_URL}/calendars/${CALENDAR_ID}/events/${todoId}`, {
-        method: 'DELETE',
-        headers,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Calendar API error: ${response.status}`);
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Failed to delete todo:', error);
-      throw error;
-    }
-  }
-
-  /**
    * GoogleカレンダーのイベントをTodoオブジェクトに変換
    * @param {Object} event - Googleカレンダーのイベント
    */
   static convertEventToTodo(event) {
     return {
       id: event.id,
-      title: event.summary,
+      title: event.summary || '(タイトルなし)',
       description: event.description || '',
-      completed: event.status === 'completed',
-      dueDate: event.start.dateTime || event.start.date,
-      category: event.colorId || 'default',
-    };
-  }
-
-  /**
-   * TodoオブジェクトをGoogleカレンダーのイベントに変換
-   * @param {Object} todo - Todoオブジェクト
-   */
-  static convertTodoToEvent(todo) {
-    return {
-      summary: todo.title,
-      description: todo.description,
-      start: {
-        dateTime: todo.dueDate,
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      },
-      end: {
-        dateTime: todo.dueDate,
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      },
-      status: todo.completed ? 'completed' : 'confirmed',
-      colorId: todo.category,
+      status: event.status || 'confirmed',
+      startDate: event.start?.dateTime || event.start?.date || '',
+      endDate: event.end?.dateTime || event.end?.date || '',
+      created: event.created || '',
+      updated: event.updated || '',
+      creator: event.creator?.email || '',
+      organizer: event.organizer?.email || '',
     };
   }
 }
