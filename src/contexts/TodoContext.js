@@ -13,8 +13,10 @@ export const TodoProvider = ({ children }) => {
   // 初期データの読み込み
   useEffect(() => {
     if (isAuthenticated) {
+      console.log('User is authenticated, fetching todos');
       fetchTodos();
     } else {
+      console.log('User is not authenticated, skipping todo fetch');
       setTodos([]);
       setLoading(false);
     }
@@ -23,6 +25,7 @@ export const TodoProvider = ({ children }) => {
   // 今日から7日間のTodoを取得
   const fetchTodos = async () => {
     try {
+      console.log('Starting fetchTodos');
       setLoading(true);
       setError(null);
       
@@ -33,11 +36,19 @@ export const TodoProvider = ({ children }) => {
       const timeMin = today.toISOString();
       const timeMax = sevenDaysLater.toISOString();
       
+      console.log('Calling CalendarService.getTodos with:', { timeMin, timeMax });
       const todoList = await CalendarService.getTodos(timeMin, timeMax);
+      console.log('Received todos:', todoList);
+      
       setTodos(todoList);
     } catch (err) {
       console.error('Failed to fetch todos:', err);
-      setError('カレンダーデータの取得に失敗しました。');
+      console.error('Error details:', {
+        message: err.message,
+        stack: err.stack,
+        name: err.name
+      });
+      setError(`カレンダーデータの取得に失敗しました。${err.message}`);
     } finally {
       setLoading(false);
     }

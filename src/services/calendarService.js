@@ -14,6 +14,7 @@ class CalendarService {
    */
   static async getHeaders() {
     const token = getAccessToken();
+    console.log('Access Token:', token ? 'Token exists' : 'No token');
     return {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
@@ -27,7 +28,10 @@ class CalendarService {
    */
   static async getTodos(timeMin, timeMax) {
     try {
+      console.log('Fetching todos with timeRange:', { timeMin, timeMax });
       const headers = await this.getHeaders();
+      console.log('Request Headers:', headers);
+
       const params = new URLSearchParams({
         calendarId: CALENDAR_ID,
         timeMin: timeMin,
@@ -37,18 +41,30 @@ class CalendarService {
         maxResults: 100
       });
 
-      const response = await fetch(`${BASE_URL}/calendars/${CALENDAR_ID}/events?${params}`, {
+      const url = `${BASE_URL}/calendars/${CALENDAR_ID}/events?${params}`;
+      console.log('Request URL:', url);
+
+      const response = await fetch(url, {
         headers,
       });
 
+      console.log('API Response Status:', response.status);
+
       if (!response.ok) {
-        throw new Error(`Calendar API error: ${response.status}`);
+        const errorData = await response.json();
+        console.error('API Error Response:', errorData);
+        throw new Error(`Calendar API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
       }
 
       const data = await response.json();
+      console.log('API Response Data:', data);
+      
       return data.items.map(this.convertEventToTodo);
     } catch (error) {
-      console.error('Failed to fetch todos:', error);
+      console.error('Calendar Service Error:', {
+        message: error.message,
+        stack: error.stack
+      });
       throw error;
     }
   }
