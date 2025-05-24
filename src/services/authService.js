@@ -3,7 +3,7 @@ import { gapi } from 'gapi-script';
 
 const CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 const API_KEY = process.env.REACT_APP_GOOGLE_API_KEY;
-// Tasks APIのスコープに変更
+// Tasks APIのスコープ
 const SCOPES = 'https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/tasks.readonly';
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest'];
 
@@ -56,8 +56,30 @@ export const initGoogleAuth = () => {
 // GAPI（Google API Client）の初期化
 const initGapiClient = () => {
   return new Promise((resolve, reject) => {
-    gapi.load('client:auth2', () => {
-      gapi.client.init({
+    if (!window.gapi) {
+      console.log('Loading GAPI script...');
+      const script = document.createElement('script');
+      script.src = 'https://apis.google.com/js/api.js';
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        loadGapiClient().then(resolve).catch(reject);
+      };
+      script.onerror = () => {
+        reject(new Error('GAPI script failed to load'));
+      };
+      document.body.appendChild(script);
+    } else {
+      loadGapiClient().then(resolve).catch(reject);
+    }
+  });
+};
+
+// GAPIクライアントの読み込み
+const loadGapiClient = () => {
+  return new Promise((resolve, reject) => {
+    window.gapi.load('client:auth2', () => {
+      window.gapi.client.init({
         apiKey: API_KEY,
         clientId: CLIENT_ID,
         scope: SCOPES,
@@ -115,7 +137,7 @@ const handleCredentialResponse = (response) => {
 const getGapiAccessToken = async () => {
   return new Promise((resolve, reject) => {
     try {
-      if (!gapi.auth2) {
+      if (!window.gapi || !window.gapi.auth2) {
         // GAPIクライアントが初期化されていない場合は再初期化
         initGapiClient().then(() => {
           getGapiAccessToken().then(resolve).catch(reject);
@@ -123,7 +145,7 @@ const getGapiAccessToken = async () => {
         return;
       }
       
-      const authInstance = gapi.auth2.getAuthInstance();
+      const authInstance = window.gapi.auth2.getAuthInstance();
       if (!authInstance) {
         reject(new Error('Auth instance not available'));
         return;
@@ -206,9 +228,9 @@ export const signOut = () => {
   localStorage.removeItem(USER_KEY);
   
   // GAPIのサインアウト
-  if (gapi.auth2) {
+  if (window.gapi && window.gapi.auth2) {
     try {
-      const authInstance = gapi.auth2.getAuthInstance();
+      const authInstance = window.gapi.auth2.getAuthInstance();
       if (authInstance) {
         authInstance.signOut();
       }

@@ -18,16 +18,33 @@ class TasksService {
         throw new Error('アクセストークンがありません。再度ログインしてください。');
       }
       
-      // 2つの方法でAPIを呼び出す
-      try {
-        // 方法1: GAPIクライアントを使用
-        if (gapi.client?.tasks) {
+      // GAPIクライアントが初期化されているか確認
+      if (window.gapi && window.gapi.client) {
+        try {
+          // GAPIクライアントが初期化されていない場合は初期化
+          if (!window.gapi.client.tasks) {
+            console.log('Loading tasks API...');
+            await new Promise((resolve, reject) => {
+              window.gapi.load('client', async () => {
+                try {
+                  await window.gapi.client.load('tasks', 'v1');
+                  console.log('Tasks API loaded successfully');
+                  resolve();
+                } catch (error) {
+                  console.error('Failed to load tasks API:', error);
+                  reject(error);
+                }
+              });
+            });
+          }
+          
+          // 方法1: GAPIクライアントを使用
           console.log('Using GAPI client for API call');
           return await this.getTaskListsWithGapi();
+        } catch (gapiError) {
+          console.error('GAPI client error:', gapiError);
+          // GAPIが失敗した場合は、fetchを使用する方法にフォールバック
         }
-      } catch (gapiError) {
-        console.error('GAPI client error:', gapiError);
-        // GAPIが失敗した場合は、fetchを使用する方法にフォールバック
       }
       
       // 方法2: fetchを使用
@@ -56,16 +73,33 @@ class TasksService {
         throw new Error('アクセストークンがありません。再度ログインしてください。');
       }
       
-      // 2つの方法でAPIを呼び出す
-      try {
-        // 方法1: GAPIクライアントを使用
-        if (gapi.client?.tasks) {
+      // GAPIクライアントが初期化されているか確認
+      if (window.gapi && window.gapi.client) {
+        try {
+          // GAPIクライアントが初期化されていない場合は初期化
+          if (!window.gapi.client.tasks) {
+            console.log('Loading tasks API...');
+            await new Promise((resolve, reject) => {
+              window.gapi.load('client', async () => {
+                try {
+                  await window.gapi.client.load('tasks', 'v1');
+                  console.log('Tasks API loaded successfully');
+                  resolve();
+                } catch (error) {
+                  console.error('Failed to load tasks API:', error);
+                  reject(error);
+                }
+              });
+            });
+          }
+          
+          // 方法1: GAPIクライアントを使用
           console.log('Using GAPI client for API call');
           return await this.getTasksWithGapi(taskListId);
+        } catch (gapiError) {
+          console.error('GAPI client error:', gapiError);
+          // GAPIが失敗した場合は、fetchを使用する方法にフォールバック
         }
-      } catch (gapiError) {
-        console.error('GAPI client error:', gapiError);
-        // GAPIが失敗した場合は、fetchを使用する方法にフォールバック
       }
       
       // 方法2: fetchを使用
@@ -86,7 +120,7 @@ class TasksService {
   static async getTaskListsWithGapi() {
     try {
       console.log('Calling tasks.tasklists.list API with GAPI...');
-      const response = await gapi.client.tasks.tasklists.list({
+      const response = await window.gapi.client.tasks.tasklists.list({
         maxResults: 100
       });
       
@@ -145,7 +179,7 @@ class TasksService {
   static async getTasksWithGapi(taskListId) {
     try {
       console.log('Calling tasks.tasks.list API with GAPI...');
-      const response = await gapi.client.tasks.tasks.list({
+      const response = await window.gapi.client.tasks.tasks.list({
         tasklist: taskListId,
         showCompleted: true,
         showHidden: false,
