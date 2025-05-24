@@ -5,7 +5,6 @@ import {
   List, 
   ListItem, 
   ListItemText, 
-  ListItemIcon,
   Divider, 
   CircularProgress, 
   Alert, 
@@ -13,15 +12,11 @@ import {
   InputLabel, 
   Select, 
   MenuItem,
-  Paper,
-  Checkbox,
-  IconButton
+  Paper
 } from '@mui/material';
 import { useTodo } from '../contexts/TodoContext';
 import { format, parseISO, isValid } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 
 const TodoList = () => {
   const { todos, taskLists, selectedTaskList, loading, error, selectTaskList } = useTodo();
@@ -94,13 +89,13 @@ const TodoList = () => {
 
   return (
     <Box sx={{ mt: 2 }}>
-      <Typography variant="h5" gutterBottom sx={{ fontWeight: 'medium', color: 'text.primary' }}>
-        Todoリスト
+      <Typography variant="h5" gutterBottom>
+        今後の予定
       </Typography>
       
       {/* タスクリスト選択 */}
       {taskLists && taskLists.length > 0 && (
-        <Paper elevation={0} sx={{ p: 2, mb: 3, bgcolor: 'background.paper', border: '1px solid #e0e0e0' }}>
+        <Box sx={{ mb: 3 }}>
           <FormControl fullWidth variant="outlined" size="small">
             <InputLabel id="task-list-select-label">タスクリスト</InputLabel>
             <Select
@@ -115,92 +110,54 @@ const TodoList = () => {
               ))}
             </Select>
           </FormControl>
-        </Paper>
+        </Box>
       )}
       
       {/* タスク一覧 */}
       {todos.length === 0 ? (
-        <Paper elevation={0} sx={{ p: 3, textAlign: 'center', bgcolor: 'background.paper', border: '1px solid #e0e0e0' }}>
-          <Typography variant="body1" color="text.secondary">
+        <Box sx={{ textAlign: 'center', my: 4 }}>
+          <Typography variant="body1">
             タスクが見つかりません。
           </Typography>
-        </Paper>
+        </Box>
       ) : (
         sortedDates.map((date) => (
-          <Paper 
-            key={date} 
-            elevation={0} 
-            sx={{ 
-              mb: 3, 
-              overflow: 'hidden',
-              bgcolor: 'background.paper',
-              border: '1px solid #e0e0e0',
-              borderRadius: 1
-            }}
-          >
-            <Box sx={{ 
-              bgcolor: 'grey.100', 
-              p: 1.5,
-              borderBottom: '1px solid #e0e0e0'
-            }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 'medium', color: 'text.primary' }}>
-                {date}
-              </Typography>
-            </Box>
+          <Box key={date} sx={{ mb: 3 }}>
+            <Typography variant="h6" sx={{ bgcolor: 'primary.main', color: 'white', p: 1 }}>
+              {date}
+            </Typography>
             
-            <List disablePadding>
+            <List>
               {groupedTodos[date].map((todo) => (
                 <React.Fragment key={todo.id}>
-                  <ListItem 
-                    sx={{ 
-                      py: 1.5,
-                      px: 2,
-                      '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
-                    }}
-                  >
-                    <ListItemIcon sx={{ minWidth: 40 }}>
-                      <Checkbox
-                        edge="start"
-                        checked={todo.status === 'completed'}
-                        icon={<RadioButtonUncheckedIcon />}
-                        checkedIcon={<CheckCircleOutlineIcon />}
-                        sx={{ 
-                          color: 'text.secondary',
-                          '&.Mui-checked': { color: 'text.secondary' }
-                        }}
-                      />
-                    </ListItemIcon>
+                  <ListItem>
                     <ListItemText
                       primary={
-                        <Typography 
-                          variant="body1" 
-                          sx={{ 
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Typography variant="body1" sx={{
                             textDecoration: todo.status === 'completed' ? 'line-through' : 'none',
-                            color: todo.status === 'completed' ? 'text.secondary' : 'text.primary'
-                          }}
-                        >
-                          {todo.title}
-                        </Typography>
+                          }}>
+                            {todo.title}
+                          </Typography>
+                          {todo.status === 'completed' && (
+                            <Typography variant="body2" sx={{ ml: 2, color: 'text.secondary' }}>
+                              (完了)
+                            </Typography>
+                          )}
+                        </Box>
                       }
                       secondary={todo.description ? (
-                        <Typography 
-                          variant="body2" 
-                          sx={{ 
-                            mt: 0.5,
-                            color: 'text.secondary',
-                            textDecoration: todo.status === 'completed' ? 'line-through' : 'none'
-                          }}
-                        >
+                        <Typography variant="body2" sx={{ mt: 0.5 }}>
                           {todo.description}
                         </Typography>
                       ) : null}
                     />
                   </ListItem>
-                  <Divider component="li" />
+                  <Divider />
                 </React.Fragment>
               ))}
             </List>
-          </Paper>
+          </Box>
         ))
       )}
     </Box>
