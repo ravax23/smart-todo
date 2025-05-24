@@ -32,7 +32,7 @@ const Sidebar = () => {
   const filters = [
     { id: 'today', name: '今日', icon: '📅' },
     { id: 'tomorrow', name: '明日', icon: '📆' },
-    { id: 'after-tomorrow', name: '明後日', icon: '📆' },
+    { id: 'after-tomorrow', name: '今週', icon: '📆' },
     { id: 'past', name: '過去', icon: '⏱️' },
     { id: 'all', name: 'すべて', icon: '📋' },
   ];
