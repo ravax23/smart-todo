@@ -1,31 +1,13 @@
 import { getAccessToken } from './authService';
+import { gapi } from 'gapi-script';
 
-const API_KEY = process.env.REACT_APP_GOOGLE_API_KEY;
 const CALENDAR_ID = 'primary';  // ユーザーのプライマリカレンダーを使用
 const BASE_URL = 'https://www.googleapis.com/calendar/v3';
 
 /**
  * Google Calendar APIクライアント
- * 読み取り専用の操作のみを提供
  */
 class CalendarService {
-  /**
-   * APIリクエストの共通ヘッダーを取得
-   */
-  static async getHeaders() {
-    const token = getAccessToken();
-    console.log('Access Token for Calendar API:', token ? 'Token exists' : 'No token');
-    
-    if (!token) {
-      throw new Error('認証情報が見つかりません。再度ログインしてください。');
-    }
-    
-    return {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    };
-  }
-
   /**
    * カレンダーからTodoリストを取得
    * @param {string} timeMin - 開始日時（ISO 8601形式）
@@ -34,7 +16,74 @@ class CalendarService {
   static async getTodos(timeMin, timeMax) {
     try {
       console.log('Fetching todos with timeRange:', { timeMin, timeMax });
-      const headers = await this.getHeaders();
+      
+      // アクセストークンの確認
+      const token = getAccessToken();
+      if (!token) {
+        throw new Error('アクセストークンがありません。再度ログインしてください。');
+      }
+      
+      // 2つの方法でAPIを呼び出す
+      try {
+        // 方法1: GAPIクライアントを使用
+        if (gapi.client?.calendar) {
+          console.log('Using GAPI client for API call');
+          return await this.getTodosWithGapi(timeMin, timeMax);
+        }
+      } catch (gapiError) {
+        console.error('GAPI client error:', gapiError);
+        // GAPIが失敗した場合は、fetchを使用する方法にフォールバック
+      }
+      
+      // 方法2: fetchを使用
+      console.log('Using fetch for API call');
+      return await this.getTodosWithFetch(timeMin, timeMax, token);
+    } catch (error) {
+      console.error('Calendar Service Error:', {
+        message: error.message,
+        stack: error.stack
+      });
+      throw error;
+    }
+  }
+  
+  /**
+   * GAPIクライアントを使用してTodoを取得
+   */
+  static async getTodosWithGapi(timeMin, timeMax) {
+    try {
+      console.log('Calling calendar.events.list API with GAPI...');
+      const response = await gapi.client.calendar.events.list({
+        calendarId: CALENDAR_ID,
+        timeMin: timeMin,
+        timeMax: timeMax,
+        singleEvents: true,
+        orderBy: 'startTime',
+        maxResults: 100
+      });
+      
+      console.log('GAPI Response:', response);
+      
+      if (response.status !== 200) {
+        throw new Error(`Calendar API error: ${response.status} - ${response.statusText}`);
+      }
+      
+      return response.result.items ? response.result.items.map(this.convertEventToTodo) : [];
+    } catch (error) {
+      console.error('Error fetching todos with GAPI:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * fetchを使用してTodoを取得
+   */
+  static async getTodosWithFetch(timeMin, timeMax, token) {
+    try {
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      };
       console.log('Request Headers:', headers);
 
       const params = new URLSearchParams({
@@ -65,10 +114,7 @@ class CalendarService {
       
       return data.items ? data.items.map(this.convertEventToTodo) : [];
     } catch (error) {
-      console.error('Calendar Service Error:', {
-        message: error.message,
-        stack: error.stack
-      });
+      console.error('Error fetching todos with fetch:', error);
       throw error;
     }
   }
