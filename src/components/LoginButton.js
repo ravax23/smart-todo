@@ -37,12 +37,12 @@ function LoginButton() {
   }, []);
 
   return (
-    <Box sx={{ textAlign: 'center', py: 4 }}>
-      <Typography variant="h5" gutterBottom>
+    <Box sx={{ textAlign: 'center' }}>
+      <Typography variant="h6" gutterBottom sx={{ fontWeight: 'medium', color: 'text.primary' }}>
         Todoアプリへようこそ
       </Typography>
-      <Typography variant="body1" sx={{ mb: 3 }}>
-        Google Todoカレンダーと連携するカスタムUIのTodoアプリケーションです。
+      <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary' }}>
+        Google Todoと連携するカスタムUIのTodoアプリケーションです。
         始めるにはGoogleアカウントでログインしてください。
       </Typography>
       
