@@ -1,23 +1,40 @@
-import React, { useEffect, useState } from 'react';
-import { Typography, Box, Button, CircularProgress, Alert } from '@mui/material';
+import React, { useEffect, useRef, useState } from 'react';
+import { Typography, Box, CircularProgress, Alert } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 
 function LoginButton() {
-  const { loading, signIn } = useAuth();
+  const { loading } = useAuth();
+  const googleButtonRef = useRef(null);
   const [error, setError] = useState(null);
 
-  const handleLogin = async () => {
-    try {
-      setError(null);
-      const success = await signIn();
-      if (!success) {
-        setError('ログインに失敗しました。もう一度お試しください。');
-      }
-    } catch (err) {
-      console.error('Login error:', err);
-      setError('ログイン処理中にエラーが発生しました。');
+  useEffect(() => {
+    const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+    
+    if (!clientId) {
+      setError('Google Client IDが設定されていません。管理者に連絡してください。');
+      return;
     }
-  };
+
+    if (window.google?.accounts?.id) {
+      try {
+        window.google.accounts.id.renderButton(
+          googleButtonRef.current,
+          { 
+            type: 'standard',
+            theme: 'outline',
+            size: 'large',
+            width: 280,
+            text: 'signin_with',
+            locale: 'ja'
+          }
+        );
+        setError(null);
+      } catch (err) {
+        console.error('Failed to render login button:', err);
+        setError('ログインボタンの表示に失敗しました。ページを再読み込みしてください。');
+      }
+    }
+  }, []);
 
   return (
     <Box sx={{ textAlign: 'center', py: 4 }}>
@@ -38,14 +55,7 @@ function LoginButton() {
       {loading ? (
         <CircularProgress sx={{ mt: 2 }} />
       ) : (
-        <Button 
-          variant="contained" 
-          color="primary" 
-          onClick={handleLogin}
-          sx={{ mt: 2 }}
-        >
-          Googleでログイン
-        </Button>
+        <div ref={googleButtonRef} style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}></div>
       )}
     </Box>
   );
