@@ -136,6 +136,61 @@ export const TodoProvider = ({ children }) => {
     setSelectedTaskList(taskListId);
   };
 
+  // タスクリストのタイトル更新
+  const updateTaskListTitle = async (taskListId, newTitle) => {
+    try {
+      setLoading(true);
+      // 実際のAPIを呼び出す前に、UIを先に更新（オプティミスティックUI更新）
+      setTaskLists(prevLists => 
+        prevLists.map(list => 
+          list.id === taskListId ? { ...list, title: newTitle } : list
+        )
+      );
+      
+      // ここでAPIを呼び出してタスクリストのタイトルを更新する
+      // await TasksService.updateTaskList(taskListId, { title: newTitle });
+      
+      // 成功した場合は何もしない（すでに更新済み）
+      console.log(`Task list ${taskListId} title updated to: ${newTitle}`);
+    } catch (err) {
+      console.error('Failed to update task list title:', err);
+      setError(`タスクリストの更新に失敗しました。${err.message}`);
+      
+      // 失敗した場合は元に戻す
+      fetchTaskLists();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // タスクを別のリストに移動
+  const moveTaskToList = async (taskId, targetListId) => {
+    try {
+      // 移動するタスクを見つける
+      const taskToMove = todos.find(task => task.id === taskId);
+      if (!taskToMove) return;
+      
+      // 現在のリストからタスクを削除
+      setTodos(prevTodos => prevTodos.filter(task => task.id !== taskId));
+      
+      // ここでAPIを呼び出してタスクを移動する
+      // await TasksService.moveTask(taskId, targetListId);
+      
+      // 移動先のリストが現在表示中のリストなら、タスクを再取得
+      if (targetListId === selectedTaskList) {
+        fetchTasks(targetListId);
+      }
+      
+      console.log(`Task ${taskId} moved to list: ${targetListId}`);
+    } catch (err) {
+      console.error('Failed to move task:', err);
+      setError(`タスクの移動に失敗しました。${err.message}`);
+      
+      // 失敗した場合は元のリストのタスクを再取得
+      fetchTasks(selectedTaskList);
+    }
+  };
+
   // コンテキストの値
   const value = {
     todos,
@@ -145,7 +200,9 @@ export const TodoProvider = ({ children }) => {
     error,
     fetchTasks,
     fetchTaskLists,
-    selectTaskList
+    selectTaskList,
+    updateTaskListTitle,
+    moveTaskToList
   };
 
   return (

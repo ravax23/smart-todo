@@ -1,9 +1,24 @@
-import React from 'react';
-import { Box, Typography, List, ListItem, ListItemIcon, ListItemText, InputBase, Paper } from '@mui/material';
+import React, { useState } from 'react';
+import { 
+  Box, 
+  Typography, 
+  List, 
+  ListItem, 
+  ListItemIcon, 
+  ListItemText, 
+  InputBase, 
+  Paper,
+  TextField,
+  IconButton,
+  ClickAwayListener,
+  Tooltip
+} from '@mui/material';
 import { useTodo } from '../contexts/TodoContext';
 
 const Sidebar = () => {
-  const { taskLists, selectedTaskList, selectTaskList } = useTodo();
+  const { taskLists, selectedTaskList, selectTaskList, updateTaskListTitle, moveTaskToList } = useTodo();
+  const [editingListId, setEditingListId] = useState(null);
+  const [editingTitle, setEditingTitle] = useState('');
 
   // フィルターリスト
   const filters = [
@@ -30,6 +45,49 @@ const Sidebar = () => {
       return 'work-internal';
     } else {
       return 'personal';
+    }
+  };
+
+  // リスト名の編集を開始
+  const handleStartEditing = (list) => {
+    setEditingListId(list.id);
+    setEditingTitle(list.title);
+  };
+
+  // リスト名の編集を保存
+  const handleSaveEditing = () => {
+    if (editingListId && editingTitle.trim()) {
+      updateTaskListTitle(editingListId, editingTitle.trim());
+      setEditingListId(null);
+      setEditingTitle('');
+    }
+  };
+
+  // リスト名の編集をキャンセル
+  const handleCancelEditing = () => {
+    setEditingListId(null);
+    setEditingTitle('');
+  };
+
+  // ドラッグオーバー時の処理
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.currentTarget.style.backgroundColor = '#f0f0f0';
+  };
+
+  // ドラッグリーブ時の処理
+  const handleDragLeave = (e) => {
+    e.currentTarget.style.backgroundColor = '';
+  };
+
+  // ドロップ時の処理
+  const handleDrop = (e, listId) => {
+    e.preventDefault();
+    e.currentTarget.style.backgroundColor = '';
+    
+    const taskId = e.dataTransfer.getData('taskId');
+    if (taskId) {
+      moveTaskToList(taskId, listId);
     }
   };
 
@@ -143,6 +201,9 @@ const Sidebar = () => {
               button
               selected={list.id === selectedTaskList}
               onClick={() => selectTaskList(list.id)}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, list.id)}
               sx={{
                 borderRadius: 1,
                 mb: 0.5,
@@ -169,7 +230,38 @@ const Sidebar = () => {
                   }} 
                 />
               </ListItemIcon>
-              <ListItemText primary={list.title} primaryTypographyProps={{ fontSize: '0.9375rem' }} />
+              {editingListId === list.id ? (
+                <ClickAwayListener onClickAway={handleSaveEditing}>
+                  <TextField
+                    value={editingTitle}
+                    onChange={(e) => setEditingTitle(e.target.value)}
+                    autoFocus
+                    variant="standard"
+                    fullWidth
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSaveEditing();
+                      } else if (e.key === 'Escape') {
+                        handleCancelEditing();
+                      }
+                    }}
+                    sx={{ 
+                      '& .MuiInput-root': { 
+                        fontSize: '0.9375rem',
+                        fontWeight: list.id === selectedTaskList ? 500 : 400
+                      }
+                    }}
+                  />
+                </ClickAwayListener>
+              ) : (
+                <Tooltip title="ダブルクリックで名前を変更">
+                  <ListItemText 
+                    primary={list.title} 
+                    primaryTypographyProps={{ fontSize: '0.9375rem' }}
+                    onDoubleClick={() => handleStartEditing(list)}
+                  />
+                </Tooltip>
+              )}
             </ListItem>
           );
         })}

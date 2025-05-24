@@ -80,8 +80,17 @@ const TodoList = () => {
   };
 
   // ドラッグ開始時の処理
-  const handleDragStart = (e, index) => {
+  const handleDragStart = (e, index, taskId) => {
     e.dataTransfer.setData('text/plain', index);
+    e.dataTransfer.setData('taskId', taskId);
+    
+    // ドラッグ中のタスクのスタイルを設定
+    e.currentTarget.style.opacity = '0.6';
+  };
+
+  // ドラッグ終了時の処理
+  const handleDragEnd = (e) => {
+    e.currentTarget.style.opacity = '1';
   };
 
   // ドラッグオーバー時の処理
@@ -189,7 +198,8 @@ const TodoList = () => {
               <React.Fragment key={task.id}>
                 <ListItem 
                   draggable
-                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragStart={(e) => handleDragStart(e, index, task.id)}
+                  onDragEnd={handleDragEnd}
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, index)}
                   sx={{ 
