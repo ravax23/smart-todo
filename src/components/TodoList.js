@@ -1,11 +1,15 @@
 import React from 'react';
-import { Box, Typography, List, ListItem, ListItemText, Divider, CircularProgress, Alert } from '@mui/material';
+import { Box, Typography, List, ListItem, ListItemText, Divider, CircularProgress, Alert, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { useTodo } from '../contexts/TodoContext';
 import { format, parseISO } from 'date-fns';
 import { ja } from 'date-fns/locale';
 
 const TodoList = () => {
-  const { todos, loading, error } = useTodo();
+  const { todos, taskLists, selectedTaskList, loading, error, selectTaskList } = useTodo();
+
+  const handleTaskListChange = (event) => {
+    selectTaskList(event.target.value);
+  };
 
   if (loading) {
     return (
@@ -23,94 +27,88 @@ const TodoList = () => {
     );
   }
 
-  if (todos.length === 0) {
-    return (
-      <Box sx={{ textAlign: 'center', my: 4 }}>
-        <Typography variant="body1">
-          予定が見つかりません。
-        </Typography>
-      </Box>
-    );
-  }
-
-  // 日付ごとにイベントをグループ化
-  const groupedTodos = todos.reduce((acc, todo) => {
-    let dateStr = '';
-    
-    if (todo.startDate) {
-      try {
-        // ISO形式の日付文字列をパース
-        const date = parseISO(todo.startDate);
-        // 日本語の日付フォーマット
-        dateStr = format(date, 'yyyy年MM月dd日(E)', { locale: ja });
-      } catch (e) {
-        dateStr = '日付なし';
-      }
-    } else {
-      dateStr = '日付なし';
-    }
-    
-    if (!acc[dateStr]) {
-      acc[dateStr] = [];
-    }
-    
-    acc[dateStr].push(todo);
-    return acc;
-  }, {});
-
   return (
     <Box sx={{ mt: 2 }}>
       <Typography variant="h5" gutterBottom>
-        今後の予定
+        Todoリスト
       </Typography>
       
-      {Object.entries(groupedTodos).map(([date, dateTodos]) => (
-        <Box key={date} sx={{ mb: 3 }}>
-          <Typography variant="h6" sx={{ bgcolor: 'primary.main', color: 'white', p: 1 }}>
-            {date}
+      {/* タスクリスト選択 */}
+      {taskLists && taskLists.length > 0 && (
+        <FormControl fullWidth sx={{ mb: 3 }}>
+          <InputLabel id="task-list-select-label">タスクリスト</InputLabel>
+          <Select
+            labelId="task-list-select-label"
+            id="task-list-select"
+            value={selectedTaskList}
+            label="タスクリスト"
+            onChange={handleTaskListChange}
+          >
+            {taskLists.map((list) => (
+              <MenuItem key={list.id} value={list.id}>{list.title}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      )}
+      
+      {/* タスク一覧 */}
+      {todos.length === 0 ? (
+        <Box sx={{ textAlign: 'center', my: 4 }}>
+          <Typography variant="body1">
+            タスクが見つかりません。
           </Typography>
-          
-          <List>
-            {dateTodos.map((todo) => {
-              // 時間の表示
-              let timeStr = '';
-              if (todo.startDate) {
-                try {
-                  const date = parseISO(todo.startDate);
-                  timeStr = format(date, 'HH:mm');
-                } catch (e) {
-                  timeStr = '';
-                }
-              }
-              
-              return (
-                <React.Fragment key={todo.id}>
-                  <ListItem>
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          {timeStr && (
-                            <Typography variant="body2" sx={{ mr: 2, color: 'text.secondary' }}>
-                              {timeStr}
-                            </Typography>
-                          )}
-                          <Typography variant="body1">
-                            {todo.title}
-                          </Typography>
-                        </Box>
-                      }
-                      secondary={todo.description}
-                    />
-                  </ListItem>
-                  <Divider />
-                </React.Fragment>
-              );
-            })}
-          </List>
         </Box>
-      ))}
+      ) : (
+        <List>
+          {todos.map((todo) => (
+            <React.Fragment key={todo.id}>
+              <ListItem>
+                <ListItemText
+                  primary={
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Typography variant="body1">
+                        {todo.title}
+                      </Typography>
+                      {todo.status === 'completed' && (
+                        <Typography variant="body2" sx={{ ml: 2, color: 'success.main' }}>
+                          完了
+                        </Typography>
+                      )}
+                    </Box>
+                  }
+                  secondary={
+                    <Box>
+                      {todo.description && (
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                          {todo.description}
+                        </Typography>
+                      )}
+                      {todo.startDate && (
+                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                          期限: {formatDate(todo.startDate)}
+                        </Typography>
+                      )}
+                    </Box>
+                  }
+                />
+              </ListItem>
+              <Divider />
+            </React.Fragment>
+          ))}
+        </List>
+      )}
     </Box>
   );
+};
+
+// 日付のフォーマット
+const formatDate = (dateString) => {
+  try {
+    const date = parseISO(dateString);
+    return format(date, 'yyyy年MM月dd日(E)', { locale: ja });
+  } catch (e) {
+    return dateString;
+  }
 };
 
 export default TodoList;

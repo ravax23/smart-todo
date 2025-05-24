@@ -3,8 +3,9 @@ import { gapi } from 'gapi-script';
 
 const CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 const API_KEY = process.env.REACT_APP_GOOGLE_API_KEY;
-const SCOPES = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events';
-const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'];
+// Tasks APIのスコープに変更
+const SCOPES = 'https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/tasks.readonly';
+const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest'];
 
 // ローカルストレージのキー
 const TOKEN_KEY = 'google_auth_token';
@@ -183,9 +184,9 @@ export const signIn = () => {
 };
 
 // 明示的なスコープ承認を要求
-export const requestCalendarScope = async () => {
+export const requestTasksScope = async () => {
   try {
-    console.log('Requesting calendar scope explicitly');
+    console.log('Requesting tasks scope explicitly');
     const accessToken = await getGapiAccessToken();
     if (accessToken) {
       localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
@@ -193,7 +194,7 @@ export const requestCalendarScope = async () => {
     }
     return false;
   } catch (error) {
-    console.error('Failed to request calendar scope:', error);
+    console.error('Failed to request tasks scope:', error);
     return false;
   }
 };

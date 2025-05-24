@@ -1,12 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
-import CalendarService from '../services/calendarService';
-import { requestCalendarScope } from '../services/authService';
+import TasksService from '../services/tasksService';
+import { requestTasksScope } from '../services/authService';
 
 const TodoContext = createContext();
 
 export const TodoProvider = ({ children }) => {
   const [todos, setTodos] = useState([]);
+  const [taskLists, setTaskLists] = useState([]);
+  const [selectedTaskList, setSelectedTaskList] = useState('@default');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { isAuthenticated } = useAuth();
@@ -14,70 +16,136 @@ export const TodoProvider = ({ children }) => {
   // 初期データの読み込み
   useEffect(() => {
     if (isAuthenticated) {
-      console.log('User is authenticated, fetching todos');
-      fetchTodos();
+      console.log('User is authenticated, fetching task lists');
+      fetchTaskLists();
     } else {
-      console.log('User is not authenticated, skipping todo fetch');
+      console.log('User is not authenticated, skipping task fetch');
+      setTaskLists([]);
       setTodos([]);
       setLoading(false);
     }
   }, [isAuthenticated]);
 
-  // 今日から7日間のTodoを取得
-  const fetchTodos = async () => {
+  // タスクリストが選択されたときにタスクを取得
+  useEffect(() => {
+    if (isAuthenticated && selectedTaskList) {
+      console.log(`Selected task list changed to: ${selectedTaskList}`);
+      fetchTasks(selectedTaskList);
+    }
+  }, [isAuthenticated, selectedTaskList]);
+
+  // タスクリストの取得
+  const fetchTaskLists = async () => {
     try {
-      console.log('Starting fetchTodos');
+      console.log('Starting fetchTaskLists');
       setLoading(true);
       setError(null);
       
-      const today = new Date();
-      const sevenDaysLater = new Date();
-      sevenDaysLater.setDate(today.getDate() + 7);
-      
-      const timeMin = today.toISOString();
-      const timeMax = sevenDaysLater.toISOString();
-      
-      console.log('Calling CalendarService.getTodos with:', { timeMin, timeMax });
       try {
-        const todoList = await CalendarService.getTodos(timeMin, timeMax);
-        console.log('Received todos:', todoList);
-        setTodos(todoList);
+        const lists = await TasksService.getTaskLists();
+        console.log('Received task lists:', lists);
+        setTaskLists(lists);
+        
+        // デフォルトのタスクリストを選択
+        if (lists && lists.length > 0) {
+          const defaultList = lists.find(list => list.title === 'マイタスク') || lists[0];
+          setSelectedTaskList(defaultList.id);
+        }
       } catch (err) {
-        console.error('Failed to fetch todos:', err);
+        console.error('Failed to fetch task lists:', err);
         
         // スコープ不足エラーの場合、明示的なスコープ承認を要求
         if (err.message && err.message.includes('insufficient authentication scopes')) {
           console.log('Insufficient scopes detected, requesting explicit authorization');
-          const success = await requestCalendarScope();
+          const success = await requestTasksScope();
           
           if (success) {
             // スコープ承認に成功したら再度取得を試みる
             console.log('Scope authorization successful, retrying fetch');
-            const todoList = await CalendarService.getTodos(timeMin, timeMax);
-            console.log('Received todos after scope authorization:', todoList);
-            setTodos(todoList);
+            const lists = await TasksService.getTaskLists();
+            console.log('Received task lists after scope authorization:', lists);
+            setTaskLists(lists);
+            
+            // デフォルトのタスクリストを選択
+            if (lists && lists.length > 0) {
+              const defaultList = lists.find(list => list.title === 'マイタスク') || lists[0];
+              setSelectedTaskList(defaultList.id);
+            }
             return;
           } else {
-            setError('カレンダーへのアクセス権限が不足しています。カレンダーへのアクセスを許可してください。');
+            setError('タスクへのアクセス権限が不足しています。タスクへのアクセスを許可してください。');
           }
         } else {
-          setError(`カレンダーデータの取得に失敗しました。${err.message}`);
+          setError(`タスクリストの取得に失敗しました。${err.message}`);
+        }
+      } finally {
+        if (!selectedTaskList) {
+          setLoading(false);
         }
       }
     } catch (err) {
-      console.error('Error in fetchTodos:', err);
-      setError(`カレンダーデータの取得に失敗しました。${err.message}`);
+      console.error('Error in fetchTaskLists:', err);
+      setError(`タスクリストの取得に失敗しました。${err.message}`);
+      setLoading(false);
+    }
+  };
+
+  // タスクの取得
+  const fetchTasks = async (taskListId = selectedTaskList) => {
+    try {
+      console.log(`Starting fetchTasks for list: ${taskListId}`);
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const todoList = await TasksService.getTasks(taskListId);
+        console.log('Received tasks:', todoList);
+        setTodos(todoList);
+      } catch (err) {
+        console.error('Failed to fetch tasks:', err);
+        
+        // スコープ不足エラーの場合、明示的なスコープ承認を要求
+        if (err.message && err.message.includes('insufficient authentication scopes')) {
+          console.log('Insufficient scopes detected, requesting explicit authorization');
+          const success = await requestTasksScope();
+          
+          if (success) {
+            // スコープ承認に成功したら再度取得を試みる
+            console.log('Scope authorization successful, retrying fetch');
+            const todoList = await TasksService.getTasks(taskListId);
+            console.log('Received tasks after scope authorization:', todoList);
+            setTodos(todoList);
+            return;
+          } else {
+            setError('タスクへのアクセス権限が不足しています。タスクへのアクセスを許可してください。');
+          }
+        } else {
+          setError(`タスクの取得に失敗しました。${err.message}`);
+        }
+      }
+    } catch (err) {
+      console.error('Error in fetchTasks:', err);
+      setError(`タスクの取得に失敗しました。${err.message}`);
     } finally {
       setLoading(false);
     }
   };
 
+  // タスクリストの選択
+  const selectTaskList = (taskListId) => {
+    setSelectedTaskList(taskListId);
+  };
+
   // コンテキストの値
   const value = {
     todos,
+    taskLists,
+    selectedTaskList,
     loading,
     error,
-    fetchTodos,
+    fetchTasks,
+    fetchTaskLists,
+    selectTaskList
   };
 
   return (
