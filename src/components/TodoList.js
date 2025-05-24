@@ -100,7 +100,7 @@ const TodoList = () => {
     if (todos.length > 0) {
       // カテゴリを追加
       const tasksWithCategory = todos.map(todo => {
-        let category = 'personal';
+        let category = selectedListInfo.category; // マイリストのカテゴリをデフォルトとして使用
         if (todo.title.includes('HISYS') || todo.title.includes('クライアント')) {
           category = 'work-hisys';
         } else if (todo.title.includes('社内') || todo.title.includes('仕様書')) {
@@ -110,7 +110,7 @@ const TodoList = () => {
       });
       setTaskItems(tasksWithCategory);
     }
-  }, [todos]);
+  }, [todos, selectedListInfo.category]);
 
   if (loading) {
     return (
@@ -145,7 +145,7 @@ const TodoList = () => {
   return (
     <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 600, color: categoryColors[selectedListInfo.category] }}>
+        <Typography variant="h5" sx={{ fontWeight: 600 }}>
           {selectedListInfo.title}
         </Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary', bgcolor: '#f9fafb', p: '8px 16px', borderRadius: 1 }}>
@@ -197,16 +197,8 @@ const TodoList = () => {
                     px: 2,
                     bgcolor: 'white',
                     borderLeft: `4px solid ${categoryColors[task.category]}`,
-                    borderTop: `1px solid ${categoryColors[task.category]}`,
-                    borderRight: `1px solid ${categoryColors[task.category]}`,
-                    borderBottom: `1px solid ${categoryColors[task.category]}`,
-                    mb: 1,
-                    mx: 1,
-                    borderRadius: 1,
                     '&:hover': { 
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                      transform: 'translateY(-2px)',
-                      transition: 'all 0.2s',
+                      bgcolor: '#f9fafb',
                       cursor: 'grab'
                     },
                     '&:active': {
@@ -231,7 +223,7 @@ const TodoList = () => {
                       variant="body1" 
                       sx={{
                         textDecoration: task.status === 'completed' ? 'line-through' : 'none',
-                        color: task.status === 'completed' ? 'text.secondary' : categoryColors[task.category],
+                        color: task.status === 'completed' ? 'text.secondary' : 'text.primary',
                         mb: 0.5,
                         fontWeight: 500,
                         fontSize: '0.9375rem'
@@ -269,16 +261,17 @@ const TodoList = () => {
                   }}>
                     <IconButton 
                       size="small" 
-                      sx={{ color: categoryColors[task.category] }}
+                      sx={{ color: 'text.secondary' }}
                       onClick={(e) => handleMenuOpen(e, task)}
                     >
                       ✏️
                     </IconButton>
-                    <IconButton size="small" sx={{ color: categoryColors[task.category] }}>
+                    <IconButton size="small" sx={{ color: 'text.secondary' }}>
                       🗑️
                     </IconButton>
                   </Box>
                 </ListItem>
+                {index < taskItems.length - 1 && <Divider />}
               </React.Fragment>
             ))}
           </List>
