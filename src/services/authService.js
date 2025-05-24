@@ -1,12 +1,7 @@
 import { jwtDecode } from 'jwt-decode';
 
 const CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
-const SCOPES = [
-  'https://www.googleapis.com/auth/calendar.readonly',
-  'profile',
-  'email'
-];
-const TOKEN_KEY = 'google_access_token';
+const TOKEN_KEY = 'google_auth_token';
 const USER_KEY = 'google_user_info';
 
 export const initGoogleAuth = () => {
@@ -22,24 +17,14 @@ export const initGoogleAuth = () => {
     script.defer = true;
     script.onload = () => {
       try {
-        // OAuth2トークンクライアントの初期化
-        window.tokenClient = window.google.accounts.oauth2.initTokenClient({
-          client_id: CLIENT_ID,
-          scope: SCOPES.join(' '),
-          callback: handleCredentialResponse,
-        });
-        
-        // ID認証の初期化（プロフィール情報用）
         window.google.accounts.id.initialize({
           client_id: CLIENT_ID,
-          callback: handleIdResponse,
+          callback: handleCredentialResponse,
           auto_select: false,
           cancel_on_tap_outside: true,
         });
-        
         resolve();
       } catch (error) {
-        console.error('Google Auth initialization error:', error);
         reject(error);
       }
     };
@@ -50,58 +35,37 @@ export const initGoogleAuth = () => {
   });
 };
 
-// アクセストークンのレスポンス処理
 const handleCredentialResponse = (response) => {
-  console.log('OAuth token response:', response);
-  if (response.access_token) {
-    localStorage.setItem(TOKEN_KEY, response.access_token);
-    
-    // 認証状態変更イベントの発行
-    const event = new CustomEvent('googleAuthStateChanged', { 
-      detail: { isAuthenticated: true } 
-    });
-    window.dispatchEvent(event);
-    return true;
-  }
-  return false;
-};
-
-// IDトークンのレスポンス処理（ユーザー情報用）
-const handleIdResponse = (response) => {
-  console.log('ID token response received');
   if (response.credential) {
     try {
       const userObject = jwtDecode(response.credential);
+      localStorage.setItem(TOKEN_KEY, response.credential);
       localStorage.setItem(USER_KEY, JSON.stringify(userObject));
+      const event = new CustomEvent('googleAuthStateChanged', { detail: { isAuthenticated: true } });
+      window.dispatchEvent(event);
+      return userObject;
     } catch (error) {
-      console.error('Error decoding ID token:', error);
+      return null;
     }
   }
+  return null;
 };
 
 export const signIn = () => {
   if (!CLIENT_ID) {
-    console.error('Google Client ID is not configured');
     return false;
   }
 
-  if (window.tokenClient) {
+  if (window.google?.accounts?.id) {
     try {
-      console.log('Requesting access token...');
-      window.tokenClient.requestAccessToken();
+      window.google.accounts.id.prompt();
       return true;
     } catch (error) {
-      console.error('Error requesting access token:', error);
       return false;
     }
   } else {
-    console.log('Token client not initialized, initializing auth...');
     initGoogleAuth().then(() => {
-      if (window.tokenClient) {
-        window.tokenClient.requestAccessToken();
-      } else {
-        console.error('Failed to initialize token client');
-      }
+      signIn();
     });
     return false;
   }
@@ -110,20 +74,30 @@ export const signIn = () => {
 export const signOut = () => {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
-  
-  if (window.google?.accounts?.oauth2) {
-    window.google.accounts.oauth2.revoke(getAccessToken(), () => {
-      console.log('Access token revoked');
-    });
-  }
-  
   const event = new CustomEvent('googleAuthStateChanged', { detail: { isAuthenticated: false } });
   window.dispatchEvent(event);
   return true;
 };
 
 export const isAuthenticated = () => {
-  return !!getAccessToken();
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) return false;
+  
+  try {
+    const decoded = jwtDecode(token);
+    const currentTime = Date.now() / 1000;
+    
+    if (decoded.exp < currentTime) {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    return false;
+  }
 };
 
 export const getUserInfo = () => {
