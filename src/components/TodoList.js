@@ -137,18 +137,25 @@ const TodoList = () => {
     );
   }
 
-  // カテゴリ名を表示用に変換する関数
-  const getCategoryLabel = (category) => {
-    switch (category) {
-      case 'work-hisys':
-        return 'HISYS';
-      case 'work-internal':
-        return '社内';
-      case 'personal':
-        return '個人';
-      default:
-        return '';
+  // タスクのカテゴリに対応するリスト名を取得する関数
+  const getTaskListName = (category) => {
+    if (!taskLists || taskLists.length === 0) return '';
+    
+    let listName = '';
+    
+    // カテゴリに基づいてタスクリストを検索
+    if (category === 'work-hisys') {
+      const list = taskLists.find(list => list.title.includes('HISYS'));
+      if (list) listName = list.title;
+    } else if (category === 'work-internal') {
+      const list = taskLists.find(list => list.title.includes('社内'));
+      if (list) listName = list.title;
+    } else if (category === 'personal') {
+      const list = taskLists.find(list => !list.title.includes('HISYS') && !list.title.includes('社内'));
+      if (list) listName = list.title;
     }
+    
+    return listName || '未分類';
   };
 
   return (
@@ -257,7 +264,7 @@ const TodoList = () => {
                           fontSize: '0.6875rem'
                         }}
                       >
-                        {getCategoryLabel(task.category)}
+                        {getTaskListName(task.category)}
                       </Box>
                     </Box>
                   </Box>

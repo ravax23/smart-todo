@@ -147,8 +147,8 @@ export const TodoProvider = ({ children }) => {
         )
       );
       
-      // ここでAPIを呼び出してタスクリストのタイトルを更新する
-      // await TasksService.updateTaskList(taskListId, { title: newTitle });
+      // APIを呼び出してタスクリストのタイトルを更新する
+      await TasksService.updateTaskList(taskListId, { title: newTitle });
       
       // 成功した場合は何もしない（すでに更新済み）
       console.log(`Task list ${taskListId} title updated to: ${newTitle}`);
@@ -173,8 +173,8 @@ export const TodoProvider = ({ children }) => {
       // 現在のリストからタスクを削除
       setTodos(prevTodos => prevTodos.filter(task => task.id !== taskId));
       
-      // ここでAPIを呼び出してタスクを移動する
-      // await TasksService.moveTask(taskId, targetListId);
+      // APIを呼び出してタスクを移動する
+      await TasksService.moveTask(taskId, selectedTaskList, targetListId);
       
       // 移動先のリストが現在表示中のリストなら、タスクを再取得
       if (targetListId === selectedTaskList) {
