@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import CalendarService from '../services/calendarService';
+import { requestCalendarScope } from '../services/authService';
 
 const TodoContext = createContext();
 
@@ -37,17 +38,34 @@ export const TodoProvider = ({ children }) => {
       const timeMax = sevenDaysLater.toISOString();
       
       console.log('Calling CalendarService.getTodos with:', { timeMin, timeMax });
-      const todoList = await CalendarService.getTodos(timeMin, timeMax);
-      console.log('Received todos:', todoList);
-      
-      setTodos(todoList);
+      try {
+        const todoList = await CalendarService.getTodos(timeMin, timeMax);
+        console.log('Received todos:', todoList);
+        setTodos(todoList);
+      } catch (err) {
+        console.error('Failed to fetch todos:', err);
+        
+        // スコープ不足エラーの場合、明示的なスコープ承認を要求
+        if (err.message && err.message.includes('insufficient authentication scopes')) {
+          console.log('Insufficient scopes detected, requesting explicit authorization');
+          const success = await requestCalendarScope();
+          
+          if (success) {
+            // スコープ承認に成功したら再度取得を試みる
+            console.log('Scope authorization successful, retrying fetch');
+            const todoList = await CalendarService.getTodos(timeMin, timeMax);
+            console.log('Received todos after scope authorization:', todoList);
+            setTodos(todoList);
+            return;
+          } else {
+            setError('カレンダーへのアクセス権限が不足しています。カレンダーへのアクセスを許可してください。');
+          }
+        } else {
+          setError(`カレンダーデータの取得に失敗しました。${err.message}`);
+        }
+      }
     } catch (err) {
-      console.error('Failed to fetch todos:', err);
-      console.error('Error details:', {
-        message: err.message,
-        stack: err.stack,
-        name: err.name
-      });
+      console.error('Error in fetchTodos:', err);
       setError(`カレンダーデータの取得に失敗しました。${err.message}`);
     } finally {
       setLoading(false);

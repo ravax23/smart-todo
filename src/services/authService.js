@@ -55,7 +55,7 @@ export const initGoogleAuth = () => {
 // GAPI（Google API Client）の初期化
 const initGapiClient = () => {
   return new Promise((resolve, reject) => {
-    gapi.load('client', () => {
+    gapi.load('client:auth2', () => {
       gapi.client.init({
         apiKey: API_KEY,
         clientId: CLIENT_ID,
@@ -114,7 +114,7 @@ const handleCredentialResponse = (response) => {
 const getGapiAccessToken = async () => {
   return new Promise((resolve, reject) => {
     try {
-      if (!gapi.auth) {
+      if (!gapi.auth2) {
         // GAPIクライアントが初期化されていない場合は再初期化
         initGapiClient().then(() => {
           getGapiAccessToken().then(resolve).catch(reject);
@@ -122,18 +122,32 @@ const getGapiAccessToken = async () => {
         return;
       }
       
-      gapi.auth.authorize({
-        client_id: CLIENT_ID,
-        scope: SCOPES,
-        immediate: true
-      }, response => {
-        if (response && !response.error) {
-          console.log('GAPI authorization successful');
-          resolve(response.access_token);
-        } else {
-          console.error('GAPI authorization failed:', response?.error);
-          reject(new Error(response?.error || 'Authorization failed'));
-        }
+      const authInstance = gapi.auth2.getAuthInstance();
+      if (!authInstance) {
+        reject(new Error('Auth instance not available'));
+        return;
+      }
+      
+      // ユーザーが既にサインインしているか確認
+      if (authInstance.isSignedIn.get()) {
+        const user = authInstance.currentUser.get();
+        const authResponse = user.getAuthResponse(true);
+        console.log('User already signed in, getting access token');
+        resolve(authResponse.access_token);
+        return;
+      }
+      
+      // 明示的なサインインを要求
+      console.log('Requesting explicit sign in with scopes');
+      authInstance.signIn({
+        scope: SCOPES
+      }).then(user => {
+        const authResponse = user.getAuthResponse(true);
+        console.log('Sign in successful, got access token');
+        resolve(authResponse.access_token);
+      }).catch(error => {
+        console.error('Sign in failed:', error);
+        reject(error);
       });
     } catch (error) {
       console.error('Error in getGapiAccessToken:', error);
@@ -164,6 +178,22 @@ export const signIn = () => {
     }).catch(error => {
       console.error('Failed to initialize Google Auth:', error);
     });
+    return false;
+  }
+};
+
+// 明示的なスコープ承認を要求
+export const requestCalendarScope = async () => {
+  try {
+    console.log('Requesting calendar scope explicitly');
+    const accessToken = await getGapiAccessToken();
+    if (accessToken) {
+      localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Failed to request calendar scope:', error);
     return false;
   }
 };
