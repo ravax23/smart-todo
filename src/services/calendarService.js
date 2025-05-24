@@ -14,7 +14,12 @@ class CalendarService {
    */
   static async getHeaders() {
     const token = getAccessToken();
-    console.log('Access Token:', token ? 'Token exists' : 'No token');
+    console.log('Access Token for Calendar API:', token ? 'Token exists' : 'No token');
+    
+    if (!token) {
+      throw new Error('認証情報が見つかりません。再度ログインしてください。');
+    }
+    
     return {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
@@ -33,7 +38,6 @@ class CalendarService {
       console.log('Request Headers:', headers);
 
       const params = new URLSearchParams({
-        calendarId: CALENDAR_ID,
         timeMin: timeMin,
         timeMax: timeMax,
         singleEvents: true,
@@ -59,7 +63,7 @@ class CalendarService {
       const data = await response.json();
       console.log('API Response Data:', data);
       
-      return data.items.map(this.convertEventToTodo);
+      return data.items ? data.items.map(this.convertEventToTodo) : [];
     } catch (error) {
       console.error('Calendar Service Error:', {
         message: error.message,
