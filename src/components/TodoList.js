@@ -16,7 +16,6 @@ import {
 import { useTodo } from '../contexts/TodoContext';
 import { format, parseISO, isValid } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 // カテゴリ別の色を定義
 const categoryColors = {
@@ -27,7 +26,7 @@ const categoryColors = {
 
 const TodoList = () => {
   const { todos, loading, error } = useTodo();
-  const [taskItems, setTaskItems] = useState(todos);
+  const [taskItems, setTaskItems] = useState([]);
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
 
@@ -54,15 +53,28 @@ const TodoList = () => {
     handleMenuClose();
   };
 
-  // ドラッグ&ドロップの処理
-  const handleDragEnd = (result) => {
-    if (!result.destination) return;
-    
-    const items = Array.from(taskItems);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-    
-    setTaskItems(items);
+  // タスクの順序変更
+  const moveTask = (fromIndex, toIndex) => {
+    const updatedTasks = [...taskItems];
+    const [movedTask] = updatedTasks.splice(fromIndex, 1);
+    updatedTasks.splice(toIndex, 0, movedTask);
+    setTaskItems(updatedTasks);
+  };
+
+  // ドラッグ開始時の処理
+  const handleDragStart = (e, index) => {
+    e.dataTransfer.setData('text/plain', index);
+  };
+
+  // ドラッグオーバー時の処理
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  // ドロップ時の処理
+  const handleDrop = (e, toIndex) => {
+    const fromIndex = e.dataTransfer.getData('text/plain');
+    moveTask(parseInt(fromIndex), toIndex);
   };
 
   // コンポーネントがマウントされたときにtodosをtaskItemsに設定
@@ -115,18 +127,7 @@ const TodoList = () => {
   return (
     <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center' }}>
-          <Box 
-            component="span" 
-            sx={{ 
-              width: 12, 
-              height: 12, 
-              borderRadius: '50%', 
-              backgroundColor: categoryColors['work-hisys'],
-              display: 'inline-block',
-              mr: 1.5
-            }} 
-          />
+        <Typography variant="h5" sx={{ fontWeight: 600 }}>
           仕事（HISYS）
         </Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary', bgcolor: '#f9fafb', p: '8px 16px', borderRadius: 1 }}>
@@ -165,109 +166,99 @@ const TodoList = () => {
           borderRadius: '4px',
           overflow: 'hidden'
         }}>
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="tasks">
-              {(provided) => (
-                <List 
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  sx={{ p: 0 }}
+          <List sx={{ p: 0 }}>
+            {taskItems.map((task, index) => (
+              <React.Fragment key={task.id}>
+                <ListItem 
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, index)}
+                  sx={{ 
+                    py: 1.5,
+                    px: 2,
+                    bgcolor: `rgba(${task.category === 'work-hisys' ? '231, 76, 60' : task.category === 'work-internal' ? '52, 152, 219' : '46, 204, 113'}, 0.05)`,
+                    borderLeft: `4px solid ${categoryColors[task.category]}`,
+                    '&:hover': { 
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                      transform: 'translateY(-2px)',
+                      transition: 'all 0.2s',
+                      cursor: 'grab'
+                    },
+                    '&:active': {
+                      cursor: 'grabbing'
+                    }
+                  }}
                 >
-                  {taskItems.map((task, index) => (
-                    <Draggable key={task.id} draggableId={task.id} index={index}>
-                      {(provided) => (
-                        <React.Fragment>
-                          <ListItem 
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            sx={{ 
-                              py: 1.5,
-                              px: 2,
-                              bgcolor: '#ffffff',
-                              borderLeft: `4px solid ${categoryColors[task.category]}`,
-                              '&:hover': { 
-                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                                transform: 'translateY(-2px)',
-                                transition: 'all 0.2s'
-                              }
-                            }}
-                          >
-                            <Checkbox 
-                              checked={task.status === 'completed'} 
-                              sx={{ 
-                                mr: 1,
-                                width: 22,
-                                height: 22,
-                                borderRadius: '50%',
-                                '&.Mui-checked': {
-                                  color: categoryColors[task.category],
-                                }
-                              }}
-                            />
-                            <Box sx={{ flex: 1 }}>
-                              <Typography 
-                                variant="body1" 
-                                sx={{
-                                  textDecoration: task.status === 'completed' ? 'line-through' : 'none',
-                                  color: task.status === 'completed' ? 'text.secondary' : 'text.primary',
-                                  mb: 0.5,
-                                  fontWeight: 500,
-                                  fontSize: '0.9375rem'
-                                }}
-                              >
-                                {task.title}
-                              </Typography>
-                              <Box sx={{ display: 'flex', alignItems: 'center', fontSize: '0.75rem', color: 'text.secondary' }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                  <span style={{ marginRight: '4px' }}>📅</span>
-                                  {task.startDate ? format(parseISO(task.startDate), 'MM月dd日', { locale: ja }) : '期限なし'}
-                                </Box>
-                                <Box 
-                                  sx={{ 
-                                    ml: 2, 
-                                    bgcolor: `rgba(${task.category === 'work-hisys' ? '231, 76, 60' : task.category === 'work-internal' ? '52, 152, 219' : '46, 204, 113'}, 0.1)`,
-                                    color: categoryColors[task.category],
-                                    px: 1,
-                                    py: 0.25,
-                                    borderRadius: '1rem',
-                                    fontSize: '0.6875rem'
-                                  }}
-                                >
-                                  {getCategoryLabel(task.category)}
-                                </Box>
-                              </Box>
-                            </Box>
-                            <Box sx={{ 
-                              display: 'flex', 
-                              opacity: 0,
-                              transition: 'opacity 0.2s',
-                              '.MuiListItem-root:hover &': {
-                                opacity: 1
-                              }
-                            }}>
-                              <IconButton 
-                                size="small" 
-                                sx={{ color: 'text.secondary' }}
-                                onClick={(e) => handleMenuOpen(e, task)}
-                              >
-                                ✏️
-                              </IconButton>
-                              <IconButton size="small" sx={{ color: 'text.secondary' }}>
-                                🗑️
-                              </IconButton>
-                            </Box>
-                          </ListItem>
-                          {index < taskItems.length - 1 && <Divider />}
-                        </React.Fragment>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </List>
-              )}
-            </Droppable>
-          </DragDropContext>
+                  <Checkbox 
+                    checked={task.status === 'completed'} 
+                    sx={{ 
+                      mr: 1,
+                      width: 22,
+                      height: 22,
+                      borderRadius: '50%',
+                      '&.Mui-checked': {
+                        color: categoryColors[task.category],
+                      }
+                    }}
+                  />
+                  <Box sx={{ flex: 1 }}>
+                    <Typography 
+                      variant="body1" 
+                      sx={{
+                        textDecoration: task.status === 'completed' ? 'line-through' : 'none',
+                        color: task.status === 'completed' ? 'text.secondary' : 'text.primary',
+                        mb: 0.5,
+                        fontWeight: 500,
+                        fontSize: '0.9375rem'
+                      }}
+                    >
+                      {task.title}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', fontSize: '0.75rem', color: 'text.secondary' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <span style={{ marginRight: '4px' }}>📅</span>
+                        {task.startDate ? format(parseISO(task.startDate), 'MM月dd日', { locale: ja }) : '期限なし'}
+                      </Box>
+                      <Box 
+                        sx={{ 
+                          ml: 2, 
+                          bgcolor: `rgba(${task.category === 'work-hisys' ? '231, 76, 60' : task.category === 'work-internal' ? '52, 152, 219' : '46, 204, 113'}, 0.1)`,
+                          color: categoryColors[task.category],
+                          px: 1,
+                          py: 0.25,
+                          borderRadius: '1rem',
+                          fontSize: '0.6875rem'
+                        }}
+                      >
+                        {getCategoryLabel(task.category)}
+                      </Box>
+                    </Box>
+                  </Box>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    opacity: 0,
+                    transition: 'opacity 0.2s',
+                    '.MuiListItem-root:hover &': {
+                      opacity: 1
+                    }
+                  }}>
+                    <IconButton 
+                      size="small" 
+                      sx={{ color: 'text.secondary' }}
+                      onClick={(e) => handleMenuOpen(e, task)}
+                    >
+                      ✏️
+                    </IconButton>
+                    <IconButton size="small" sx={{ color: 'text.secondary' }}>
+                      🗑️
+                    </IconButton>
+                  </Box>
+                </ListItem>
+                {index < taskItems.length - 1 && <Divider />}
+              </React.Fragment>
+            ))}
+          </List>
         </Box>
       )}
 
