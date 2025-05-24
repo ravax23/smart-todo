@@ -1,6 +1,7 @@
 import React from 'react';
 import { AuthProvider } from './contexts/AuthContext';
 import { TodoProvider } from './contexts/TodoContext';
+import { CategoryProvider } from './contexts/CategoryContext';
 import LoginButton from './components/LoginButton';
 import TodoList from './components/TodoList';
 import Sidebar from './components/Sidebar';
@@ -82,12 +83,14 @@ const AppContent = () => {
 
   return (
     <TodoProvider>
-      <Box sx={{ display: 'flex', minHeight: '100vh', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}>
-        <Sidebar />
-        <Box sx={{ flex: 1, p: 4, bgcolor: 'background.paper' }}>
-          <TodoList />
+      <CategoryProvider>
+        <Box sx={{ display: 'flex', minHeight: '100vh', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}>
+          <Sidebar />
+          <Box sx={{ flex: 1, p: 4, bgcolor: 'background.paper' }}>
+            <TodoList />
+          </Box>
         </Box>
-      </Box>
+      </CategoryProvider>
     </TodoProvider>
   );
 };
