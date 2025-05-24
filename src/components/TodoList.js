@@ -11,11 +11,23 @@ import {
   IconButton,
   Checkbox,
   Menu,
-  MenuItem
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  FormHelperText
 } from '@mui/material';
-import { useTodo } from '../contexts/TodoContext';
-import { format, parseISO, isValid } from 'date-fns';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ja } from 'date-fns/locale';
+import { format, parseISO, isValid } from 'date-fns';
+import { useTodo } from '../contexts/TodoContext';
 
 // カテゴリ別の色を定義
 const categoryColors = {
@@ -25,10 +37,24 @@ const categoryColors = {
 };
 
 const TodoList = () => {
-  const { todos, taskLists, selectedTaskList, loading, error } = useTodo();
-  const [taskItems, setTaskItems] = useState([]);
-  const [menuAnchorEl, setMenuAnchorEl] = useState(null);
-  const [selectedTask, setSelectedTask] = useState(null);
+  const { 
+    todos, 
+    taskLists, 
+    selectedTaskList, 
+    loading, 
+    error,
+    createTask
+  } = useTodo();
+  
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [newTaskData, setNewTaskData] = useState({
+    title: '',
+    notes: '',
+    due: null,
+    taskListId: selectedTaskList
+  });
+  const [dialogError, setDialogError] = useState('');
 
   // 選択されているタスクリストの情報を取得
   const selectedListInfo = React.useMemo(() => {
@@ -47,95 +73,6 @@ const TodoList = () => {
     }
     return { title: 'タスク', category: 'personal' };
   }, [taskLists, selectedTaskList]);
-
-  // メニューを開く
-  const handleMenuOpen = (event, task) => {
-    setMenuAnchorEl(event.currentTarget);
-    setSelectedTask(task);
-  };
-
-  // メニューを閉じる
-  const handleMenuClose = () => {
-    setMenuAnchorEl(null);
-    setSelectedTask(null);
-  };
-
-  // カテゴリ変更
-  const handleCategoryChange = (category) => {
-    if (selectedTask) {
-      const updatedTasks = taskItems.map(task => 
-        task.id === selectedTask.id ? { ...task, category } : task
-      );
-      setTaskItems(updatedTasks);
-    }
-    handleMenuClose();
-  };
-
-  // タスクの順序変更
-  const moveTask = (fromIndex, toIndex) => {
-    const updatedTasks = [...taskItems];
-    const [movedTask] = updatedTasks.splice(fromIndex, 1);
-    updatedTasks.splice(toIndex, 0, movedTask);
-    setTaskItems(updatedTasks);
-  };
-
-  // ドラッグ開始時の処理
-  const handleDragStart = (e, index, taskId) => {
-    e.dataTransfer.setData('text/plain', index);
-    e.dataTransfer.setData('taskId', taskId);
-    
-    // ドラッグ中のタスクのスタイルを設定
-    e.currentTarget.style.opacity = '0.6';
-  };
-
-  // ドラッグ終了時の処理
-  const handleDragEnd = (e) => {
-    e.currentTarget.style.opacity = '1';
-  };
-
-  // ドラッグオーバー時の処理
-  const handleDragOver = (e) => {
-    e.preventDefault();
-  };
-
-  // ドロップ時の処理
-  const handleDrop = (e, toIndex) => {
-    const fromIndex = e.dataTransfer.getData('text/plain');
-    moveTask(parseInt(fromIndex), toIndex);
-  };
-
-  // コンポーネントがマウントされたときにtodosをtaskItemsに設定
-  React.useEffect(() => {
-    if (todos.length > 0) {
-      // カテゴリを追加
-      const tasksWithCategory = todos.map(todo => {
-        let category = selectedListInfo.category; // マイリストのカテゴリをデフォルトとして使用
-        if (todo.title.includes('HISYS') || todo.title.includes('クライアント')) {
-          category = 'work-hisys';
-        } else if (todo.title.includes('社内') || todo.title.includes('仕様書')) {
-          category = 'work-internal';
-        }
-        return { ...todo, category };
-      });
-      setTaskItems(tasksWithCategory);
-    }
-  }, [todos, selectedListInfo.category]);
-
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert severity="error" sx={{ my: 2 }}>
-        {error}
-      </Alert>
-    );
-  }
 
   // タスクのカテゴリに対応するリスト名を取得する関数
   const getTaskListName = (category) => {
@@ -158,6 +95,87 @@ const TodoList = () => {
     return listName || '未分類';
   };
 
+  // 新規タスク入力フィールドでEnterキーが押されたときの処理
+  const handleNewTaskKeyPress = (e) => {
+    if (e.key === 'Enter' && newTaskTitle.trim()) {
+      setNewTaskData({
+        title: newTaskTitle.trim(),
+        notes: '',
+        due: null,
+        taskListId: selectedTaskList
+      });
+      setDialogOpen(true);
+    }
+  };
+
+  // ダイアログを閉じる
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+    setDialogError('');
+  };
+
+  // 新規タスクを作成
+  const handleCreateTask = async () => {
+    if (!newTaskData.title.trim()) {
+      setDialogError('タイトルを入力してください');
+      return;
+    }
+
+    try {
+      const taskData = {
+        title: newTaskData.title,
+        notes: newTaskData.notes || '',
+        due: newTaskData.due ? format(newTaskData.due, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx") : undefined
+      };
+
+      await createTask(taskData, newTaskData.taskListId);
+      
+      // 入力フィールドをクリア
+      setNewTaskTitle('');
+      setNewTaskData({
+        title: '',
+        notes: '',
+        due: null,
+        taskListId: selectedTaskList
+      });
+      
+      // ダイアログを閉じる
+      setDialogOpen(false);
+      setDialogError('');
+    } catch (err) {
+      setDialogError(`タスクの作成に失敗しました: ${err.message}`);
+    }
+  };
+
+  // ドラッグ開始時の処理
+  const handleDragStart = (e, taskId) => {
+    e.dataTransfer.setData('taskId', taskId);
+    
+    // ドラッグ中のタスクのスタイルを設定
+    e.currentTarget.style.opacity = '0.6';
+  };
+
+  // ドラッグ終了時の処理
+  const handleDragEnd = (e) => {
+    e.currentTarget.style.opacity = '1';
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert severity="error" sx={{ my: 2 }}>
+        {error}
+      </Alert>
+    );
+  }
+
   return (
     <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -175,6 +193,9 @@ const TodoList = () => {
           fullWidth
           placeholder="新しいタスクを追加"
           variant="outlined"
+          value={newTaskTitle}
+          onChange={(e) => setNewTaskTitle(e.target.value)}
+          onKeyPress={handleNewTaskKeyPress}
           sx={{
             '& .MuiOutlinedInput-root': {
               pl: 4,
@@ -188,7 +209,7 @@ const TodoList = () => {
       </Box>
       
       {/* タスク一覧 */}
-      {taskItems.length === 0 ? (
+      {todos.length === 0 ? (
         <Box sx={{ textAlign: 'center', my: 4, p: 3, border: '1px solid #e0e0e0', borderRadius: 1 }}>
           <Typography variant="body1" color="text.secondary">
             タスクが見つかりません。
@@ -201,14 +222,12 @@ const TodoList = () => {
           overflow: 'hidden'
         }}>
           <List sx={{ p: 0 }}>
-            {taskItems.map((task, index) => (
+            {todos.map((task, index) => (
               <React.Fragment key={task.id}>
                 <ListItem 
                   draggable
-                  onDragStart={(e) => handleDragStart(e, index, task.id)}
+                  onDragStart={(e) => handleDragStart(e, task.id)}
                   onDragEnd={handleDragEnd}
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => handleDrop(e, index)}
                   sx={{ 
                     py: 1.5,
                     px: 2,
@@ -276,74 +295,77 @@ const TodoList = () => {
                       opacity: 1
                     }
                   }}>
-                    <IconButton 
-                      size="small" 
-                      sx={{ color: 'text.secondary' }}
-                      onClick={(e) => handleMenuOpen(e, task)}
-                    >
-                      ✏️
-                    </IconButton>
                     <IconButton size="small" sx={{ color: 'text.secondary' }}>
                       🗑️
                     </IconButton>
                   </Box>
                 </ListItem>
-                {index < taskItems.length - 1 && <Divider />}
+                {index < todos.length - 1 && <Divider />}
               </React.Fragment>
             ))}
           </List>
         </Box>
       )}
 
-      {/* カテゴリ変更メニュー */}
-      <Menu
-        anchorEl={menuAnchorEl}
-        open={Boolean(menuAnchorEl)}
-        onClose={handleMenuClose}
-      >
-        <MenuItem onClick={() => handleCategoryChange('work-hisys')}>
-          <Box 
-            component="span" 
-            sx={{ 
-              width: 10, 
-              height: 10, 
-              borderRadius: '50%', 
-              bgcolor: categoryColors['work-hisys'],
-              display: 'inline-block',
-              mr: 1.5
-            }} 
-          />
-          HISYS
-        </MenuItem>
-        <MenuItem onClick={() => handleCategoryChange('work-internal')}>
-          <Box 
-            component="span" 
-            sx={{ 
-              width: 10, 
-              height: 10, 
-              borderRadius: '50%', 
-              bgcolor: categoryColors['work-internal'],
-              display: 'inline-block',
-              mr: 1.5
-            }} 
-          />
-          社内
-        </MenuItem>
-        <MenuItem onClick={() => handleCategoryChange('personal')}>
-          <Box 
-            component="span" 
-            sx={{ 
-              width: 10, 
-              height: 10, 
-              borderRadius: '50%', 
-              bgcolor: categoryColors['personal'],
-              display: 'inline-block',
-              mr: 1.5
-            }} 
-          />
-          個人
-        </MenuItem>
-      </Menu>
+      {/* 新規タスク作成ダイアログ */}
+      <Dialog open={dialogOpen} onClose={handleCloseDialog} fullWidth maxWidth="sm">
+        <DialogTitle>新しいタスクを作成</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <TextField
+              label="タイトル"
+              fullWidth
+              value={newTaskData.title}
+              onChange={(e) => setNewTaskData({ ...newTaskData, title: e.target.value })}
+              error={dialogError.includes('タイトル')}
+              helperText={dialogError.includes('タイトル') ? dialogError : ''}
+            />
+            
+            <TextField
+              label="メモ"
+              fullWidth
+              multiline
+              rows={3}
+              value={newTaskData.notes}
+              onChange={(e) => setNewTaskData({ ...newTaskData, notes: e.target.value })}
+            />
+            
+            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ja}>
+              <DatePicker
+                label="期限"
+                value={newTaskData.due}
+                onChange={(date) => setNewTaskData({ ...newTaskData, due: date })}
+                renderInput={(params) => <TextField {...params} fullWidth />}
+              />
+            </LocalizationProvider>
+            
+            <FormControl fullWidth>
+              <InputLabel id="task-list-select-label">リスト</InputLabel>
+              <Select
+                labelId="task-list-select-label"
+                value={newTaskData.taskListId}
+                label="リスト"
+                onChange={(e) => setNewTaskData({ ...newTaskData, taskListId: e.target.value })}
+              >
+                {taskLists.map((list) => (
+                  <MenuItem key={list.id} value={list.id}>{list.title}</MenuItem>
+                ))}
+              </Select>
+              <FormHelperText>タスクを追加するリストを選択してください</FormHelperText>
+            </FormControl>
+            
+            {dialogError && !dialogError.includes('タイトル') && (
+              <Alert severity="error">{dialogError}</Alert>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>キャンセル</Button>
+          <Button onClick={handleCreateTask} variant="contained" color="primary">
+            作成
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

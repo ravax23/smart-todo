@@ -11,22 +11,33 @@ import {
   TextField,
   IconButton,
   ClickAwayListener,
-  Tooltip
+  Tooltip,
+  Switch,
+  FormControlLabel
 } from '@mui/material';
 import { useTodo } from '../contexts/TodoContext';
 
 const Sidebar = () => {
-  const { taskLists, selectedTaskList, selectTaskList, updateTaskListTitle, moveTaskToList } = useTodo();
+  const { 
+    taskLists, 
+    selectedTaskList, 
+    selectedFilter,
+    showCompleted,
+    selectTaskList, 
+    selectFilter,
+    toggleShowCompleted,
+    updateTaskListTitle 
+  } = useTodo();
   const [editingListId, setEditingListId] = useState(null);
   const [editingTitle, setEditingTitle] = useState('');
 
   // フィルターリスト
   const filters = [
-    { id: 'today', name: 'Today', icon: '📅' },
-    { id: 'tomorrow', name: 'Tomorrow', icon: '📆' },
-    { id: 'after-tomorrow', name: 'After tomorrow', icon: '📆' },
-    { id: 'past', name: 'Past', icon: '⏱️' },
-    { id: 'all', name: 'All', icon: '📋' },
+    { id: 'today', name: '今日', icon: '📅' },
+    { id: 'tomorrow', name: '明日', icon: '📆' },
+    { id: 'after-tomorrow', name: '明後日', icon: '📆' },
+    { id: 'past', name: '過去', icon: '⏱️' },
+    { id: 'all', name: 'すべて', icon: '📋' },
   ];
 
   // カテゴリ別の色を定義
@@ -144,6 +155,19 @@ const Sidebar = () => {
         />
       </Box>
 
+      {/* 完了タスク表示切替 */}
+      <FormControlLabel
+        control={
+          <Switch 
+            checked={showCompleted} 
+            onChange={toggleShowCompleted}
+            size="small"
+          />
+        }
+        label="完了タスクを表示"
+        sx={{ mb: 2, '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
+      />
+
       {/* フィルターリスト */}
       <Typography variant="caption" sx={{ 
         textTransform: 'uppercase', 
@@ -159,7 +183,8 @@ const Sidebar = () => {
           <ListItem
             key={filter.id}
             button
-            selected={filter.id === 'today'}
+            selected={filter.id === selectedFilter}
+            onClick={() => selectFilter(filter.id)}
             sx={{
               borderRadius: 1,
               mb: 0.5,

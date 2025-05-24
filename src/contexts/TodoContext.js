@@ -2,13 +2,17 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import TasksService from '../services/tasksService';
 import { requestTasksScope } from '../services/authService';
+import { isToday, isTomorrow, addDays, isBefore, parseISO, startOfDay } from 'date-fns';
 
 const TodoContext = createContext();
 
 export const TodoProvider = ({ children }) => {
   const [todos, setTodos] = useState([]);
+  const [filteredTodos, setFilteredTodos] = useState([]);
   const [taskLists, setTaskLists] = useState([]);
   const [selectedTaskList, setSelectedTaskList] = useState('@default');
+  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [showCompleted, setShowCompleted] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { isAuthenticated } = useAuth();
@@ -22,6 +26,7 @@ export const TodoProvider = ({ children }) => {
       console.log('User is not authenticated, skipping task fetch');
       setTaskLists([]);
       setTodos([]);
+      setFilteredTodos([]);
       setLoading(false);
     }
   }, [isAuthenticated]);
@@ -33,6 +38,83 @@ export const TodoProvider = ({ children }) => {
       fetchTasks(selectedTaskList);
     }
   }, [isAuthenticated, selectedTaskList]);
+
+  // フィルターが変更されたときにタスクをフィルタリング
+  useEffect(() => {
+    filterTodos();
+  }, [todos, selectedFilter, showCompleted]);
+
+  // タスクのフィルタリング
+  const filterTodos = () => {
+    if (!todos.length) {
+      setFilteredTodos([]);
+      return;
+    }
+
+    let filtered = [...todos];
+    
+    // 完了タスクのフィルタリング
+    if (!showCompleted) {
+      filtered = filtered.filter(todo => todo.status !== 'completed');
+    }
+    
+    // 日付フィルターの適用
+    switch (selectedFilter) {
+      case 'today':
+        filtered = filtered.filter(todo => {
+          if (!todo.startDate) return false;
+          try {
+            const date = parseISO(todo.startDate);
+            return isToday(date);
+          } catch (e) {
+            return false;
+          }
+        });
+        break;
+      case 'tomorrow':
+        filtered = filtered.filter(todo => {
+          if (!todo.startDate) return false;
+          try {
+            const date = parseISO(todo.startDate);
+            return isTomorrow(date);
+          } catch (e) {
+            return false;
+          }
+        });
+        break;
+      case 'after-tomorrow':
+        filtered = filtered.filter(todo => {
+          if (!todo.startDate) return false;
+          try {
+            const date = parseISO(todo.startDate);
+            const afterTomorrow = addDays(new Date(), 2);
+            return date.getDate() === afterTomorrow.getDate() &&
+                   date.getMonth() === afterTomorrow.getMonth() &&
+                   date.getFullYear() === afterTomorrow.getFullYear();
+          } catch (e) {
+            return false;
+          }
+        });
+        break;
+      case 'past':
+        filtered = filtered.filter(todo => {
+          if (!todo.startDate) return false;
+          try {
+            const date = parseISO(todo.startDate);
+            return isBefore(date, startOfDay(new Date()));
+          } catch (e) {
+            return false;
+          }
+        });
+        break;
+      case 'all':
+      default:
+        // すべてのタスクを表示（フィルタリングなし）
+        break;
+    }
+    
+    setFilteredTodos(filtered);
+  };
 
   // タスクリストの取得
   const fetchTaskLists = async () => {
@@ -131,9 +213,40 @@ export const TodoProvider = ({ children }) => {
     }
   };
 
+  // 新しいタスクを作成
+  const createTask = async (taskData, listId = selectedTaskList) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const newTask = await TasksService.createTask(listId, taskData);
+      console.log('Created new task:', newTask);
+      
+      // タスクリストを再取得
+      fetchTasks(listId);
+      
+      return newTask;
+    } catch (err) {
+      console.error('Failed to create task:', err);
+      setError(`タスクの作成に失敗しました。${err.message}`);
+      setLoading(false);
+      throw err;
+    }
+  };
+
   // タスクリストの選択
   const selectTaskList = (taskListId) => {
     setSelectedTaskList(taskListId);
+  };
+
+  // フィルターの選択
+  const selectFilter = (filterId) => {
+    setSelectedFilter(filterId);
+  };
+
+  // 完了タスクの表示/非表示を切り替え
+  const toggleShowCompleted = () => {
+    setShowCompleted(prev => !prev);
   };
 
   // タスクリストのタイトル更新
@@ -193,14 +306,20 @@ export const TodoProvider = ({ children }) => {
 
   // コンテキストの値
   const value = {
-    todos,
+    todos: filteredTodos,
+    allTodos: todos,
     taskLists,
     selectedTaskList,
+    selectedFilter,
+    showCompleted,
     loading,
     error,
     fetchTasks,
     fetchTaskLists,
+    createTask,
     selectTaskList,
+    selectFilter,
+    toggleShowCompleted,
     updateTaskListTitle,
     moveTaskToList
   };
