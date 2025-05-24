@@ -177,8 +177,14 @@ const TodoList = () => {
                   sx={{ 
                     py: 1.5,
                     px: 2,
-                    bgcolor: `rgba(${task.category === 'work-hisys' ? '231, 76, 60' : task.category === 'work-internal' ? '52, 152, 219' : '46, 204, 113'}, 0.05)`,
+                    bgcolor: 'white',
                     borderLeft: `4px solid ${categoryColors[task.category]}`,
+                    borderTop: `1px solid ${categoryColors[task.category]}`,
+                    borderRight: `1px solid ${categoryColors[task.category]}`,
+                    borderBottom: `1px solid ${categoryColors[task.category]}`,
+                    mb: 1,
+                    mx: 1,
+                    borderRadius: 1,
                     '&:hover': { 
                       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
                       transform: 'translateY(-2px)',
@@ -207,7 +213,7 @@ const TodoList = () => {
                       variant="body1" 
                       sx={{
                         textDecoration: task.status === 'completed' ? 'line-through' : 'none',
-                        color: task.status === 'completed' ? 'text.secondary' : 'text.primary',
+                        color: task.status === 'completed' ? 'text.secondary' : categoryColors[task.category],
                         mb: 0.5,
                         fontWeight: 500,
                         fontSize: '0.9375rem'
@@ -223,8 +229,8 @@ const TodoList = () => {
                       <Box 
                         sx={{ 
                           ml: 2, 
-                          bgcolor: `rgba(${task.category === 'work-hisys' ? '231, 76, 60' : task.category === 'work-internal' ? '52, 152, 219' : '46, 204, 113'}, 0.1)`,
-                          color: categoryColors[task.category],
+                          bgcolor: categoryColors[task.category],
+                          color: 'white',
                           px: 1,
                           py: 0.25,
                           borderRadius: '1rem',
@@ -245,17 +251,16 @@ const TodoList = () => {
                   }}>
                     <IconButton 
                       size="small" 
-                      sx={{ color: 'text.secondary' }}
+                      sx={{ color: categoryColors[task.category] }}
                       onClick={(e) => handleMenuOpen(e, task)}
                     >
                       ✏️
                     </IconButton>
-                    <IconButton size="small" sx={{ color: 'text.secondary' }}>
+                    <IconButton size="small" sx={{ color: categoryColors[task.category] }}>
                       🗑️
                     </IconButton>
                   </Box>
                 </ListItem>
-                {index < taskItems.length - 1 && <Divider />}
               </React.Fragment>
             ))}
           </List>
