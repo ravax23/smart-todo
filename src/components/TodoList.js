@@ -25,10 +25,28 @@ const categoryColors = {
 };
 
 const TodoList = () => {
-  const { todos, loading, error } = useTodo();
+  const { todos, taskLists, selectedTaskList, loading, error } = useTodo();
   const [taskItems, setTaskItems] = useState([]);
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
+
+  // 選択されているタスクリストの情報を取得
+  const selectedListInfo = React.useMemo(() => {
+    if (taskLists && taskLists.length > 0 && selectedTaskList) {
+      const list = taskLists.find(list => list.id === selectedTaskList);
+      if (list) {
+        // カテゴリを判定
+        let category = 'personal';
+        if (list.title.includes('HISYS')) {
+          category = 'work-hisys';
+        } else if (list.title.includes('社内')) {
+          category = 'work-internal';
+        }
+        return { ...list, category };
+      }
+    }
+    return { title: 'タスク', category: 'personal' };
+  }, [taskLists, selectedTaskList]);
 
   // メニューを開く
   const handleMenuOpen = (event, task) => {
@@ -127,8 +145,8 @@ const TodoList = () => {
   return (
     <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 600 }}>
-          仕事（HISYS）
+        <Typography variant="h5" sx={{ fontWeight: 600, color: categoryColors[selectedListInfo.category] }}>
+          {selectedListInfo.title}
         </Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary', bgcolor: '#f9fafb', p: '8px 16px', borderRadius: 1 }}>
           {format(new Date(), 'yyyy年MM月dd日(E)', { locale: ja })}
