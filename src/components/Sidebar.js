@@ -11,9 +11,7 @@ import {
   TextField,
   IconButton,
   ClickAwayListener,
-  Tooltip,
-  Switch,
-  FormControlLabel
+  Tooltip
 } from '@mui/material';
 import { useTodo } from '../contexts/TodoContext';
 
@@ -22,11 +20,10 @@ const Sidebar = () => {
     taskLists, 
     selectedTaskList, 
     selectedFilter,
-    showCompleted,
     selectTaskList, 
     selectFilter,
-    toggleShowCompleted,
-    updateTaskListTitle 
+    updateTaskListTitle, 
+    moveTaskToList 
   } = useTodo();
   const [editingListId, setEditingListId] = useState(null);
   const [editingTitle, setEditingTitle] = useState('');
@@ -154,19 +151,6 @@ const Sidebar = () => {
           }}
         />
       </Box>
-
-      {/* 完了タスク表示切替 */}
-      <FormControlLabel
-        control={
-          <Switch 
-            checked={showCompleted} 
-            onChange={toggleShowCompleted}
-            size="small"
-          />
-        }
-        label="完了タスクを表示"
-        sx={{ mb: 2, '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
-      />
 
       {/* フィルターリスト */}
       <Typography variant="caption" sx={{ 
