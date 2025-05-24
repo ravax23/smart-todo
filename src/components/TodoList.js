@@ -12,7 +12,8 @@ import {
   InputLabel, 
   Select, 
   MenuItem,
-  Checkbox
+  Checkbox,
+  Paper
 } from '@mui/material';
 import { useTodo } from '../contexts/TodoContext';
 import { format, parseISO, isValid } from 'date-fns';
@@ -88,11 +89,7 @@ const TodoList = () => {
   });
 
   return (
-    <Box sx={{ mt: 2 }}>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
-        Todo App
-      </Typography>
-      
+    <Box>
       {/* タスクリスト選択 */}
       {taskLists && taskLists.length > 0 && (
         <Box sx={{ mb: 3 }}>
@@ -113,101 +110,86 @@ const TodoList = () => {
         </Box>
       )}
       
-      {/* カテゴリタブ */}
-      <Box sx={{ display: 'flex', mb: 2 }}>
-        <Box sx={{ 
-          py: 1, 
-          px: 2, 
-          bgcolor: 'primary.main', 
-          color: 'white',
-          borderRadius: '4px 4px 0 0'
-        }}>
-          すべて
-        </Box>
-        <Box sx={{ 
-          py: 1, 
-          px: 2, 
-          ml: 1,
-          color: 'text.secondary',
-          borderBottom: '1px solid #e0e0e0'
-        }}>
-          仕事
-        </Box>
-        <Box sx={{ 
-          py: 1, 
-          px: 2, 
-          ml: 1,
-          color: 'text.secondary',
-          borderBottom: '1px solid #e0e0e0'
-        }}>
-          個人
-        </Box>
-      </Box>
-      
       {/* タスク一覧 */}
       {todos.length === 0 ? (
-        <Box sx={{ textAlign: 'center', my: 4, p: 3, border: '1px solid #e0e0e0' }}>
+        <Paper elevation={0} sx={{ p: 3, textAlign: 'center', border: '1px solid #e0e0e0' }}>
           <Typography variant="body1">
             タスクが見つかりません。
           </Typography>
-        </Box>
+        </Paper>
       ) : (
         sortedDates.map((date) => (
-          <Box key={date} sx={{ mb: 4 }}>
-            <Typography 
-              variant="h6" 
+          <Box key={date} sx={{ mb: 3 }}>
+            <Paper 
+              elevation={0} 
               sx={{ 
-                bgcolor: '#1976d2', 
-                color: 'white', 
-                p: 1.5,
-                borderRadius: '4px 4px 0 0'
+                bgcolor: '#2196f3', 
+                color: 'white',
+                borderRadius: '4px 4px 0 0',
+                overflow: 'hidden'
               }}
             >
-              {date}
-            </Typography>
+              <Box sx={{ p: 1.5 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
+                  {date}
+                </Typography>
+              </Box>
+            </Paper>
             
-            <List sx={{ 
-              border: '1px solid #e0e0e0', 
-              borderTop: 'none',
-              borderRadius: '0 0 4px 4px'
-            }}>
-              {groupedTodos[date].map((todo) => (
-                <React.Fragment key={todo.id}>
-                  <ListItem>
-                    <Checkbox 
-                      checked={todo.status === 'completed'} 
-                      sx={{ mr: 1 }}
-                    />
-                    <ListItemText
-                      primary={
-                        <Typography 
-                          variant="body1" 
-                          sx={{
-                            textDecoration: todo.status === 'completed' ? 'line-through' : 'none',
-                            color: todo.status === 'completed' ? 'text.secondary' : 'text.primary'
-                          }}
-                        >
-                          {todo.title}
-                        </Typography>
-                      }
-                      secondary={todo.description ? (
-                        <Typography 
-                          variant="body2" 
-                          sx={{ 
-                            mt: 0.5,
-                            color: 'text.secondary',
-                            textDecoration: todo.status === 'completed' ? 'line-through' : 'none'
-                          }}
-                        >
-                          {todo.description}
-                        </Typography>
-                      ) : null}
-                    />
-                  </ListItem>
-                  <Divider component="li" />
-                </React.Fragment>
-              ))}
-            </List>
+            <Paper 
+              elevation={0} 
+              sx={{ 
+                border: '1px solid #e0e0e0',
+                borderTop: 'none',
+                borderRadius: '0 0 4px 4px',
+                overflow: 'hidden'
+              }}
+            >
+              <List disablePadding>
+                {groupedTodos[date].map((todo, index) => (
+                  <React.Fragment key={todo.id}>
+                    <ListItem 
+                      sx={{ 
+                        py: 1.5,
+                        bgcolor: index % 2 === 0 ? 'background.paper' : '#f5f5f5'
+                      }}
+                    >
+                      <Checkbox 
+                        checked={todo.status === 'completed'} 
+                        sx={{ mr: 1 }}
+                        disableRipple
+                      />
+                      <ListItemText
+                        primary={
+                          <Typography 
+                            variant="body1" 
+                            sx={{
+                              textDecoration: todo.status === 'completed' ? 'line-through' : 'none',
+                              color: todo.status === 'completed' ? 'text.secondary' : 'text.primary'
+                            }}
+                          >
+                            {todo.title}
+                          </Typography>
+                        }
+                        secondary={todo.description ? (
+                          <Typography 
+                            variant="body2" 
+                            sx={{ 
+                              mt: 0.5,
+                              color: 'text.secondary',
+                              textDecoration: todo.status === 'completed' ? 'line-through' : 'none'
+                            }}
+                          >
+                            {todo.description}
+                          </Typography>
+                        ) : null}
+                      />
+                    </ListItem>
+                    {index < groupedTodos[date].length - 1 && <Divider />}
+                  </React.Fragment>
+                ))}
+              </List>
+            </Paper>
           </Box>
         ))
       )}

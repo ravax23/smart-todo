@@ -10,13 +10,13 @@ import { useAuth } from './contexts/AuthContext';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#1976d2',
+      main: '#2196f3',
     },
     secondary: {
-      main: '#dc004e',
+      main: '#f50057',
     },
     background: {
-      default: '#f5f5f5',
+      default: '#ffffff',
     },
   },
   typography: {
@@ -29,6 +29,15 @@ const theme = createTheme({
       'Arial',
       'sans-serif',
     ].join(','),
+  },
+  components: {
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          boxShadow: 'none',
+        },
+      },
+    },
   },
 });
 
@@ -50,7 +59,9 @@ const AppContent = () => {
 
   return (
     <TodoProvider>
-      <TodoList />
+      <Box sx={{ mt: 2 }}>
+        <TodoList />
+      </Box>
     </TodoProvider>
   );
 };
