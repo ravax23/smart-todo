@@ -3,24 +3,37 @@ import { AuthProvider } from './contexts/AuthContext';
 import { TodoProvider } from './contexts/TodoContext';
 import LoginButton from './components/LoginButton';
 import TodoList from './components/TodoList';
-import { Box, Container, CssBaseline, createTheme, ThemeProvider } from '@mui/material';
+import Sidebar from './components/Sidebar';
+import { Box, Container, CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import { useAuth } from './contexts/AuthContext';
 
 // カスタムテーマの作成
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#2196f3',
+      main: '#2c3e50',
+      light: '#ecf0f1',
     },
     secondary: {
-      main: '#f50057',
+      main: '#3498db',
+    },
+    text: {
+      primary: '#1f2937',
+      secondary: '#6b7280',
     },
     background: {
-      default: '#ffffff',
+      default: '#f9fafb',
+      paper: '#ffffff',
     },
+    categories: {
+      workHisys: '#e74c3c',
+      workInternal: '#3498db',
+      personal: '#2ecc71',
+    }
   },
   typography: {
     fontFamily: [
+      'Poppins',
       '-apple-system',
       'BlinkMacSystemFont',
       '"Segoe UI"',
@@ -30,11 +43,21 @@ const theme = createTheme({
       'sans-serif',
     ].join(','),
   },
+  shape: {
+    borderRadius: 8,
+  },
   components: {
     MuiPaper: {
       styleOverrides: {
         root: {
           boxShadow: 'none',
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
         },
       },
     },
@@ -59,8 +82,11 @@ const AppContent = () => {
 
   return (
     <TodoProvider>
-      <Box sx={{ mt: 2 }}>
-        <TodoList />
+      <Box sx={{ display: 'flex', minHeight: '100vh', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}>
+        <Sidebar />
+        <Box sx={{ flex: 1, p: 4, bgcolor: 'background.paper' }}>
+          <TodoList />
+        </Box>
       </Box>
     </TodoProvider>
   );
@@ -72,11 +98,9 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <Container maxWidth="md">
-          <Box sx={{ my: 4 }}>
-            <AppContent />
-          </Box>
-        </Container>
+        <Box sx={{ maxWidth: '1440px', margin: '0 auto' }}>
+          <AppContent />
+        </Box>
       </AuthProvider>
     </ThemeProvider>
   );
