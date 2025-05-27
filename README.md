@@ -1,6 +1,6 @@
-# Todo App
+# SmartTodo
 
-Google Todoカレンダーと連携するカスタムUIのTodoアプリケーション
+シンプルで使いやすいタスク管理アプリケーション
 
 ## 機能
 

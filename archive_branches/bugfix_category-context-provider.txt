@@ -1,0 +1,1 @@
+44294c148dff4b65b46147bfbf2d0abdb22f6c34 Fix: Add CategoryProvider to App component to resolve useCategories() is not a function error

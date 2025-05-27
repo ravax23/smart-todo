@@ -1,0 +1,1 @@
+30d4a1bf84cd8a1a6ec088d2b77354f66b7f5b1f Revert to previous authentication method to restore login functionality

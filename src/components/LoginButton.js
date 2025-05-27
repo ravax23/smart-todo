@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Typography, Box, CircularProgress, Alert } from '@mui/material';
+import { Box, Alert } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 
 function LoginButton() {
-  const { loading } = useAuth();
   const googleButtonRef = useRef(null);
   const [error, setError] = useState(null);
 
@@ -22,40 +21,24 @@ function LoginButton() {
           { 
             type: 'standard',
             theme: 'outline',
-            size: 'large',
-            width: 280,
+            size: 'medium',
             text: 'signin_with',
             locale: 'ja'
           }
         );
-        setError(null);
       } catch (err) {
         console.error('Failed to render login button:', err);
-        setError('ログインボタンの表示に失敗しました。ページを再読み込みしてください。');
+        setError('ログインボタンの表示に失敗しました。');
       }
     }
   }, []);
 
   return (
-    <Box sx={{ textAlign: 'center' }}>
-      <Typography variant="h6" gutterBottom sx={{ fontWeight: 'medium', color: 'text.primary' }}>
-        Todoアプリへようこそ
-      </Typography>
-      <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary' }}>
-        Google Todoと連携するカスタムUIのTodoアプリケーションです。
-        始めるにはGoogleアカウントでログインしてください。
-      </Typography>
-      
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-      
-      {loading ? (
-        <CircularProgress sx={{ mt: 2 }} />
+    <Box>
+      {error ? (
+        <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
       ) : (
-        <div ref={googleButtonRef} style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}></div>
+        <div ref={googleButtonRef}></div>
       )}
     </Box>
   );

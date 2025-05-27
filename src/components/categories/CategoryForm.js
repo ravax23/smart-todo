@@ -1,111 +1,122 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Box,
   TextField,
   Button,
-  Box,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
   Typography,
 } from '@mui/material';
 import { useCategories } from '../../contexts/CategoryContext';
 
-function CategoryForm({ open, onClose, editingCategory }) {
-  const { addCategory, updateCategory } = useCategories();
-  const [categoryName, setCategoryName] = useState('');
-  const [categoryColor, setCategoryColor] = useState('#1976d2');
-  const [error, setError] = useState('');
+const colors = [
+  { id: 'red', value: '#f44336', name: 'レッド' },
+  { id: 'pink', value: '#e91e63', name: 'ピンク' },
+  { id: 'purple', value: '#9c27b0', name: 'パープル' },
+  { id: 'deepPurple', value: '#673ab7', name: 'ディープパープル' },
+  { id: 'indigo', value: '#3f51b5', name: 'インディゴ' },
+  { id: 'blue', value: '#2196f3', name: 'ブルー' },
+  { id: 'lightBlue', value: '#03a9f4', name: 'ライトブルー' },
+  { id: 'cyan', value: '#00bcd4', name: 'シアン' },
+  { id: 'teal', value: '#009688', name: 'ティール' },
+  { id: 'green', value: '#4caf50', name: 'グリーン' },
+  { id: 'lightGreen', value: '#8bc34a', name: 'ライトグリーン' },
+  { id: 'lime', value: '#cddc39', name: 'ライム' },
+  { id: 'yellow', value: '#ffeb3b', name: 'イエロー' },
+  { id: 'amber', value: '#ffc107', name: 'アンバー' },
+  { id: 'orange', value: '#ff9800', name: 'オレンジ' },
+  { id: 'deepOrange', value: '#ff5722', name: 'ディープオレンジ' },
+  { id: 'brown', value: '#795548', name: 'ブラウン' },
+  { id: 'grey', value: '#9e9e9e', name: 'グレー' },
+  { id: 'blueGrey', value: '#607d8b', name: 'ブルーグレー' },
+];
 
-  // 編集モードの場合、フォームに値をセット
-  useEffect(() => {
-    if (editingCategory) {
-      setCategoryName(editingCategory.name);
-      setCategoryColor(editingCategory.color);
-    } else {
-      setCategoryName('');
-      setCategoryColor('#1976d2');
-    }
-    setError('');
-  }, [editingCategory, open]);
+function CategoryForm({ category = null, onSubmit, onCancel }) {
+  const [name, setName] = useState(category ? category.name : '');
+  const [color, setColor] = useState(category ? category.color : colors[0].value);
+  const [nameError, setNameError] = useState('');
+  const { categories } = useCategories();
 
-  const handleSave = () => {
-    if (!categoryName.trim()) {
-      setError('カテゴリ名を入力してください');
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // 名前の検証
+    if (!name.trim()) {
+      setNameError('マイリスト名を入力してください');
       return;
     }
-
-    if (editingCategory) {
-      updateCategory(editingCategory.id, {
-        name: categoryName.trim(),
-        color: categoryColor,
-      });
-    } else {
-      addCategory({
-        name: categoryName.trim(),
-        color: categoryColor,
-      });
+    
+    // 既存のマイリスト名との重複チェック（編集時は自分自身を除外）
+    const isDuplicate = categories.some(
+      (cat) => cat.name.toLowerCase() === name.trim().toLowerCase() && 
+      (!category || cat.id !== category.id)
+    );
+    
+    if (isDuplicate) {
+      setNameError('同じ名前のマイリストが既に存在します');
+      return;
     }
-
-    onClose();
+    
+    onSubmit({
+      id: category ? category.id : null,
+      name: name.trim(),
+      color,
+    });
   };
 
-  // カラーピッカーの代わりにプリセットカラーを使用
-  const presetColors = [
-    '#1976d2', // 青
-    '#f44336', // 赤
-    '#4caf50', // 緑
-    '#ff9800', // オレンジ
-    '#9c27b0', // 紫
-    '#00bcd4', // シアン
-    '#ffeb3b', // 黄色
-    '#795548', // 茶色
-    '#607d8b', // グレー
-  ];
-
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>{editingCategory ? 'カテゴリを編集' : '新規カテゴリ'}</DialogTitle>
-      <DialogContent>
-        <TextField
-          autoFocus
-          margin="dense"
-          label="カテゴリ名"
-          fullWidth
-          value={categoryName}
-          onChange={(e) => setCategoryName(e.target.value)}
-          error={!!error}
-          helperText={error}
-        />
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="subtitle2" gutterBottom>
-            カラー
-          </Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-            {presetColors.map((color) => (
-              <Box
-                key={color}
-                onClick={() => setCategoryColor(color)}
-                sx={{
-                  width: 36,
-                  height: 36,
-                  bgcolor: color,
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  border: categoryColor === color ? '2px solid black' : 'none',
-                }}
-              />
-            ))}
-          </Box>
-        </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>キャンセル</Button>
-        <Button onClick={handleSave} color="primary">
-          保存
+    <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+      <Typography variant="h6" sx={{ mb: 2 }}>
+        {category ? 'マイリストを編集' : '新しいマイリストを作成'}
+      </Typography>
+      
+      <TextField
+        fullWidth
+        label="マイリスト名"
+        value={name}
+        onChange={(e) => {
+          setName(e.target.value);
+          setNameError('');
+        }}
+        error={!!nameError}
+        helperText={nameError}
+        margin="normal"
+        required
+      />
+      
+      <FormControl fullWidth margin="normal">
+        <InputLabel>色</InputLabel>
+        <Select value={color} onChange={(e) => setColor(e.target.value)} label="色">
+          {colors.map((colorOption) => (
+            <MenuItem key={colorOption.id} value={colorOption.value}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Box
+                  sx={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    bgcolor: colorOption.value,
+                    mr: 1,
+                  }}
+                />
+                {colorOption.name}
+              </Box>
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+      
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, gap: 1 }}>
+        <Button variant="outlined" onClick={onCancel}>
+          キャンセル
         </Button>
-      </DialogActions>
-    </Dialog>
+        <Button type="submit" variant="contained">
+          {category ? '更新' : '作成'}
+        </Button>
+      </Box>
+    </Box>
   );
 }
 

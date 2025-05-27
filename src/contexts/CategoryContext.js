@@ -14,36 +14,36 @@ export function CategoryProvider({ children }) {
     { id: 'shopping', name: '買い物', color: '#ff9800' },
   ]);
 
-  // ローカルストレージからカテゴリを読み込む
+  // ローカルストレージからマイリストを読み込む
   useEffect(() => {
     const storedCategories = localStorage.getItem('categories');
     if (storedCategories) {
       try {
         setCategories(JSON.parse(storedCategories));
       } catch (e) {
-        console.error('カテゴリの読み込みに失敗しました', e);
+        console.error('マイリストの読み込みに失敗しました', e);
       }
     }
   }, []);
 
-  // カテゴリが変更されたらローカルストレージに保存
+  // マイリストが変更されたらローカルストレージに保存
   useEffect(() => {
     localStorage.setItem('categories', JSON.stringify(categories));
   }, [categories]);
 
-  // カテゴリを追加
+  // マイリストを追加
   const addCategory = (category) => {
     setCategories([...categories, { ...category, id: Date.now().toString() }]);
   };
 
-  // カテゴリを更新
+  // マイリストを更新
   const updateCategory = (id, updatedCategory) => {
     setCategories(
       categories.map((cat) => (cat.id === id ? { ...cat, ...updatedCategory } : cat))
     );
   };
 
-  // カテゴリを削除
+  // マイリストを削除
   const deleteCategory = (id) => {
     setCategories(categories.filter((cat) => cat.id !== id));
   };

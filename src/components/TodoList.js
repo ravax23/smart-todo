@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Typography, 
@@ -11,17 +11,38 @@ import {
   IconButton,
   Checkbox,
   Menu,
-  MenuItem
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
+  FormControlLabel,
+  RadioGroup,
+  Radio,
+  FormControl,
+  InputLabel,
+  Select
 } from '@mui/material';
 import { format, parseISO, isValid } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useTodo } from '../contexts/TodoContext';
+import UserMenu from './UserMenu';
 
-// カテゴリ別の色を定義
+// フィルターリストの定義（Sidebarと同じ定義を持つ）
+const filters = [
+  { id: 'today', name: '今日', icon: '📅' },
+  { id: 'tomorrow', name: '明日', icon: '📆' },
+  { id: 'after-tomorrow', name: '今週', icon: '📆' },
+  { id: 'past', name: '期限切れ', icon: '⏱️' },
+  { id: 'starred', name: 'スター付き', icon: '⭐' },
+  { id: 'all', name: 'すべて', icon: '📋' },
+];
+
+// カテゴリ別の色を定義（単一色に変更）
 const categoryColors = {
-  'work-hisys': '#e74c3c',
-  'work-internal': '#3498db',
-  'personal': '#2ecc71'
+  'default': '#1976d2'
 };
 
 const TodoList = () => {
@@ -34,31 +55,106 @@ const TodoList = () => {
     loading, 
     error,
     toggleShowCompleted,
-    createTask
+    createTask,
+    moveTaskToList,
+    deleteTask,
+    toggleTaskCompletion,
+    updateTask,
+    reorderTasks,
+    deleteTaskList
   } = useTodo();
   
-  const [taskItems, setTaskItems] = useState([]);
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  
+  // 削除確認ダイアログの状態
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  
+  // 状態の追加
+  const [openDialog, setOpenDialog] = useState(false);
+  const [editMode, setEditMode] = useState(false); // 編集モードかどうかを管理
+  const [taskDetails, setTaskDetails] = useState({
+    title: '',
+    description: '',
+    dueDate: '',
+    priority: 'normal',
+    categoryId: '',
+    taskId: null // 編集時に使用するタスクID
+  });
+  
+  // 設定ダイアログの状態
+  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
 
   // 選択されているタスクリストの情報を取得
-  const selectedListInfo = React.useMemo(() => {
-    if (taskLists && taskLists.length > 0 && selectedTaskList) {
-      const list = taskLists.find(list => list.id === selectedTaskList);
-      if (list) {
-        // カテゴリを判定
-        let category = 'personal';
-        if (list.title.includes('HISYS')) {
-          category = 'work-hisys';
-        } else if (list.title.includes('社内')) {
-          category = 'work-internal';
-        }
-        return { ...list, category };
-      }
+  const selectedListInfo = taskLists?.find(list => list.id === selectedTaskList) || { title: 'すべてのタスク' };
+
+  // 選択されているフィルターの情報を取得
+  const selectedFilterInfo = filters.find(filter => filter.id === selectedFilter);
+
+  // タスクリストのタイトルを取得する関数
+  const getListTitle = () => {
+    if (selectedFilter !== 'all') {
+      return selectedFilterInfo?.name || 'すべてのタスク';
+    } else if (selectedFilter === 'all') {
+      return 'すべて';
     }
-    return { title: 'タスク', category: 'personal' };
-  }, [taskLists, selectedTaskList]);
+    return selectedListInfo.title;
+  };
+
+  // タスクのマイリスト名を取得する関数
+  const getTaskListName = (task) => {
+    if (!task || !task.listId) return '';
+    const list = taskLists.find(list => list.id === task.listId);
+    return list ? list.title : '';
+  };
+
+  // それ以外の場合はリストIDを表示（デバッグ用）
+  const getListId = (task) => {
+    return `リスト: ${task.listId.substring(0, 8)}...`;
+  };
+
+  // テーマカラーを取得する関数
+  const getThemeColor = (type) => {
+    // テーマに応じた色を返す
+    const colors = {
+      primary: '#333333', // 黒色（少し柔らかい黒）
+      secondary: '#555555', // グレー
+      accent: '#777777', // アクセントカラー
+      background: '#f9fafb', // 背景色
+      text: '#333333', // テキスト色
+      border: '#e0e0e0' // ボーダー色
+    };
+    
+    return colors[type] || colors.primary;
+  };
+
+  // 削除確認ダイアログを開く
+  const handleOpenDeleteDialog = () => {
+    setDeleteDialogOpen(true);
+    setMenuAnchorEl(null); // メニューを閉じる
+  };
+  
+  // 設定ダイアログを開く
+  const handleOpenSettingsDialog = () => {
+    setSettingsDialogOpen(true);
+    setMenuAnchorEl(null); // メニューを閉じる
+  };
+
+  // 削除確認ダイアログを閉じる
+  const handleCloseDeleteDialog = () => {
+    setDeleteDialogOpen(false);
+  };
+
+  // タスクリストを削除する
+  const handleDeleteTaskList = async () => {
+    try {
+      await deleteTaskList(selectedTaskList);
+      handleCloseDeleteDialog();
+    } catch (err) {
+      console.error('Failed to delete task list:', err);
+    }
+  };
 
   // メニューを開く
   const handleMenuOpen = (event, task) => {
@@ -73,22 +169,170 @@ const TodoList = () => {
   };
 
   // カテゴリ変更
-  const handleCategoryChange = (category) => {
-    if (selectedTask) {
-      const updatedTasks = taskItems.map(task => 
-        task.id === selectedTask.id ? { ...task, category } : task
-      );
-      setTaskItems(updatedTasks);
+  const handleCategoryChange = (listId) => {
+    if (selectedTask && listId) {
+      // タスクを別のリストに移動する処理
+      moveTaskToList(selectedTask.id, listId);
     }
     handleMenuClose();
   };
 
   // タスクの順序変更
   const moveTask = (fromIndex, toIndex) => {
-    const updatedTasks = [...taskItems];
+    if (fromIndex === toIndex) return;
+    
+    const updatedTasks = [...todos];
     const [movedTask] = updatedTasks.splice(fromIndex, 1);
     updatedTasks.splice(toIndex, 0, movedTask);
-    setTaskItems(updatedTasks);
+    
+    // コンテキストの関数を呼び出して並び替えを保存
+    reorderTasks(updatedTasks);
+  };
+
+  // 並び順の状態
+  const [sortOrder, setSortOrder] = useState('custom'); // 'custom' または 'dueDate'
+  
+  // ドラッグ終了時の処理（react-beautiful-dnd用）
+  const handleDragEndRbd = (result) => {
+    // ドロップ先がない場合や同じ位置の場合は何もしない
+    if (!result.destination) return;
+    if (result.destination.index === result.source.index) return;
+
+    // タスクの並び替え
+    moveTask(result.source.index, result.destination.index);
+  };
+  
+  // 検索フィールドの状態
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // 検索フィールドの変更を処理
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  // タスクの編集を開始
+  const handleEditTask = (task) => {
+    // タスクの日付をYYYY-MM-DD形式に変換
+    let formattedDate = '';
+    if (task.startDate) {
+      try {
+        const date = parseISO(task.startDate);
+        if (isValid(date)) {
+          formattedDate = format(date, 'yyyy-MM-dd');
+        }
+      } catch (e) {
+        console.error('日付の変換に失敗しました:', e);
+      }
+    }
+
+    // タスクの詳細をダイアログにセット
+    setTaskDetails({
+      taskId: task.id,
+      title: task.title,
+      description: task.description || '',
+      dueDate: formattedDate,
+      priority: task.starred ? 'starred' : 'normal',
+      categoryId: task.listId || ''
+    });
+    
+    // 編集モードをオンにしてダイアログを開く
+    setEditMode(true);
+    setOpenDialog(true);
+  };
+
+  // タスクの保存（新規作成または更新）
+  const handleSaveTask = async () => {
+    if (!taskDetails.title.trim()) return;
+
+    try {
+      const taskData = {
+        title: taskDetails.title.trim(),
+        notes: taskDetails.description || '',
+        // Google Tasks APIが受け付ける形式に変換
+        due: taskDetails.dueDate ? new Date(taskDetails.dueDate).toISOString() : null,
+        // priorityの代わりにstarredを使用
+        starred: taskDetails.priority === 'starred'
+      };
+
+      if (editMode) {
+        // 既存タスクの更新
+        await updateTask(taskDetails.taskId, taskData);
+      } else {
+        // 新規タスクの作成
+        // taskDetails.categoryIdが設定されている場合はそれを使用、そうでなければselectedTaskListを使用
+        const listId = taskDetails.categoryId || selectedTaskList;
+        await createTask(taskData, listId);
+      }
+      
+      handleCloseDialog();
+    } catch (err) {
+      console.error('Failed to save task:', err);
+    }
+  };
+
+  // ダイアログを閉じる
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    
+    // フォームをリセット
+    setTaskDetails({
+      taskId: null,
+      title: '',
+      description: '',
+      dueDate: '',
+      priority: 'normal',
+      categoryId: ''
+    });
+  };
+
+  // タスク詳細の入力を処理
+  const handleTaskDetailChange = (field) => (e) => {
+    setTaskDetails({
+      ...taskDetails,
+      [field]: e.target.value
+    });
+  };
+  
+  // タスクを削除する処理
+  const handleDeleteTask = async (taskId) => {
+    try {
+      // 既に取得済みのuseTodoコンテキストから削除メソッドを呼び出す
+      await deleteTask(taskId);
+    } catch (err) {
+      console.error('タスクの削除に失敗しました:', err);
+    }
+  };
+
+  // リストの色を取得する関数（マイリストの色分けを行わない）
+  const getListColor = () => {
+    // 黒色に変更
+    return '#333333'; // 黒色（少し柔らかい黒）
+  };
+  
+  // テーマカラーを取得する関数
+  const getThemeColor2 = (type) => {
+    // テーマに応じた色を返す
+    const colors = {
+      primary: '#333333', // 黒色（少し柔らかい黒）
+      secondary: '#555555', // グレー
+      accent: '#777777', // アクセントカラー
+      background: '#f9fafb', // 背景色
+      text: '#333333', // テキスト色
+      border: '#e0e0e0' // ボーダー色
+    };
+    
+    return colors[type] || colors.primary;
+  };
+
+  // ドラッグオーバー時の処理
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  // ドロップ時の処理
+  const handleDrop = (e, toIndex) => {
+    const fromIndex = e.dataTransfer.getData('text/plain');
+    moveTask(parseInt(fromIndex), toIndex);
   };
 
   // ドラッグ開始時の処理
@@ -105,153 +349,289 @@ const TodoList = () => {
     e.currentTarget.style.opacity = '1';
   };
 
-  // ドラッグオーバー時の処理
-  const handleDragOver = (e) => {
-    e.preventDefault();
-  };
-
-  // ドロップ時の処理
-  const handleDrop = (e, toIndex) => {
-    const fromIndex = e.dataTransfer.getData('text/plain');
-    moveTask(parseInt(fromIndex), toIndex);
-  };
-
-  // 新規タスク入力フィールドでEnterキーが押されたときの処理
-  const handleNewTaskKeyPress = (e) => {
-    if (e.key === 'Enter' && newTaskTitle.trim()) {
-      handleCreateTask();
-    }
-  };
-
-  // 新規タスクを作成
-  const handleCreateTask = async () => {
-    if (!newTaskTitle.trim()) return;
-
-    try {
-      const taskData = {
-        title: newTaskTitle.trim(),
-        notes: '',
-        due: null
-      };
-
-      await createTask(taskData, selectedTaskList);
-      
-      // 入力フィールドをクリア
-      setNewTaskTitle('');
-    } catch (err) {
-      console.error('タスクの作成に失敗しました:', err);
-    }
-  };
-
-  // タスクのカテゴリに対応するリスト名を取得する関数
-  const getTaskListName = (category) => {
-    if (!taskLists || taskLists.length === 0) return '';
-    
-    let listName = '';
-    
-    // カテゴリに基づいてタスクリストを検索
-    if (category === 'work-hisys') {
-      const list = taskLists.find(list => list.title.includes('HISYS'));
-      if (list) listName = list.title;
-    } else if (category === 'work-internal') {
-      const list = taskLists.find(list => list.title.includes('社内'));
-      if (list) listName = list.title;
-    } else if (category === 'personal') {
-      const list = taskLists.find(list => !list.title.includes('HISYS') && !list.title.includes('社内'));
-      if (list) listName = list.title;
-    }
-    
-    return listName || '未分類';
-  };
-
-  // コンポーネントがマウントされたときにtodosをtaskItemsに設定
-  React.useEffect(() => {
-    if (todos.length > 0) {
-      // カテゴリを追加
-      const tasksWithCategory = todos.map(todo => {
-        let category = selectedListInfo.category; // マイリストのカテゴリをデフォルトとして使用
-        if (todo.title.includes('HISYS') || todo.title.includes('クライアント')) {
-          category = 'work-hisys';
-        } else if (todo.title.includes('社内') || todo.title.includes('仕様書')) {
-          category = 'work-internal';
-        }
-        return { ...todo, category };
-      });
-      setTaskItems(tasksWithCategory);
-    }
-  }, [todos, selectedListInfo.category]);
-
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert severity="error" sx={{ my: 2 }}>
-        {error}
-      </Alert>
-    );
-  }
-
   return (
     <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h5" sx={{ fontWeight: 600 }}>
-          {selectedListInfo.title}
+          {/* フィルターが選択されている場合はフィルター名、そうでなければリスト名を表示 */}
+          {getListTitle()}
         </Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary', bgcolor: '#f9fafb', p: '8px 16px', borderRadius: 1 }}>
-          {format(new Date(), 'yyyy年MM月dd日(E)', { locale: ja })}
-        </Typography>
-      </Box>
-
-      {/* 完了タスク表示切替 */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-        <Typography 
-          variant="body2" 
-          component="label" 
-          sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            cursor: 'pointer',
-            userSelect: 'none'
-          }}
-        >
-          <Checkbox 
-            checked={showCompleted} 
-            onChange={toggleShowCompleted}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {/* 完了タスク表示切替 */}
+          <Typography 
+            variant="body2" 
+            component="label" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              cursor: 'pointer',
+              userSelect: 'none'
+            }}
+          >
+            <Checkbox 
+              checked={showCompleted} 
+              onChange={toggleShowCompleted}
+              size="small"
+            />
+            完了タスクを表示
+          </Typography>
+          
+          {/* マイリスト削除ボタン - マイリストが選択されている場合のみ表示 */}
+          {selectedTaskList && selectedTaskList !== 'all' && selectedTaskList !== 'today' && selectedTaskList !== 'tomorrow' && selectedTaskList !== 'after-tomorrow' && selectedTaskList !== 'past' && (
+            <IconButton
+              size="small"
+              onClick={handleOpenDeleteDialog}
+              sx={{ 
+                color: 'error.main',
+                ml: 1,
+                opacity: 0.7,
+                '&:hover': { bgcolor: 'rgba(211, 47, 47, 0.04)' }
+              }}
+              title="マイリストを削除"
+            >
+              <Box component="span" sx={{ fontSize: '1.2rem', display: 'block' }}>🗑️</Box>
+            </IconButton>
+          )}
+          
+          {/* 設定ボタン（歯車アイコン） */}
+          <IconButton
             size="small"
-          />
-          完了タスクを表示
-        </Typography>
-      </Box>
-
-      {/* 新規タスク入力フィールド */}
-      <Box sx={{ position: 'relative', mb: 3 }}>
-        <TextField
-          fullWidth
-          placeholder="新しいタスクを追加"
-          variant="outlined"
-          value={newTaskTitle}
-          onChange={(e) => setNewTaskTitle(e.target.value)}
-          onKeyPress={handleNewTaskKeyPress}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              pl: 4,
-              bgcolor: '#f9fafb',
-            }
-          }}
-        />
-        <Box sx={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'text.secondary', fontSize: '1.5rem' }}>
-          +
+            onClick={handleOpenSettingsDialog}
+            sx={{ 
+              color: 'text.secondary',
+              ml: 1,
+              opacity: 0.7
+            }}
+            title="設定"
+          >
+            <Box component="span" sx={{ fontSize: '1.2rem', display: 'block' }}>⚙️</Box>
+          </IconButton>
+          
+          <UserMenu />
         </Box>
       </Box>
       
+      {/* 設定ダイアログ */}
+      <Dialog 
+        open={settingsDialogOpen} 
+        onClose={() => setSettingsDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>設定</DialogTitle>
+        <DialogContent>
+          <Box sx={{ py: 2 }}>
+            <Typography variant="h6" gutterBottom>表示設定</Typography>
+            
+            <FormControl component="fieldset" sx={{ mt: 2, display: 'block' }}>
+              <Typography variant="subtitle2" gutterBottom>テーマ</Typography>
+              <RadioGroup
+                row
+                value="light"
+                onChange={() => {}}
+              >
+                <FormControlLabel value="light" control={<Radio />} label="ライト" />
+                <FormControlLabel value="dark" control={<Radio />} label="ダーク" />
+                <FormControlLabel value="system" control={<Radio />} label="システム設定に合わせる" />
+              </RadioGroup>
+            </FormControl>
+            
+            <FormControl fullWidth sx={{ mt: 3 }}>
+              <InputLabel>日付表示形式</InputLabel>
+              <Select
+                value="yyyy-MM-dd"
+                onChange={() => {}}
+                label="日付表示形式"
+              >
+                <MenuItem value="yyyy-MM-dd">YYYY-MM-DD</MenuItem>
+                <MenuItem value="MM/dd/yyyy">MM/DD/YYYY</MenuItem>
+                <MenuItem value="dd/MM/yyyy">DD/MM/YYYY</MenuItem>
+                <MenuItem value="yyyy年MM月dd日">YYYY年MM月DD日</MenuItem>
+              </Select>
+            </FormControl>
+            
+            <Divider sx={{ my: 3 }} />
+            
+            <Typography variant="h6" gutterBottom>通知設定</Typography>
+            
+            <FormControlLabel
+              control={<Checkbox checked={true} onChange={() => {}} />}
+              label="タスク期限の通知"
+              sx={{ display: 'block', mt: 1 }}
+            />
+            
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel>通知タイミング</InputLabel>
+              <Select
+                value="1day"
+                onChange={() => {}}
+                label="通知タイミング"
+              >
+                <MenuItem value="same">当日</MenuItem>
+                <MenuItem value="1day">1日前</MenuItem>
+                <MenuItem value="3days">3日前</MenuItem>
+                <MenuItem value="1week">1週間前</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSettingsDialogOpen(false)}>キャンセル</Button>
+          <Button 
+            onClick={() => setSettingsDialogOpen(false)} 
+            variant="contained"
+            sx={{ 
+              bgcolor: getThemeColor('primary'),
+              '&:hover': {
+                bgcolor: getThemeColor('secondary')
+              }
+            }}
+          >
+            保存
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 新規タスク追加ボタン */}
+      <Box 
+        sx={{ 
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          mb: 3,
+          mt: 1,
+          p: 2,
+          border: '2px dashed #e0e0e0',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            borderColor: getThemeColor('primary'),
+            bgcolor: 'rgba(0,0,0,0.02)'
+          }
+        }}
+        onClick={() => {
+          setTaskDetails({
+            ...taskDetails,
+            title: ''
+          });
+          setEditMode(false);
+          setOpenDialog(true);
+        }}
+      >
+        <Box component="span" sx={{ fontSize: '1.5rem', mr: 1, color: getThemeColor('primary') }}>+</Box>
+        <Typography variant="body1" sx={{ color: getThemeColor('primary'), fontWeight: 500 }}>
+          新しいタスクを追加
+        </Typography>
+      </Box>
+      
+      {/* 新規タスク作成ダイアログ */}
+      <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth maxWidth="sm">
+        <DialogTitle>{editMode ? 'タスクの編集' : '新規タスクの作成'}</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <TextField
+              label="タイトル"
+              fullWidth
+              value={taskDetails.title}
+              onChange={handleTaskDetailChange('title')}
+              required
+              autoFocus
+            />
+            
+            <TextField
+              label="内容"
+              fullWidth
+              multiline
+              rows={4}
+              value={taskDetails.description}
+              onChange={handleTaskDetailChange('description')}
+            />
+            
+            <TextField
+              label="期限"
+              type="date"
+              fullWidth
+              value={taskDetails.dueDate}
+              onChange={handleTaskDetailChange('dueDate')}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+            
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>優先度</Typography>
+              <RadioGroup
+                row
+                value={taskDetails.priority}
+                onChange={handleTaskDetailChange('priority')}
+              >
+                <FormControlLabel value="normal" control={<Radio sx={{ '&.Mui-checked': { color: getThemeColor('primary') } }} />} label="通常" />
+                <FormControlLabel value="starred" control={<Radio sx={{ '&.Mui-checked': { color: getThemeColor('primary') } }} />} label="スター付き" />
+              </RadioGroup>
+            </Box>
+            
+            {taskLists && taskLists.length > 0 && (
+              <FormControl fullWidth>
+                <InputLabel>マイリスト</InputLabel>
+                <Select
+                  value={taskDetails.categoryId || selectedTaskList}
+                  onChange={handleTaskDetailChange('categoryId')}
+                  label="マイリスト"
+                >
+                  {taskLists.map((list) => (
+                    <MenuItem key={list.id} value={list.id}>
+                      {list.title}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>キャンセル</Button>
+          <Button 
+            onClick={handleSaveTask} 
+            variant="contained" 
+            sx={{ 
+              bgcolor: getThemeColor('primary'),
+              '&:hover': {
+                bgcolor: getThemeColor('secondary')
+              }
+            }}
+            disabled={!taskDetails.title}
+          >
+            {editMode ? '更新' : '保存'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
       {/* タスク一覧 */}
-      {todos.length === 0 ? (
+      {error && (
+        <Box sx={{ mb: 3 }}>
+          <Alert 
+            severity="error" 
+            action={
+              <Button 
+                color="inherit" 
+                size="small"
+                onClick={() => window.location.reload()}
+              >
+                再読み込み
+              </Button>
+            }
+          >
+            {error}
+          </Alert>
+        </Box>
+      )}
+      
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : todos.length === 0 ? (
         <Box sx={{ textAlign: 'center', my: 4, p: 3, border: '1px solid #e0e0e0', borderRadius: 1 }}>
           <Typography variant="body1" color="text.secondary">
             タスクが見つかりません。
@@ -276,9 +656,9 @@ const TodoList = () => {
                     py: 1.5,
                     px: 2,
                     bgcolor: 'white',
-                    borderLeft: `4px solid ${categoryColors[task.category]}`,
+                    borderLeft: `4px solid ${getThemeColor('primary')}`,
                     '&:hover': { 
-                      bgcolor: '#f9fafb',
+                      bgcolor: getThemeColor('background'),
                       cursor: 'grab'
                     },
                     '&:active': {
@@ -288,13 +668,14 @@ const TodoList = () => {
                 >
                   <Checkbox 
                     checked={task.status === 'completed'} 
+                    onChange={() => toggleTaskCompletion(task.id, task.status)}
                     sx={{ 
                       mr: 1,
                       width: 22,
                       height: 22,
                       borderRadius: '50%',
                       '&.Mui-checked': {
-                        color: categoryColors[task.category],
+                        color: getThemeColor('primary'),
                       }
                     }}
                   />
@@ -313,34 +694,62 @@ const TodoList = () => {
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', fontSize: '0.75rem', color: 'text.secondary' }}>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <span style={{ marginRight: '4px' }}>📅</span>
-                        {task.startDate ? format(parseISO(task.startDate), 'MM月dd日', { locale: ja }) : '期限なし'}
+                        <span style={{ marginRight: '4px', opacity: 0.7 }}>📅</span>
+                        {task.startDate ? format(parseISO(task.startDate), 'yyyy年MM月dd日', { locale: ja }) : '期限なし'}
                       </Box>
-                      <Box 
-                        sx={{ 
-                          ml: 2, 
-                          bgcolor: categoryColors[task.category],
-                          color: 'white',
-                          px: 1,
-                          py: 0.25,
-                          borderRadius: '1rem',
-                          fontSize: '0.6875rem'
-                        }}
-                      >
-                        {getTaskListName(task.category)}
-                      </Box>
+                      {task.starred && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
+                          <span style={{ marginRight: '4px', opacity: 0.7 }}>⭐</span>
+                          スター付き
+                        </Box>
+                      )}
+                      {/* マイリスト名を表示 */}
+                      {selectedFilter !== 'all' && task.listId && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
+                          <span style={{ marginRight: '4px', opacity: 0.7 }}>📁</span>
+                          {getTaskListName(task)}
+                        </Box>
+                      )}
                     </Box>
                   </Box>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    opacity: 0,
-                    transition: 'opacity 0.2s',
-                    '.MuiListItem-root:hover &': {
-                      opacity: 1
-                    }
-                  }}>
-                    <IconButton size="small" sx={{ color: 'text.secondary' }}>
-                      🗑️
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <IconButton 
+                      size="small" 
+                      sx={{ 
+                        color: 'text.secondary',
+                        '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' }
+                      }}
+                      onClick={() => handleEditTask(task)}
+                    >
+                      <Box 
+                        component="span" 
+                        sx={{ 
+                          fontSize: '1rem', 
+                          opacity: 0.7,
+                          display: 'inline-block'
+                        }}
+                      >
+                        ✏️
+                      </Box>
+                    </IconButton>
+                    <IconButton 
+                      size="small" 
+                      sx={{ 
+                        color: 'text.secondary',
+                        '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' }
+                      }}
+                      onClick={() => handleDeleteTask(task.id)}
+                    >
+                      <Box 
+                        component="span" 
+                        sx={{ 
+                          fontSize: '1rem', 
+                          opacity: 0.7,
+                          display: 'inline-block'
+                        }}
+                      >
+                        🗑️
+                      </Box>
                     </IconButton>
                   </Box>
                 </ListItem>
@@ -351,55 +760,51 @@ const TodoList = () => {
         </Box>
       )}
 
-      {/* カテゴリ変更メニュー */}
+      {/* マイリスト変更メニュー */}
       <Menu
         anchorEl={menuAnchorEl}
         open={Boolean(menuAnchorEl)}
         onClose={handleMenuClose}
+        sx={{
+          maxHeight: '300px', // メニューの最大高さを設定
+        }}
       >
-        <MenuItem onClick={() => handleCategoryChange('work-hisys')}>
-          <Box 
-            component="span" 
-            sx={{ 
-              width: 10, 
-              height: 10, 
-              borderRadius: '50%', 
-              bgcolor: categoryColors['work-hisys'],
-              display: 'inline-block',
-              mr: 1.5
-            }} 
-          />
-          HISYS
-        </MenuItem>
-        <MenuItem onClick={() => handleCategoryChange('work-internal')}>
-          <Box 
-            component="span" 
-            sx={{ 
-              width: 10, 
-              height: 10, 
-              borderRadius: '50%', 
-              bgcolor: categoryColors['work-internal'],
-              display: 'inline-block',
-              mr: 1.5
-            }} 
-          />
-          社内
-        </MenuItem>
-        <MenuItem onClick={() => handleCategoryChange('personal')}>
-          <Box 
-            component="span" 
-            sx={{ 
-              width: 10, 
-              height: 10, 
-              borderRadius: '50%', 
-              bgcolor: categoryColors['personal'],
-              display: 'inline-block',
-              mr: 1.5
-            }} 
-          />
-          個人
-        </MenuItem>
+        {taskLists && taskLists.map((list) => (
+          <MenuItem 
+            key={list.id} 
+            onClick={() => handleCategoryChange(list.id)}
+            sx={{
+              color: list.id === selectedTask?.listId ? 'primary.main' : 'inherit',
+              fontWeight: list.id === selectedTask?.listId ? 500 : 400,
+            }}
+          >
+            {list.title}
+          </MenuItem>
+        ))}
       </Menu>
+
+      {/* 削除確認ダイアログ */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleCloseDeleteDialog}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          リストの削除
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            「{selectedListInfo.title}」リストを削除しますか？このリスト内のすべてのタスクも削除されます。
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteDialog}>キャンセル</Button>
+          <Button onClick={handleDeleteTaskList} color="error" autoFocus>
+            削除する
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

@@ -182,25 +182,20 @@ const getGapiAccessToken = async () => {
 // サインイン処理
 export const signIn = () => {
   if (!CLIENT_ID) {
+    console.error('Google Client ID is not configured');
     return false;
   }
 
-  if (window.google?.accounts?.id) {
-    try {
-      // GISのログインプロンプトを表示
-      window.google.accounts.id.prompt();
-      return true;
-    } catch (error) {
-      console.error('Error prompting sign in:', error);
-      return false;
-    }
-  } else {
-    // Google APIが読み込まれていない場合は初期化
-    initGoogleAuth().then(() => {
-      signIn();
-    }).catch(error => {
-      console.error('Failed to initialize Google Auth:', error);
-    });
+  try {
+    // 明示的にリダイレクトベースの認証を使用
+    const redirectUri = window.location.origin;
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(SCOPES)}&prompt=consent`;
+    
+    console.log('Redirecting to auth URL:', authUrl);
+    window.location.href = authUrl;
+    return true;
+  } catch (error) {
+    console.error('Error during sign in:', error);
     return false;
   }
 };
@@ -209,12 +204,26 @@ export const signIn = () => {
 export const requestTasksScope = async () => {
   try {
     console.log('Requesting tasks scope explicitly');
-    const accessToken = await getGapiAccessToken();
-    if (accessToken) {
-      localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-      return true;
+    
+    // 現在のアクセストークンを取得
+    const currentToken = getAccessToken();
+    if (!currentToken) {
+      console.error('No access token available');
+      return false;
     }
-    return false;
+    
+    // 強制的に再認証を行う
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(TOKEN_KEY);
+    
+    // Google OAuth 2.0認証ページにリダイレクト
+    const redirectUri = window.location.origin;
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(SCOPES)}&prompt=consent`;
+    
+    console.log('Redirecting to auth URL:', authUrl);
+    window.location.href = authUrl;
+    
+    return true;
   } catch (error) {
     console.error('Failed to request tasks scope:', error);
     return false;
@@ -282,16 +291,30 @@ export const getUserInfo = () => {
 
 // アクセストークンの取得
 export const getAccessToken = () => {
-  // まずGAPIのアクセストークンを試す
-  const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
-  if (accessToken) {
+  try {
+    // URLからアクセストークンを取得（OAuth 2.0リダイレクト後）
+    const hash = window.location.hash;
+    if (hash && hash.includes('access_token=')) {
+      const accessToken = hash.match(/access_token=([^&]*)/)[1];
+      if (accessToken) {
+        console.log('Got access token from URL hash');
+        localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+        
+        // URLからハッシュを削除
+        window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+        
+        return accessToken;
+      }
+    }
+    
+    // ローカルストレージからアクセストークンを取得
+    const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
     return accessToken;
+  } catch (error) {
+    console.error('Error getting access token:', error);
+    return null;
   }
-  
-  // アクセストークンがない場合はIDトークンを返す（互換性のため）
-  return localStorage.getItem(TOKEN_KEY);
 };
-
 // 認証状態変更リスナーの追加
 export const addAuthStateListener = (callback) => {
   window.addEventListener('googleAuthStateChanged', (event) => {

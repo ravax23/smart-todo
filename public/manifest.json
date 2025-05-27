@@ -1,6 +1,6 @@
 {
-  "short_name": "Todo App",
-  "name": "Google Calendar Todo App",
+  "short_name": "SmartTodo",
+  "name": "SmartTodo - シンプルで使いやすいタスク管理アプリ",
   "icons": [
     {
       "src": "favicon.ico",

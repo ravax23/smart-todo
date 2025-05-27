@@ -3,51 +3,69 @@ import {
   List,
   ListItem,
   ListItemText,
+  ListItemIcon,
   IconButton,
   Box,
   Typography,
-  Divider,
 } from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { useCategories } from '../../contexts/CategoryContext';
 
-function CategoryList({ onEditCategory }) {
-  const { categories, deleteCategory } = useCategories();
-
-  const handleDelete = (id) => {
-    if (window.confirm('このカテゴリを削除してもよろしいですか？')) {
-      deleteCategory(id);
-    }
-  };
+function CategoryList({ onEdit, onDelete }) {
+  const { categories } = useCategories();
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        カテゴリ一覧
+      <Typography variant="h6" sx={{ mb: 2 }}>
+        マイリスト
       </Typography>
-      <List>
-        {categories.map((category) => (
-          <React.Fragment key={category.id}>
+      
+      {categories.length === 0 ? (
+        <Typography variant="body2" color="text.secondary">
+          マイリストがありません。新しいマイリストを作成してください。
+        </Typography>
+      ) : (
+        <List>
+          {categories.map((category) => (
             <ListItem
+              key={category.id}
+              secondaryAction={
+                <Box>
+                  <IconButton edge="end" aria-label="編集" onClick={() => onEdit(category)}>
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    edge="end"
+                    aria-label="削除"
+                    onClick={() => onDelete(category.id)}
+                    sx={{ ml: 1 }}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              }
               sx={{
-                borderLeft: `4px solid ${category.color}`,
-                bgcolor: 'background.paper',
-                mb: 1,
                 borderRadius: 1,
+                mb: 1,
+                border: '1px solid #e0e0e0',
               }}
             >
+              <ListItemIcon>
+                <Box
+                  sx={{
+                    width: 16,
+                    height: 16,
+                    borderRadius: '50%',
+                    bgcolor: category.color,
+                  }}
+                />
+              </ListItemIcon>
               <ListItemText primary={category.name} />
-              <IconButton edge="end" onClick={() => onEditCategory(category)}>
-                <EditIcon />
-              </IconButton>
-              <IconButton edge="end" onClick={() => handleDelete(category.id)}>
-                <DeleteIcon />
-              </IconButton>
             </ListItem>
-            <Divider />
-          </React.Fragment>
-        ))}
-      </List>
+          ))}
+        </List>
+      )}
     </Box>
   );
 }

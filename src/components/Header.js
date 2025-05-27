@@ -34,17 +34,47 @@ function Header({ title }) {
       }}
     >
       <Toolbar>
-        <Typography 
-          variant="h5" 
-          component="div" 
+        <Box 
           sx={{ 
             flexGrow: 1, 
-            fontWeight: 500,
-            color: 'text.primary'
+            display: 'flex',
+            alignItems: 'center'
           }}
         >
-          {title || 'Todo App'}
-        </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box 
+              component="img"
+              src="/logo.png"
+              alt="SmartTodo Logo"
+              sx={{ 
+                height: 40,
+                mr: 1
+              }}
+            />
+            <Typography 
+              variant="h3" 
+              component="div" 
+              className="app-logo"
+              sx={{ 
+                fontWeight: 700,
+                letterSpacing: '-0.5px',
+                fontFamily: "'Poppins', 'Roboto', 'Helvetica', 'Arial', sans-serif",
+                background: 'linear-gradient(45deg, #3a7bd5 0%, #00d2ff 100%)',
+                backgroundSize: '200% 200%',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                textShadow: '0px 3px 5px rgba(0,0,0,0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                animation: 'gradientShift 8s ease infinite',
+                transform: 'scale(1.1)',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              Smart<Box component="span" sx={{ fontWeight: 900, backgroundImage: 'linear-gradient(45deg, #3a7bd5 30%, #00d2ff 90%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Todo</Box>
+            </Typography>
+          </Box>
+        </Box>
         
         {isAuthenticated && (
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
