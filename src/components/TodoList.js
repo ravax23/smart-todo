@@ -651,6 +651,7 @@ const TodoList = () => {
                   onDragEnd={handleDragEnd}
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, index)}
+                  onDoubleClick={() => handleEditTask(task)}
                   sx={{ 
                     py: 1.5,
                     px: 2,
