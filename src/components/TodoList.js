@@ -96,10 +96,9 @@ const TodoList = () => {
   const getListTitle = () => {
     if (selectedFilter !== 'all') {
       return selectedFilterInfo?.name || 'すべてのタスク';
-    } else if (selectedFilter === 'all') {
-      return 'すべて';
+    } else {
+      return selectedListInfo.title;
     }
-    return selectedListInfo.title;
   };
 
   // タスクのマイリスト名を取得する関数
