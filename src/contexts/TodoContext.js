@@ -514,11 +514,23 @@ export const TodoProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
+      // タスクを見つける
+      const taskToDelete = todos.find(task => task.id === taskId);
+      if (!taskToDelete) {
+        throw new Error('タスクが見つかりません。');
+      }
+      
+      // タスクのリストIDを取得
+      const listId = taskToDelete.listId;
+      if (!listId) {
+        throw new Error('タスクリストが見つかりません。');
+      }
+      
       // 実際のAPIを呼び出す前に、UIを先に更新（オプティミスティックUI更新）
       setTodos(prevTodos => prevTodos.filter(task => task.id !== taskId));
       
       // APIを呼び出してタスクを削除する
-      await TasksService.deleteTask(selectedTaskList, taskId);
+      await TasksService.deleteTask(listId, taskId);
       
       console.log(`Task ${taskId} deleted successfully`);
     } catch (err) {
@@ -526,7 +538,13 @@ export const TodoProvider = ({ children }) => {
       setError(`タスクの削除に失敗しました。${err.message}`);
       
       // 失敗した場合は元に戻す
-      fetchTasks(selectedTaskList);
+      if (selectedFilter !== 'all') {
+        fetchAllTasks();
+      } else if (selectedTaskList) {
+        fetchTasks(selectedTaskList);
+      } else {
+        fetchAllTasks();
+      }
     } finally {
       setLoading(false);
     }
@@ -537,6 +555,18 @@ export const TodoProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
+      
+      // タスクを見つける
+      const taskToUpdate = todos.find(task => task.id === taskId);
+      if (!taskToUpdate) {
+        throw new Error('タスクが見つかりません。');
+      }
+      
+      // タスクのリストIDを取得
+      const listId = taskToUpdate.listId;
+      if (!listId) {
+        throw new Error('タスクリストが見つかりません。');
+      }
       
       // 現在の状態の反対に切り替える
       const newStatus = currentStatus === 'completed' ? 'needsAction' : 'completed';
@@ -549,7 +579,7 @@ export const TodoProvider = ({ children }) => {
       );
       
       // APIを呼び出してタスクのステータスを更新する
-      await TasksService.updateTaskStatus(selectedTaskList, taskId, newStatus);
+      await TasksService.updateTaskStatus(listId, taskId, newStatus);
       
       console.log(`Task ${taskId} status updated to: ${newStatus}`);
     } catch (err) {
@@ -557,7 +587,13 @@ export const TodoProvider = ({ children }) => {
       setError(`タスクの状態更新に失敗しました。${err.message}`);
       
       // 失敗した場合は元に戻す
-      fetchTasks(selectedTaskList);
+      if (selectedFilter !== 'all') {
+        fetchAllTasks();
+      } else if (selectedTaskList) {
+        fetchTasks(selectedTaskList);
+      } else {
+        fetchAllTasks();
+      }
     } finally {
       setLoading(false);
     }
@@ -593,6 +629,18 @@ export const TodoProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
+      // タスクを見つける
+      const taskToUpdate = todos.find(task => task.id === taskId);
+      if (!taskToUpdate) {
+        throw new Error('タスクが見つかりません。');
+      }
+      
+      // タスクのリストIDを取得
+      const listId = taskToUpdate.listId;
+      if (!listId) {
+        throw new Error('タスクリストが見つかりません。');
+      }
+      
       // 実際のAPIを呼び出す前に、UIを先に更新（オプティミスティックUI更新）
       setTodos(prevTodos => 
         prevTodos.map(task => 
@@ -607,7 +655,7 @@ export const TodoProvider = ({ children }) => {
       );
       
       // APIを呼び出してタスクを更新する
-      await TasksService.updateTask(selectedTaskList, taskId, taskData);
+      await TasksService.updateTask(listId, taskId, taskData);
       
       console.log(`Task ${taskId} updated successfully`);
     } catch (err) {
@@ -615,7 +663,13 @@ export const TodoProvider = ({ children }) => {
       setError(`タスクの更新に失敗しました。${err.message}`);
       
       // 失敗した場合は元に戻す
-      fetchTasks(selectedTaskList);
+      if (selectedFilter !== 'all') {
+        fetchAllTasks();
+      } else if (selectedTaskList) {
+        fetchTasks(selectedTaskList);
+      } else {
+        fetchAllTasks();
+      }
     } finally {
       setLoading(false);
     }
