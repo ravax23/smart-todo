@@ -366,9 +366,9 @@ const TodoList = () => {
               onClick={handleOpenDeleteDialog}
               sx={{ 
                 color: 'text.secondary',
-                ml: 1,
-                opacity: 0.5,
-                '&:hover': { opacity: 0.8, bgcolor: 'rgba(0, 0, 0, 0.04)' }
+                ml: 0.5,
+                opacity: 0.4,
+                '&:hover': { opacity: 0.7, bgcolor: 'rgba(0, 0, 0, 0.04)' }
               }}
               title="マイリストを削除"
             >
@@ -402,9 +402,9 @@ const TodoList = () => {
             onClick={handleOpenSettingsDialog}
             sx={{ 
               color: 'text.secondary',
-              ml: 1,
-              opacity: 0.5,
-              '&:hover': { opacity: 0.8 }
+              ml: 2,
+              opacity: 0.4,
+              '&:hover': { opacity: 0.7 }
             }}
             title="設定"
           >
