@@ -351,10 +351,31 @@ const TodoList = () => {
   return (
     <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 600 }}>
-          {/* フィルターが選択されている場合はフィルター名、そうでなければリスト名を表示 */}
-          {getListTitle()}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Typography variant="h5" sx={{ fontWeight: 600 }}>
+            {/* フィルターが選択されている場合はフィルター名、そうでなければリスト名を表示 */}
+            {getListTitle()}
+          </Typography>
+          
+          {/* マイリスト削除ボタン - マイリストが選択されている場合のみ表示 */}
+          {selectedTaskList && selectedTaskList !== 'all' && selectedTaskList !== 'today' && selectedTaskList !== 'tomorrow' && selectedTaskList !== 'after-tomorrow' && selectedTaskList !== 'past' && (
+            <Button
+              variant="outlined"
+              color="error"
+              size="small"
+              onClick={handleOpenDeleteDialog}
+              startIcon={<Box component="span" sx={{ fontSize: '0.875rem' }}>×</Box>}
+              sx={{ 
+                ml: 2,
+                textTransform: 'none',
+                borderColor: 'rgba(211, 47, 47, 0.5)',
+                '&:hover': { bgcolor: 'rgba(211, 47, 47, 0.04)' }
+              }}
+            >
+              削除
+            </Button>
+          )}
+        </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {/* 完了タスク表示切替 */}
           <Typography 
@@ -374,23 +395,6 @@ const TodoList = () => {
             />
             完了タスクを表示
           </Typography>
-          
-          {/* マイリスト削除ボタン - マイリストが選択されている場合のみ表示 */}
-          {selectedTaskList && selectedTaskList !== 'all' && selectedTaskList !== 'today' && selectedTaskList !== 'tomorrow' && selectedTaskList !== 'after-tomorrow' && selectedTaskList !== 'past' && (
-            <IconButton
-              size="small"
-              onClick={handleOpenDeleteDialog}
-              sx={{ 
-                color: 'error.main',
-                ml: 1,
-                opacity: 0.7,
-                '&:hover': { bgcolor: 'rgba(211, 47, 47, 0.04)' }
-              }}
-              title="マイリストを削除"
-            >
-              <Box component="span" sx={{ fontSize: '1.2rem', display: 'block' }}>🗑️</Box>
-            </IconButton>
-          )}
           
           {/* 設定ボタン（歯車アイコン） */}
           <IconButton
