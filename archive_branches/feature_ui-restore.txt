@@ -1,1 +1,0 @@
-ef57c582903a7df74849bc46fe827447e79844c2 Restore UI design to match original layout with clean, simple styling

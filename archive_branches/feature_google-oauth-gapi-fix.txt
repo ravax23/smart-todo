@@ -1,1 +1,0 @@
-c819698bfabffc905b11363881d05e8995509b99 Fix: Improve OAuth flow to handle insufficient scopes and request explicit calendar authorization
