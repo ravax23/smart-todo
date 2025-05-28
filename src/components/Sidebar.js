@@ -311,16 +311,17 @@ const Sidebar = () => {
               <Box component="span" sx={{ fontSize: '1.2rem' }}>{filter.icon}</Box>
             </ListItemIcon>
             <ListItemText 
-              primary={`${filter.name} `}
+              primary={`${filter.name}`}
               primaryTypographyProps={{ 
                 fontSize: '0.9375rem',
                 display: 'inline',
               }}
-              secondary={`(${getFilteredTaskCount(filter.id)})`}
+              secondary={`  (${getFilteredTaskCount(filter.id)})`}
               secondaryTypographyProps={{ 
                 fontSize: '0.75rem', 
                 color: 'text.disabled',
                 display: 'inline',
+                marginLeft: '4px',
               }}
               sx={{ display: 'flex', alignItems: 'center' }}
             />
