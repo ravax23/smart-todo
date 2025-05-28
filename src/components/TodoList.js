@@ -708,7 +708,7 @@ const TodoList = () => {
                         </Box>
                       )}
                       {/* マイリスト名を表示 */}
-                      {selectedFilter !== 'all' && task.listId && (
+                      {task.listId && (
                         <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
                           <span style={{ marginRight: '4px', opacity: 0.7 }}>📁</span>
                           {getTaskListName(task)}
