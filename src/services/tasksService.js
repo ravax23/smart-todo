@@ -437,14 +437,10 @@ class TasksService {
         throw new Error(`Tasks API error: ${response.status} - ${response.statusText}`);
       }
       
-      // 結果をpositionプロパティでソート（Google Tasksの順序を保持）
+      // Google Tasks APIはすでに正しい順序でタスクを返すため、
+      // 追加のソートは行わずにそのまま返す
       const items = response.result.items || [];
-      return items.sort((a, b) => {
-        // positionを数値として扱う
-        const posA = a.position ? parseFloat(a.position) : 0;
-        const posB = b.position ? parseFloat(b.position) : 0;
-        return posA - posB;
-      });
+      return items;
     } catch (error) {
       console.error('Error fetching tasks with GAPI:', error);
       throw error;
@@ -470,15 +466,11 @@ class TasksService {
       }
       
       const data = await response.json();
-      const items = data.items || [];
       
-      // 結果をpositionプロパティでソート（Google Tasksの順序を保持）
-      return items.sort((a, b) => {
-        // positionを数値として扱う
-        const posA = a.position ? parseFloat(a.position) : 0;
-        const posB = b.position ? parseFloat(b.position) : 0;
-        return posA - posB;
-      });
+      // Google Tasks APIはすでに正しい順序でタスクを返すため、
+      // 追加のソートは行わずにそのまま返す
+      const items = data.items || [];
+      return items;
     } catch (error) {
       console.error('Error fetching tasks with fetch:', error);
       throw error;
