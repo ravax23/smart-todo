@@ -359,21 +359,19 @@ const TodoList = () => {
           
           {/* マイリスト削除ボタン - マイリストが選択されている場合のみ表示 */}
           {selectedTaskList && selectedTaskList !== 'all' && selectedTaskList !== 'today' && selectedTaskList !== 'tomorrow' && selectedTaskList !== 'after-tomorrow' && selectedTaskList !== 'past' && (
-            <Button
-              variant="outlined"
-              color="error"
+            <IconButton
               size="small"
               onClick={handleOpenDeleteDialog}
-              startIcon={<Box component="span" sx={{ fontSize: '0.875rem' }}>×</Box>}
               sx={{ 
-                ml: 2,
-                textTransform: 'none',
-                borderColor: 'rgba(211, 47, 47, 0.5)',
-                '&:hover': { bgcolor: 'rgba(211, 47, 47, 0.04)' }
+                color: 'text.secondary',
+                ml: 1,
+                opacity: 0.7,
+                '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
               }}
+              title="マイリストを削除"
             >
-              削除
-            </Button>
+              <Box component="span" sx={{ fontSize: '1.2rem', display: 'block' }}>🗑️</Box>
+            </IconButton>
           )}
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
