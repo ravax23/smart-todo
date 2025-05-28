@@ -440,10 +440,10 @@ class TasksService {
       // 結果をpositionプロパティでソート（Google Tasksの順序を保持）
       const items = response.result.items || [];
       return items.sort((a, b) => {
-        // positionは文字列なので、数値に変換して比較
-        const posA = a.position || '';
-        const posB = b.position || '';
-        return posA.localeCompare(posB);
+        // positionを数値として扱う
+        const posA = a.position ? parseFloat(a.position) : 0;
+        const posB = b.position ? parseFloat(b.position) : 0;
+        return posA - posB;
       });
     } catch (error) {
       console.error('Error fetching tasks with GAPI:', error);
@@ -474,10 +474,10 @@ class TasksService {
       
       // 結果をpositionプロパティでソート（Google Tasksの順序を保持）
       return items.sort((a, b) => {
-        // positionは文字列なので、数値に変換して比較
-        const posA = a.position || '';
-        const posB = b.position || '';
-        return posA.localeCompare(posB);
+        // positionを数値として扱う
+        const posA = a.position ? parseFloat(a.position) : 0;
+        const posB = b.position ? parseFloat(b.position) : 0;
+        return posA - posB;
       });
     } catch (error) {
       console.error('Error fetching tasks with fetch:', error);
