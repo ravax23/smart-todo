@@ -68,6 +68,13 @@ export const TodoProvider = ({ children }) => {
     }
 
     console.log(`Filtering ${todosToFilter.length} todos with filter: ${selectedFilter}`);
+    
+    // デバッグ用：フィルタリング前のタスクの順序を確認
+    console.log('Tasks before filtering:', todosToFilter.map(task => ({
+      title: task.title,
+      position: task.position
+    })));
+    
     let filtered = [...todosToFilter];
     
     // 完了タスクのフィルタリング
@@ -143,6 +150,12 @@ export const TodoProvider = ({ children }) => {
         // すべてのタスクを表示（フィルタリングなし）
         break;
     }
+    
+    // デバッグ用：フィルタリング後のタスクの順序を確認
+    console.log('Tasks after filtering:', filtered.map(task => ({
+      title: task.title,
+      position: task.position
+    })));
     
     setFilteredTodos(filtered);
   };
@@ -279,6 +292,12 @@ export const TodoProvider = ({ children }) => {
           listId: taskListId, // 明示的にlistIdを設定
           startDate: task.due // dueフィールドをstartDateとして使用
         }));
+        
+        // デバッグ用：タスクの順序を確認
+        console.log('Tasks before setting to state:', tasksWithListId.map(task => ({
+          title: task.title,
+          position: task.position
+        })));
         
         setTodos(tasksWithListId);
         // タスクを取得した後、フィルタリングを実行
