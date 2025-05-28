@@ -439,12 +439,7 @@ class TasksService {
       
       // 結果をpositionプロパティでソート（Google Tasksの順序を保持）
       const items = response.result.items || [];
-      return items.sort((a, b) => {
-        // positionは文字列なので、数値に変換して比較
-        const posA = a.position || '';
-        const posB = b.position || '';
-        return posA.localeCompare(posB);
-      });
+      return items;
     } catch (error) {
       console.error('Error fetching tasks with GAPI:', error);
       throw error;
@@ -472,13 +467,8 @@ class TasksService {
       const data = await response.json();
       const items = data.items || [];
       
-      // 結果をpositionプロパティでソート（Google Tasksの順序を保持）
-      return items.sort((a, b) => {
-        // positionは文字列なので、数値に変換して比較
-        const posA = a.position || '';
-        const posB = b.position || '';
-        return posA.localeCompare(posB);
-      });
+      // 結果をそのまま返す（Google Tasksの順序を保持）
+      return items;
     } catch (error) {
       console.error('Error fetching tasks with fetch:', error);
       throw error;
