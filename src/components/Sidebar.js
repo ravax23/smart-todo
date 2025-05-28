@@ -187,9 +187,24 @@ const Sidebar = () => {
       p: 2
     }}>
       {/* アプリタイトル */}
-      <Typography variant="h6" fontWeight="bold" sx={{ color: 'primary.main', mb: 3 }}>
-        SmartTodo
-      </Typography>
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        mb: 3 
+      }}>
+        <Box 
+          component="img" 
+          src="/logo.png" 
+          alt="SmartTodo Logo" 
+          sx={{ 
+            height: 32,
+            mr: 1
+          }}
+        />
+        <Typography variant="h6" fontWeight="bold" sx={{ color: 'primary.main' }}>
+          SmartTodo
+        </Typography>
+      </Box>
       
       {/* 検索フィールド */}
       <Box sx={{ position: 'relative', mb: 3 }}>
