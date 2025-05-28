@@ -189,7 +189,7 @@ const Sidebar = () => {
       {/* アプリタイトル */}
       <Box sx={{ 
         display: 'flex', 
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         mb: 3 
       }}>
         <Box 
