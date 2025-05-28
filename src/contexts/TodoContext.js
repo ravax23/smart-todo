@@ -434,16 +434,16 @@ export const TodoProvider = ({ children }) => {
     console.log(`Selecting filter: ${filterId}`);
     setSelectedFilter(filterId);
     
-    // フィルターが選択された場合、すべてのタスクリストからタスクを取得
-    if (filterId !== 'all') {
-      // フィルター選択時はタスクリスト選択をクリア
+    // フィルターが選択された場合の処理
+    if (filterId === 'all') {
+      // 'all'フィルターの場合は、タスクリスト選択をクリア
       setSelectedTaskList(null);
+      // すべてのタスクを取得
       fetchAllTasks();
-    } else if (selectedTaskList) {
-      // 'all'フィルターの場合は、選択されているタスクリストのタスクを取得
-      fetchTasks(selectedTaskList);
     } else {
-      // 'all'フィルターでタスクリストが選択されていない場合は、すべてのタスクを取得
+      // その他のフィルターの場合も、タスクリスト選択をクリア
+      setSelectedTaskList(null);
+      // すべてのタスクリストからタスクを取得してフィルタリング
       fetchAllTasks();
     }
   };
