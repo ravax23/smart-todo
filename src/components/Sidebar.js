@@ -14,6 +14,7 @@ import {
   Tooltip
 } from '@mui/material';
 import { useTodo } from '../contexts/TodoContext';
+import { isToday, isTomorrow, parseISO, startOfDay, isBefore } from 'date-fns';
 
 // テーマカラーを取得する関数
 const getThemeColor = (type) => {
@@ -41,7 +42,9 @@ const Sidebar = () => {
     moveTaskToList,
     reorderTaskLists,
     createTaskList,
-    searchTasks
+    searchTasks,
+    todos,
+    filteredTodos
   } = useTodo();
   const [editingListId, setEditingListId] = useState(null);
   const [editingTitle, setEditingTitle] = useState('');
@@ -59,14 +62,67 @@ const Sidebar = () => {
     { id: 'all', name: 'すべて', icon: '📋' },
   ];
 
-  // カテゴリ別の色を定義（使用しない）
-  const categoryColors = {
-    'default': '#1976d2'
-  };
-
-  // タスクリストのカテゴリを判定する関数（使用しない）
-  const getListCategory = () => {
-    return 'default';
+  // フィルター別のタスク数を取得する関数
+  const getFilteredTaskCount = (filterId) => {
+    if (filterId === 'all') {
+      return todos.length;
+    } else if (filterId === 'today') {
+      return todos.filter(todo => {
+        if (!todo.startDate) return false;
+        try {
+          const date = parseISO(todo.startDate);
+          return isToday(date);
+        } catch (e) {
+          return false;
+        }
+      }).length;
+    } else if (filterId === 'tomorrow') {
+      return todos.filter(todo => {
+        if (!todo.startDate) return false;
+        try {
+          const date = parseISO(todo.startDate);
+          return isTomorrow(date);
+        } catch (e) {
+          return false;
+        }
+      }).length;
+    } else if (filterId === 'after-tomorrow') {
+      return todos.filter(todo => {
+        if (!todo.startDate) return false;
+        try {
+          // 今週（日曜日から土曜日まで）のタスクを表示
+          const date = parseISO(todo.startDate);
+          const today = new Date();
+          const startOfWeek = startOfDay(new Date(today));
+          // 今日の曜日を取得（0: 日曜日, 1: 月曜日, ..., 6: 土曜日）
+          const dayOfWeek = today.getDay();
+          // 日曜日まで戻る
+          startOfWeek.setDate(today.getDate() - dayOfWeek);
+          
+          // 週の終わり（土曜日）
+          const endOfWeek = new Date(startOfWeek);
+          endOfWeek.setDate(startOfWeek.getDate() + 6);
+          
+          // タスクの日付が今週の範囲内かチェック
+          return date >= startOfWeek && date <= endOfWeek;
+        } catch (e) {
+          return false;
+        }
+      }).length;
+    } else if (filterId === 'past') {
+      return todos.filter(todo => {
+        if (!todo.startDate) return false;
+        try {
+          const date = parseISO(todo.startDate);
+          return isBefore(date, startOfDay(new Date()));
+        } catch (e) {
+          return false;
+        }
+      }).length;
+    } else if (filterId === 'starred') {
+      return todos.filter(todo => todo.starred === true).length;
+    }
+    return 0;
   };
 
   // リスト名の編集を開始
@@ -266,7 +322,7 @@ const Sidebar = () => {
               <Box component="span" sx={{ fontSize: '1.2rem' }}>{filter.icon}</Box>
             </ListItemIcon>
             <ListItemText 
-              primary={filter.name} 
+              primary={`${filter.name} (${getFilteredTaskCount(filter.id)})`} 
               primaryTypographyProps={{ fontSize: '0.9375rem' }}
             />
           </ListItem>
