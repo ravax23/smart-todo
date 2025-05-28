@@ -367,8 +367,8 @@ const TodoList = () => {
               sx={{ 
                 color: 'text.secondary',
                 ml: 1,
-                opacity: 0.7,
-                '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
+                opacity: 0.5,
+                '&:hover': { opacity: 0.8, bgcolor: 'rgba(0, 0, 0, 0.04)' }
               }}
               title="マイリストを削除"
             >
@@ -403,7 +403,8 @@ const TodoList = () => {
             sx={{ 
               color: 'text.secondary',
               ml: 1,
-              opacity: 0.7
+              opacity: 0.5,
+              '&:hover': { opacity: 0.8 }
             }}
             title="設定"
           >
