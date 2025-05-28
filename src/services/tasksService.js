@@ -444,12 +444,8 @@ class TasksService {
         position: item.position
       })));
       
-      // positionプロパティでソート
-      return items.sort((a, b) => {
-        const posA = a.position || '';
-        const posB = b.position || '';
-        return posA.localeCompare(posB, undefined, { numeric: true, sensitivity: 'base' });
-      });
+      // APIレスポンスの順序をそのまま使用（ソートなし）
+      return items;
     } catch (error) {
       console.error('Error fetching tasks with GAPI:', error);
       throw error;
@@ -483,12 +479,8 @@ class TasksService {
         position: item.position
       })));
       
-      // positionプロパティでソート
-      return items.sort((a, b) => {
-        const posA = a.position || '';
-        const posB = b.position || '';
-        return posA.localeCompare(posB, undefined, { numeric: true, sensitivity: 'base' });
-      });
+      // APIレスポンスの順序をそのまま使用（ソートなし）
+      return items;
     } catch (error) {
       console.error('Error fetching tasks with fetch:', error);
       throw error;
