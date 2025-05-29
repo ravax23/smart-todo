@@ -33,3 +33,14 @@ code {
   transition: transform 0.3s ease !important;
   filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.2)) !important;
 }
+
+/* 絵文字のスタイルリセット */
+.emoji-icon {
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+  display: inline-block;
+  text-decoration: none;
+  vertical-align: middle;
+}
