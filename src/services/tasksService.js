@@ -1,5 +1,6 @@
 import { getAccessToken } from './authService';
 import { gapi } from 'gapi-script';
+import { extractStarredStatus, setStarredStatus } from './tasksUtils';
 
 /**
  * Google Tasks APIクライアント
@@ -61,9 +62,7 @@ class TasksService {
   static async getTaskListsWithGapi() {
     try {
       console.log('Calling tasks.tasklists.list API with GAPI...');
-      const response = await window.gapi.client.tasks.tasklists.list({
-        maxResults: 100
-      });
+      const response = await window.gapi.client.tasks.tasklists.list();
       
       console.log('GAPI Response:', response);
       
@@ -87,17 +86,10 @@ class TasksService {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       };
-      console.log('Request Headers:', headers);
-
+      
       const url = 'https://tasks.googleapis.com/tasks/v1/users/@me/lists';
-      console.log('Request URL:', url);
-
-      const response = await fetch(url, {
-        headers,
-        // キャッシュを無効化
-        cache: 'no-store',
-      });
-
+      const response = await fetch(url, { headers });
+      
       console.log('API Response Status:', response.status);
 
       if (!response.ok) {
@@ -182,19 +174,14 @@ class TasksService {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       };
-      console.log('Request Headers:', headers);
-
+      
       const url = 'https://tasks.googleapis.com/tasks/v1/users/@me/lists';
-      console.log('Request URL:', url);
-
       const response = await fetch(url, {
         method: 'POST',
         headers,
         body: JSON.stringify({ title })
       });
-
-      console.log('API Response Status:', response.status);
-
+      
       if (!response.ok) {
         const errorData = await response.json();
         console.error('API Error Response:', errorData);
@@ -275,6 +262,7 @@ class TasksService {
     try {
       const headers = {
         'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
       };
       
       const url = `https://tasks.googleapis.com/tasks/v1/users/@me/lists/${taskListId}`;
@@ -296,99 +284,11 @@ class TasksService {
   }
   
   /**
-   * タスクリストを更新
-   */
-  static async updateTaskList(taskListId, updates) {
-    try {
-      console.log(`Updating task list ${taskListId}:`, updates);
-      
-      // アクセストークンの確認
-      const token = getAccessToken();
-      if (!token) {
-        throw new Error('アクセストークンがありません。再度ログインしてください。');
-      }
-      
-      // GAPIクライアントが初期化されているか確認
-      if (window.gapi && window.gapi.client && window.gapi.client.tasks) {
-        try {
-          return await this.updateTaskListWithGapi(taskListId, updates);
-        } catch (gapiError) {
-          console.error('GAPI client error:', gapiError);
-          // GAPIが失敗した場合は、fetchを使用する方法にフォールバック
-        }
-      }
-      
-      // 方法2: fetchを使用
-      console.log('Using fetch for API call');
-      return await this.updateTaskListWithFetch(taskListId, updates, token);
-    } catch (error) {
-      console.error('Tasks Service Error:', {
-        message: error.message,
-        stack: error.stack
-      });
-      throw error;
-    }
-  }
-  
-  /**
-   * GAPIクライアントを使用してタスクリストを更新
-   */
-  static async updateTaskListWithGapi(taskListId, updates) {
-    try {
-      console.log('Calling tasks.tasklists.patch API with GAPI...');
-      const response = await window.gapi.client.tasks.tasklists.patch({
-        tasklist: taskListId,
-        ...updates
-      });
-      
-      console.log('GAPI Response:', response);
-      
-      if (response.status !== 200) {
-        throw new Error(`Tasks API error: ${response.status} - ${response.statusText}`);
-      }
-      
-      return response.result;
-    } catch (error) {
-      console.error('Error updating task list with GAPI:', error);
-      throw error;
-    }
-  }
-  
-  /**
-   * fetchを使用してタスクリストを更新
-   */
-  static async updateTaskListWithFetch(taskListId, updates, token) {
-    try {
-      const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      };
-      
-      const url = `https://tasks.googleapis.com/tasks/v1/users/@me/lists/${taskListId}`;
-      const response = await fetch(url, {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify(updates)
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Tasks API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Error updating task list with fetch:', error);
-      throw error;
-    }
-  }
-  
-  /**
-   * タスクリストのタスク一覧を取得
+   * タスクリストのタスクを取得
    */
   static async getTasks(taskListId) {
     try {
-      console.log(`Fetching tasks for list ${taskListId}`);
+      console.log(`Fetching tasks from list ${taskListId}`);
       
       // アクセストークンの確認
       const token = getAccessToken();
@@ -419,7 +319,7 @@ class TasksService {
   }
   
   /**
-   * GAPIクライアントを使用してタスク一覧を取得
+   * GAPIクライアントを使用してタスクを取得
    */
   static async getTasksWithGapi(taskListId) {
     try {
@@ -437,19 +337,7 @@ class TasksService {
         throw new Error(`Tasks API error: ${response.status} - ${response.statusText}`);
       }
       
-      // デバッグ用：タスクのpositionとタイトルをログ出力
-      const items = response.result.items || [];
-      console.log('Tasks with positions (GAPI):', items.map(item => ({
-        title: item.title,
-        position: item.position
-      })));
-      
-      // positionプロパティでソート（数値として比較）
-      return items.sort((a, b) => {
-        const posA = a.position || '';
-        const posB = b.position || '';
-        return posA.localeCompare(posB, undefined, { numeric: true });
-      });
+      return response.result.items || [];
     } catch (error) {
       console.error('Error fetching tasks with GAPI:', error);
       throw error;
@@ -457,7 +345,7 @@ class TasksService {
   }
   
   /**
-   * fetchを使用してタスク一覧を取得
+   * fetchを使用してタスクを取得
    */
   static async getTasksWithFetch(taskListId, token) {
     try {
@@ -475,20 +363,7 @@ class TasksService {
       }
       
       const data = await response.json();
-      const items = data.items || [];
-      
-      // デバッグ用：タスクのpositionとタイトルをログ出力
-      console.log('Tasks with positions (fetch):', items.map(item => ({
-        title: item.title,
-        position: item.position
-      })));
-      
-      // positionプロパティでソート（数値として比較）
-      return items.sort((a, b) => {
-        const posA = a.position || '';
-        const posB = b.position || '';
-        return posA.localeCompare(posB, undefined, { numeric: true });
-      });
+      return data.items || [];
     } catch (error) {
       console.error('Error fetching tasks with fetch:', error);
       throw error;
@@ -508,10 +383,16 @@ class TasksService {
         throw new Error('アクセストークンがありません。再度ログインしてください。');
       }
       
+      // スター状態を適切なプロパティに設定
+      let apiTaskData = { ...taskData };
+      if ('starred' in taskData) {
+        apiTaskData = setStarredStatus(apiTaskData, taskData.starred);
+      }
+      
       // GAPIクライアントが初期化されているか確認
       if (window.gapi && window.gapi.client && window.gapi.client.tasks) {
         try {
-          return await this.createTaskWithGapi(taskListId, taskData);
+          return await this.createTaskWithGapi(taskListId, apiTaskData);
         } catch (gapiError) {
           console.error('GAPI client error:', gapiError);
           // GAPIが失敗した場合は、fetchを使用する方法にフォールバック
@@ -520,7 +401,7 @@ class TasksService {
       
       // 方法2: fetchを使用
       console.log('Using fetch for API call');
-      return await this.createTaskWithFetch(taskListId, taskData, token);
+      return await this.createTaskWithFetch(taskListId, apiTaskData, token);
     } catch (error) {
       console.error('Tasks Service Error:', {
         message: error.message,
@@ -535,13 +416,28 @@ class TasksService {
    */
   static async createTaskWithGapi(taskListId, taskData) {
     try {
-      console.log('Calling tasks.tasks.insert API with GAPI...');
-      const response = await window.gapi.client.tasks.tasks.insert({
-        tasklist: taskListId,
-        ...taskData
-      });
+      console.log('Calling tasks.tasks.insert API with GAPI...', JSON.stringify(taskData, null, 2));
       
-      console.log('GAPI Response:', response);
+      // Google Tasks APIの仕様に合わせてリクエストを構築
+      const request = {
+        tasklist: taskListId,
+        // 以下のプロパティを明示的に指定
+        resource: {
+          title: taskData.title,
+          notes: taskData.notes,
+          due: taskData.due,
+          status: taskData.status,
+          // スター関連のプロパティを明示的に設定
+          starred: taskData.starred,
+          priority: taskData.priority
+        }
+      };
+      
+      console.log('Final GAPI create request:', JSON.stringify(request, null, 2));
+      
+      const response = await window.gapi.client.tasks.tasks.insert(request);
+      
+      console.log('GAPI Create Response:', response);
       
       if (response.status !== 200) {
         throw new Error(`Tasks API error: ${response.status} - ${response.statusText}`);
@@ -559,6 +455,21 @@ class TasksService {
    */
   static async createTaskWithFetch(taskListId, taskData, token) {
     try {
+      console.log('Creating task with fetch:', JSON.stringify(taskData, null, 2));
+      
+      // Google Tasks APIの仕様に合わせてリクエストボディを構築
+      const requestBody = {
+        title: taskData.title,
+        notes: taskData.notes,
+        due: taskData.due,
+        status: taskData.status,
+        // スター関連のプロパティを明示的に設定
+        starred: taskData.starred,
+        priority: taskData.priority
+      };
+      
+      console.log('Final fetch create request body:', JSON.stringify(requestBody, null, 2));
+      
       const headers = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -568,7 +479,7 @@ class TasksService {
       const response = await fetch(url, {
         method: 'POST',
         headers,
-        body: JSON.stringify(taskData)
+        body: JSON.stringify(requestBody)
       });
       
       if (!response.ok) {
@@ -576,7 +487,9 @@ class TasksService {
         throw new Error(`Tasks API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
       }
       
-      return await response.json();
+      const responseData = await response.json();
+      console.log('Fetch create response data:', JSON.stringify(responseData, null, 2));
+      return responseData;
     } catch (error) {
       console.error('Error creating task with fetch:', error);
       throw error;
@@ -639,63 +552,6 @@ class TasksService {
   }
   
   /**
-   * タスクを削除
-   */
-  static async deleteTask(taskListId, taskId) {
-    try {
-      console.log(`Deleting task ${taskId} from list ${taskListId}`);
-      
-      // アクセストークンの確認
-      const token = getAccessToken();
-      if (!token) {
-        throw new Error('アクセストークンがありません。再度ログインしてください。');
-      }
-      
-      // GAPIクライアントが初期化されているか確認
-      if (window.gapi && window.gapi.client && window.gapi.client.tasks) {
-        try {
-          const response = await window.gapi.client.tasks.tasks.delete({
-            tasklist: taskListId,
-            task: taskId
-          });
-          
-          console.log('GAPI Response:', response);
-          
-          if (response.status !== 204 && response.status !== 200) {
-            throw new Error(`Tasks API error: ${response.status} - ${response.statusText}`);
-          }
-          
-          return true;
-        } catch (gapiError) {
-          console.error('GAPI client error:', gapiError);
-          // GAPIが失敗した場合は、fetchを使用する方法にフォールバック
-        }
-      }
-      
-      // fetchを使用
-      const headers = {
-        'Authorization': `Bearer ${token}`,
-      };
-      
-      const url = `https://tasks.googleapis.com/tasks/v1/lists/${taskListId}/tasks/${taskId}`;
-      const response = await fetch(url, {
-        method: 'DELETE',
-        headers
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Tasks API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error deleting task:', error);
-      throw error;
-    }
-  }
-  
-  /**
    * タスクを更新
    */
   static async updateTask(taskListId, taskId, updates) {
@@ -708,10 +564,16 @@ class TasksService {
         throw new Error('アクセストークンがありません。再度ログインしてください。');
       }
       
+      // スター状態を適切なプロパティに設定
+      let apiUpdates = { ...updates };
+      if ('starred' in updates) {
+        apiUpdates = setStarredStatus(apiUpdates, updates.starred);
+      }
+      
       // GAPIクライアントが初期化されているか確認
       if (window.gapi && window.gapi.client && window.gapi.client.tasks) {
         try {
-          return await this.updateTaskWithGapi(taskListId, taskId, updates);
+          return await this.updateTaskWithGapi(taskListId, taskId, apiUpdates);
         } catch (gapiError) {
           console.error('GAPI client error:', gapiError);
           // GAPIが失敗した場合は、fetchを使用する方法にフォールバック
@@ -720,7 +582,7 @@ class TasksService {
       
       // 方法2: fetchを使用
       console.log('Using fetch for API call');
-      return await this.updateTaskWithFetch(taskListId, taskId, updates, token);
+      return await this.updateTaskWithFetch(taskListId, taskId, apiUpdates, token);
     } catch (error) {
       console.error('Tasks Service Error:', {
         message: error.message,
@@ -741,12 +603,30 @@ class TasksService {
       // 更新データをマージ
       const updatedTask = { ...currentTask, ...updates };
       
-      console.log('Calling tasks.tasks.update API with GAPI...');
-      const response = await window.gapi.client.tasks.tasks.update({
+      console.log('Calling tasks.tasks.update API with GAPI...', JSON.stringify(updatedTask, null, 2));
+      
+      // Google Tasks APIの仕様に合わせてリクエストを構築
+      // 注意: resourceパラメータではなく、直接プロパティを指定する必要がある場合がある
+      const request = {
         tasklist: taskListId,
         task: taskId,
-        ...updatedTask
-      });
+        // 以下のプロパティを明示的に指定
+        title: updatedTask.title,
+        notes: updatedTask.notes,
+        due: updatedTask.due,
+        status: updatedTask.status,
+        completed: updatedTask.completed,
+        deleted: updatedTask.deleted,
+        hidden: updatedTask.hidden,
+        links: updatedTask.links,
+        // スター関連のプロパティを明示的に設定
+        starred: updatedTask.starred,
+        priority: updatedTask.priority
+      };
+      
+      console.log('Final GAPI request:', JSON.stringify(request, null, 2));
+      
+      const response = await window.gapi.client.tasks.tasks.update(request);
       
       console.log('GAPI Response:', response);
       
@@ -772,6 +652,26 @@ class TasksService {
       // 更新データをマージ
       const updatedTask = { ...currentTask, ...updates };
       
+      console.log('Updating task with fetch:', JSON.stringify(updatedTask, null, 2));
+      
+      // Google Tasks APIの仕様に合わせてリクエストボディを構築
+      // 必要なプロパティのみを含める
+      const requestBody = {
+        title: updatedTask.title,
+        notes: updatedTask.notes,
+        due: updatedTask.due,
+        status: updatedTask.status,
+        completed: updatedTask.completed,
+        deleted: updatedTask.deleted,
+        hidden: updatedTask.hidden,
+        links: updatedTask.links,
+        // スター関連のプロパティを明示的に設定
+        starred: updatedTask.starred,
+        priority: updatedTask.priority
+      };
+      
+      console.log('Final fetch request body:', JSON.stringify(requestBody, null, 2));
+      
       const headers = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -781,7 +681,7 @@ class TasksService {
       const response = await fetch(url, {
         method: 'PUT',
         headers,
-        body: JSON.stringify(updatedTask)
+        body: JSON.stringify(requestBody)
       });
       
       if (!response.ok) {
@@ -789,7 +689,9 @@ class TasksService {
         throw new Error(`Tasks API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
       }
       
-      return await response.json();
+      const responseData = await response.json();
+      console.log('Fetch response data:', JSON.stringify(responseData, null, 2));
+      return responseData;
     } catch (error) {
       console.error('Error updating task with fetch:', error);
       throw error;
@@ -799,44 +701,39 @@ class TasksService {
   /**
    * タスクのステータスを更新
    */
-  static async updateTaskStatus(taskListId, taskId, status) {
-    return await this.updateTask(taskListId, taskId, { status });
-  }
-  
-  /**
-   * タスクを別のリストに移動
-   */
-  static async moveTask(taskId, sourceListId, targetListId) {
+  static async updateTaskStatus(taskListId, taskId, completed) {
     try {
-      console.log(`Moving task ${taskId} from list ${sourceListId} to list ${targetListId}`);
+      console.log(`Updating task ${taskId} status to ${completed ? 'completed' : 'not completed'}`);
       
-      // 元のタスクを取得
-      const task = await this.getTask(sourceListId, taskId);
+      // アクセストークンの確認
+      const token = getAccessToken();
+      if (!token) {
+        throw new Error('アクセストークンがありません。再度ログインしてください。');
+      }
       
-      // 新しいリストにタスクを作成
-      const newTask = await this.createTask(targetListId, {
-        title: task.title,
-        notes: task.notes,
-        due: task.due,
-        status: task.status
-      });
+      // 現在のタスクを取得
+      const currentTask = await this.getTask(taskListId, taskId);
       
-      // 元のタスクを削除
-      await this.deleteTask(sourceListId, taskId);
+      // 更新データを作成
+      const updates = {
+        status: completed ? 'completed' : 'needsAction',
+        completed: completed ? new Date().toISOString() : null
+      };
       
-      return newTask;
+      // タスクを更新
+      return await this.updateTask(taskListId, taskId, updates);
     } catch (error) {
-      console.error('Error moving task between lists:', error);
+      console.error('Error updating task status:', error);
       throw error;
     }
   }
   
   /**
-   * リスト内でタスクの順序を変更
+   * タスクを削除
    */
-  static async moveTaskInList(taskListId, taskId, previousTaskId = null) {
+  static async deleteTask(taskListId, taskId) {
     try {
-      console.log(`Moving task ${taskId} in list ${taskListId}, after task ${previousTaskId || 'START'}`);
+      console.log(`Deleting task ${taskId} from list ${taskListId}`);
       
       // アクセストークンの確認
       const token = getAccessToken();
@@ -847,26 +744,147 @@ class TasksService {
       // GAPIクライアントが初期化されているか確認
       if (window.gapi && window.gapi.client && window.gapi.client.tasks) {
         try {
-          const response = await window.gapi.client.tasks.tasks.move({
-            tasklist: taskListId,
-            task: taskId,
-            previous: previousTaskId || undefined
-          });
-          
-          console.log('GAPI Response:', response);
-          
-          if (response.status !== 200) {
-            throw new Error(`Tasks API error: ${response.status} - ${response.statusText}`);
-          }
-          
-          return response.result;
+          return await this.deleteTaskWithGapi(taskListId, taskId);
         } catch (gapiError) {
           console.error('GAPI client error:', gapiError);
           // GAPIが失敗した場合は、fetchを使用する方法にフォールバック
         }
       }
       
-      // fetchを使用
+      // 方法2: fetchを使用
+      console.log('Using fetch for API call');
+      return await this.deleteTaskWithFetch(taskListId, taskId, token);
+    } catch (error) {
+      console.error('Tasks Service Error:', {
+        message: error.message,
+        stack: error.stack
+      });
+      throw error;
+    }
+  }
+  
+  /**
+   * GAPIクライアントを使用してタスクを削除
+   */
+  static async deleteTaskWithGapi(taskListId, taskId) {
+    try {
+      console.log('Calling tasks.tasks.delete API with GAPI...');
+      const response = await window.gapi.client.tasks.tasks.delete({
+        tasklist: taskListId,
+        task: taskId
+      });
+      
+      console.log('GAPI Response:', response);
+      
+      if (response.status !== 204 && response.status !== 200) {
+        throw new Error(`Tasks API error: ${response.status} - ${response.statusText}`);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting task with GAPI:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * fetchを使用してタスクを削除
+   */
+  static async deleteTaskWithFetch(taskListId, taskId, token) {
+    try {
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      };
+      
+      const url = `https://tasks.googleapis.com/tasks/v1/lists/${taskListId}/tasks/${taskId}`;
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Tasks API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting task with fetch:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * タスクの順序を更新
+   */
+  static async moveTask(taskListId, taskId, previousTaskId = null) {
+    try {
+      console.log(`Moving task ${taskId} in list ${taskListId} after ${previousTaskId || 'start'}`);
+      
+      // アクセストークンの確認
+      const token = getAccessToken();
+      if (!token) {
+        throw new Error('アクセストークンがありません。再度ログインしてください。');
+      }
+      
+      // GAPIクライアントが初期化されているか確認
+      if (window.gapi && window.gapi.client && window.gapi.client.tasks) {
+        try {
+          return await this.moveTaskWithGapi(taskListId, taskId, previousTaskId);
+        } catch (gapiError) {
+          console.error('GAPI client error:', gapiError);
+          // GAPIが失敗した場合は、fetchを使用する方法にフォールバック
+        }
+      }
+      
+      // 方法2: fetchを使用
+      console.log('Using fetch for API call');
+      return await this.moveTaskWithFetch(taskListId, taskId, previousTaskId, token);
+    } catch (error) {
+      console.error('Tasks Service Error:', {
+        message: error.message,
+        stack: error.stack
+      });
+      throw error;
+    }
+  }
+  
+  /**
+   * GAPIクライアントを使用してタスクを移動
+   */
+  static async moveTaskWithGapi(taskListId, taskId, previousTaskId) {
+    try {
+      console.log('Calling tasks.tasks.move API with GAPI...');
+      const params = {
+        tasklist: taskListId,
+        task: taskId
+      };
+      
+      if (previousTaskId) {
+        params.previous = previousTaskId;
+      }
+      
+      const response = await window.gapi.client.tasks.tasks.move(params);
+      
+      console.log('GAPI Response:', response);
+      
+      if (response.status !== 200) {
+        throw new Error(`Tasks API error: ${response.status} - ${response.statusText}`);
+      }
+      
+      return response.result;
+    } catch (error) {
+      console.error('Error moving task with GAPI:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * fetchを使用してタスクを移動
+   */
+  static async moveTaskWithFetch(taskListId, taskId, previousTaskId, token) {
+    try {
       const headers = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -889,7 +907,7 @@ class TasksService {
       
       return await response.json();
     } catch (error) {
-      console.error('Error moving task in list:', error);
+      console.error('Error moving task with fetch:', error);
       throw error;
     }
   }

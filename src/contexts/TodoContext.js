@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import TasksService from '../services/tasksService';
+import { extractStarredStatus } from '../services/tasksUtils';
 import { requestTasksScope } from '../services/authService';
 import { isToday, isTomorrow, addDays, isBefore, parseISO, startOfDay } from 'date-fns';
 
@@ -234,7 +235,7 @@ export const TodoProvider = ({ children }) => {
     }
   };
 
-  // タスクの取得
+  // タスクリストの取得
   const fetchTasks = async (taskListId = selectedTaskList) => {
     try {
       console.log(`Starting fetchTasks for list: ${taskListId}`);
@@ -287,21 +288,39 @@ export const TodoProvider = ({ children }) => {
         
         // 日付フィールドの処理
         const tasks = data.items || [];
-        const tasksWithListId = tasks.map(task => ({
-          ...task,
-          listId: taskListId, // 明示的にlistIdを設定
-          startDate: task.due // dueフィールドをstartDateとして使用
-        }));
+        const tasksWithListId = tasks.map(task => {
+          // Google Tasks APIのレスポンスを確認
+          console.log('Raw task data:', task);
+          
+          // スター状態を抽出
+          const isStarred = extractStarredStatus(task);
+          console.log(`Task ${task.title} starred status:`, isStarred);
+          
+          return {
+            ...task,
+            listId: taskListId, // 明示的にlistIdを設定
+            startDate: task.due, // dueフィールドをstartDateとして使用
+            starred: isStarred // 抽出したスター状態を設定
+          };
+        });
+        
+        // タスクをposition順にソート
+        const sortedTasks = [...tasksWithListId].sort((a, b) => {
+          // positionが文字列の場合は数値に変換
+          const posA = typeof a.position === 'string' ? parseFloat(a.position) : a.position;
+          const posB = typeof b.position === 'string' ? parseFloat(b.position) : b.position;
+          return posA - posB;
+        });
         
         // デバッグ用：タスクの順序を確認
-        console.log('Tasks before setting to state:', tasksWithListId.map(task => ({
+        console.log('Tasks before setting to state:', sortedTasks.map(task => ({
           title: task.title,
           position: task.position
         })));
         
-        setTodos(tasksWithListId);
+        setTodos(sortedTasks);
         // タスクを取得した後、フィルタリングを実行
-        filterTodos(tasksWithListId);
+        filterTodos(sortedTasks);
       } catch (err) {
         console.error('Failed to fetch tasks:', err);
         
@@ -391,11 +410,21 @@ export const TodoProvider = ({ children }) => {
           const tasks = taskData.items || [];
           
           // タスクにlistIdを追加
-          const tasksWithListId = tasks.map(task => ({
-            ...task,
-            listId: list.id,
-            startDate: task.due // dueフィールドをstartDateとして使用
-          }));
+          const tasksWithListId = tasks.map(task => {
+            // Google Tasks APIのレスポンスを確認
+            console.log('Raw task data from all lists:', task);
+            
+            // スター状態を抽出
+            const isStarred = extractStarredStatus(task);
+            console.log(`Task ${task.title} starred status:`, isStarred);
+            
+            return {
+              ...task,
+              listId: list.id,
+              startDate: task.due, // dueフィールドをstartDateとして使用
+              starred: isStarred // 抽出したスター状態を設定
+            };
+          });
           
           allTasks = [...allTasks, ...tasksWithListId];
         } catch (err) {
@@ -403,10 +432,18 @@ export const TodoProvider = ({ children }) => {
         }
       }
       
-      console.log('All tasks from all lists:', allTasks);
-      setTodos(allTasks);
+      // タスクをposition順にソート
+      const sortedTasks = [...allTasks].sort((a, b) => {
+        // positionが文字列の場合は数値に変換
+        const posA = typeof a.position === 'string' ? parseFloat(a.position) : a.position;
+        const posB = typeof b.position === 'string' ? parseFloat(b.position) : b.position;
+        return posA - posB;
+      });
+      
+      console.log('All tasks from all lists:', sortedTasks);
+      setTodos(sortedTasks);
       // タスクを取得した後、フィルタリングを実行
-      filterTodos(allTasks);
+      filterTodos(sortedTasks);
     } catch (err) {
       console.error('Error in fetchAllTasks:', err);
       setError(`すべてのタスクの取得に失敗しました。${err.message}`);
@@ -421,11 +458,19 @@ export const TodoProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
+      console.log(`Creating new task in list ${listId} with data:`, taskData);
+      
       const newTask = await TasksService.createTask(listId, taskData);
       console.log('Created new task:', newTask);
       
-      // タスクリストを再取得
-      fetchTasks(listId);
+      // タスクリストを再取得して最新の状態を反映
+      if (selectedFilter !== 'all') {
+        fetchAllTasks();
+      } else if (selectedTaskList) {
+        fetchTasks(selectedTaskList);
+      } else {
+        fetchAllTasks();
+      }
       
       return newTask;
     } catch (err) {
@@ -668,15 +713,26 @@ export const TodoProvider = ({ children }) => {
             title: taskData.title,
             description: taskData.notes,
             startDate: taskData.due,
-            starred: taskData.starred
+            starred: taskData.starred,
+            priority: taskData.priority // 優先度も明示的に更新
           } : task
         )
       );
       
-      // APIを呼び出してタスクを更新する
-      await TasksService.updateTask(listId, taskId, taskData);
+      console.log(`Updating task ${taskId} with data:`, taskData);
       
-      console.log(`Task ${taskId} updated successfully`);
+      // APIを呼び出してタスクを更新する
+      const updatedTask = await TasksService.updateTask(listId, taskId, taskData);
+      console.log(`Task ${taskId} updated successfully:`, updatedTask);
+      
+      // 更新後のタスクを再取得して状態を最新に保つ
+      if (selectedFilter !== 'all') {
+        fetchAllTasks();
+      } else if (selectedTaskList) {
+        fetchTasks(selectedTaskList);
+      } else {
+        fetchAllTasks();
+      }
     } catch (err) {
       console.error('Failed to update task:', err);
       setError(`タスクの更新に失敗しました。${err.message}`);
@@ -756,14 +812,22 @@ export const TodoProvider = ({ children }) => {
     try {
       setLoading(true);
       
+      // タスクをposition順にソート
+      const sortedTasks = [...newTasks].sort((a, b) => {
+        // positionが文字列の場合は数値に変換
+        const posA = typeof a.position === 'string' ? parseFloat(a.position) : a.position;
+        const posB = typeof b.position === 'string' ? parseFloat(b.position) : b.position;
+        return posA - posB;
+      });
+      
       // UIを先に更新（オプティミスティックUI更新）
-      setTodos(newTasks);
+      setTodos(sortedTasks);
       
       // Google Tasks APIに順序変更を反映
       // Google Tasks APIでは、タスクの順序はprevious/parentパラメータで指定します
-      for (let i = 0; i < newTasks.length; i++) {
-        const task = newTasks[i];
-        const previousTask = i > 0 ? newTasks[i - 1] : null;
+      for (let i = 0; i < sortedTasks.length; i++) {
+        const task = sortedTasks[i];
+        const previousTask = i > 0 ? sortedTasks[i - 1] : null;
         
         try {
           await TasksService.moveTaskInList(
@@ -776,6 +840,9 @@ export const TodoProvider = ({ children }) => {
           // 個別のタスク移動エラーは無視して続行
         }
       }
+      
+      // 変更後にタスクを再取得して最新の順序を反映
+      await fetchTasks(selectedTaskList);
       
       console.log('Tasks reordered and synced with Google Tasks');
     } catch (err) {

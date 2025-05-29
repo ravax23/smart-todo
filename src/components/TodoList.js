@@ -25,10 +25,11 @@ import {
   InputLabel,
   Select
 } from '@mui/material';
-import { format, parseISO, isValid } from 'date-fns';
+import { format, parseISO, isValid, isToday, isBefore, startOfDay } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useTodo } from '../contexts/TodoContext';
 import UserMenu from './UserMenu';
+import SettingsDialog from './SettingsDialog';
 
 // フィルターリストの定義（Sidebarと同じ定義を持つ）
 const filters = [
@@ -117,17 +118,48 @@ const TodoList = () => {
 
   // テーマカラーを取得する関数
   const getThemeColor = (type) => {
-    // テーマに応じた色を返す
-    const colors = {
-      primary: '#333333', // 黒色（少し柔らかい黒）
-      secondary: '#555555', // グレー
-      accent: '#777777', // アクセントカラー
-      background: '#f9fafb', // 背景色
-      text: '#333333', // テキスト色
-      border: '#e0e0e0' // ボーダー色
-    };
+    // CSSカスタムプロパティを使用
+    switch (type) {
+      case 'primary':
+        return 'var(--primary-color)';
+      case 'secondary':
+        return 'var(--secondary-color)';
+      case 'accent':
+        return 'var(--accent-color)';
+      case 'background':
+        return 'var(--background-color)';
+      case 'text':
+        return 'var(--text-color)';
+      case 'border':
+        return 'var(--border-color)';
+      default:
+        return 'var(--primary-color)';
+    }
+  };
+  
+  // タスクの期限に基づいて背景色を取得する関数
+  const getTaskBackgroundColor = (task) => {
+    if (!task.startDate) return 'var(--task-normal-color)'; // 期限なし
     
-    return colors[type] || colors.primary;
+    try {
+      const date = parseISO(task.startDate);
+      const today = new Date();
+      
+      // 期限切れ: 薄い赤色
+      if (isBefore(date, startOfDay(today))) {
+        return 'var(--task-overdue-color)';
+      }
+      // 今日中: 薄いオレンジ色
+      else if (isToday(date)) {
+        return 'var(--task-today-color)';
+      }
+      // それ以外: 白色
+      else {
+        return 'var(--task-normal-color)';
+      }
+    } catch (e) {
+      return 'var(--task-normal-color)';
+    }
   };
 
   // 削除確認ダイアログを開く
@@ -187,6 +219,7 @@ const TodoList = () => {
     updatedTasks.splice(toIndex, 0, movedTask);
     
     // コンテキストの関数を呼び出して並び替えを保存
+    // Google Todoリストに即時反映し、データを再取得
     reorderTasks(updatedTasks);
   };
 
@@ -246,22 +279,31 @@ const TodoList = () => {
     if (!taskDetails.title.trim()) return;
 
     try {
+      // スター状態をログ出力
+      console.log(`Saving task with priority: ${taskDetails.priority}, starred: ${taskDetails.priority === 'starred'}`);
+      
       const taskData = {
         title: taskDetails.title.trim(),
         notes: taskDetails.description || '',
         // Google Tasks APIが受け付ける形式に変換
         due: taskDetails.dueDate ? new Date(taskDetails.dueDate).toISOString() : null,
         // priorityの代わりにstarredを使用
-        starred: taskDetails.priority === 'starred'
+        starred: taskDetails.priority === 'starred',
+        // 明示的に優先度も設定
+        priority: taskDetails.priority === 'starred' ? 'high' : 'normal'
       };
+
+      console.log('Task data to be saved:', taskData);
 
       if (editMode) {
         // 既存タスクの更新
+        console.log(`Updating task ${taskDetails.taskId} with data:`, taskData);
         await updateTask(taskDetails.taskId, taskData);
       } else {
         // 新規タスクの作成
         // taskDetails.categoryIdが設定されている場合はそれを使用、そうでなければselectedTaskListを使用
         const listId = taskDetails.categoryId || selectedTaskList;
+        console.log(`Creating new task in list ${listId} with data:`, taskData);
         await createTask(taskData, listId);
       }
       
@@ -367,16 +409,15 @@ const TodoList = () => {
               sx={{ 
                 color: 'text.secondary',
                 ml: 0.5,
-                opacity: 0.4,
-                '&:hover': { opacity: 0.7, bgcolor: 'rgba(0, 0, 0, 0.04)' }
+                '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
               }}
               title="マイリストを削除"
             >
-              <Box component="span" sx={{ fontSize: '1.2rem', display: 'block' }}>🗑️</Box>
+              <Box component="span" sx={{ fontSize: '1.2rem', display: 'block' }} className="emoji-icon">🗑️</Box>
             </IconButton>
           )}
         </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
           {/* 完了タスク表示切替 */}
           <Typography 
             variant="body2" 
@@ -385,7 +426,8 @@ const TodoList = () => {
               display: 'flex', 
               alignItems: 'center', 
               cursor: 'pointer',
-              userSelect: 'none'
+              userSelect: 'none',
+              mr: 1
             }}
           >
             <Checkbox 
@@ -402,13 +444,12 @@ const TodoList = () => {
             onClick={handleOpenSettingsDialog}
             sx={{ 
               color: 'text.secondary',
-              ml: 2,
-              opacity: 0.4,
-              '&:hover': { opacity: 0.7 }
+              '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' },
+              mr: 0.5
             }}
             title="設定"
           >
-            <Box component="span" sx={{ fontSize: '1.2rem', display: 'block' }}>⚙️</Box>
+            <Box component="span" sx={{ fontSize: '1.2rem', display: 'block' }} className="emoji-icon">⚙️</Box>
           </IconButton>
           
           <UserMenu />
@@ -523,7 +564,7 @@ const TodoList = () => {
           setOpenDialog(true);
         }}
       >
-        <Box component="span" sx={{ fontSize: '1.5rem', mr: 1, color: getThemeColor('primary') }}>+</Box>
+        <Box component="span" sx={{ fontSize: '1.5rem', mr: 1, color: 'var(--primary-color)' }} className="emoji-icon">+</Box>
         <Typography variant="body1" sx={{ color: getThemeColor('primary'), fontWeight: 500 }}>
           新しいタスクを追加
         </Typography>
@@ -660,7 +701,7 @@ const TodoList = () => {
                   sx={{ 
                     py: 1.5,
                     px: 2,
-                    bgcolor: 'white',
+                    bgcolor: getTaskBackgroundColor(task),
                     borderLeft: `4px solid ${getThemeColor('primary')}`,
                     '&:hover': { 
                       bgcolor: getThemeColor('background'),
@@ -699,19 +740,19 @@ const TodoList = () => {
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', fontSize: '0.75rem', color: 'text.secondary' }}>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <span style={{ marginRight: '4px', opacity: 0.7 }}>📅</span>
+                        <span className="emoji-icon" style={{ marginRight: '4px' }}>📅</span>
                         {task.startDate ? format(parseISO(task.startDate), 'yyyy年MM月dd日', { locale: ja }) : '期限なし'}
                       </Box>
                       {task.starred && (
                         <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
-                          <span style={{ marginRight: '4px', opacity: 0.7 }}>⭐</span>
+                          <span className="emoji-icon" style={{ marginRight: '4px' }}>⭐</span>
                           スター付き
                         </Box>
                       )}
                       {/* マイリスト名を表示 */}
                       {task.listId && (
                         <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
-                          <span style={{ marginRight: '4px', opacity: 0.7 }}>📁</span>
+                          <span className="emoji-icon" style={{ marginRight: '4px' }}>📁</span>
                           {getTaskListName(task)}
                         </Box>
                       )}
@@ -729,10 +770,10 @@ const TodoList = () => {
                       <Box 
                         component="span" 
                         sx={{ 
-                          fontSize: '1rem', 
-                          opacity: 0.7,
+                          fontSize: '1rem',
                           display: 'inline-block'
                         }}
+                        className="emoji-icon"
                       >
                         ✏️
                       </Box>
@@ -748,10 +789,10 @@ const TodoList = () => {
                       <Box 
                         component="span" 
                         sx={{ 
-                          fontSize: '1rem', 
-                          opacity: 0.7,
+                          fontSize: '1rem',
                           display: 'inline-block'
                         }}
+                        className="emoji-icon"
                       >
                         🗑️
                       </Box>
