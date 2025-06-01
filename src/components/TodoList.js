@@ -384,8 +384,15 @@ const TodoList = () => {
   };
 
   return (
-    <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', p: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+    <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', p: 2 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        mb: 3,
+        pl: 2,
+        pt: 2
+      }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Typography variant="h5" sx={{ fontWeight: 600, fontSize: '1.8rem' }}>
             {/* フィルターが選択されている場合はフィルター名、そうでなければリスト名を表示 */}
@@ -446,7 +453,11 @@ const TodoList = () => {
       </Box>
       
       {/* 新規タスク入力フィールド */}
-      <Box sx={{ display: 'flex', mb: 3 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        mb: 3,
+        px: 2
+      }}>
         <TextField
           fullWidth
           placeholder="新しいタスクを追加..."
@@ -486,7 +497,7 @@ const TodoList = () => {
       </Box>
       
       {/* タスクリスト */}
-      <Box sx={{ flex: 1, overflow: 'auto', pb: 4 }}>
+      <Box sx={{ flex: 1, overflow: 'auto', px: 2, pb: 4 }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
             <CircularProgress />
