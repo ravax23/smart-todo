@@ -97,9 +97,9 @@ const TodoList = () => {
   // タスクリストのタイトルを取得する関数
   const getListTitle = () => {
     if (selectedFilter && selectedFilter !== 'all') {
-      return selectedFilterInfo?.name || 'すべてのタスク';
+      return selectedFilterInfo?.name || 'すべて';
     } else if (selectedFilter === 'all' || !selectedTaskList) {
-      return 'すべてのタスク';
+      return 'すべて';
     } else {
       return selectedListInfo.title;
     }
@@ -421,7 +421,7 @@ const TodoList = () => {
           </Typography>
           
           {/* マイリスト削除ボタン - マイリストが選択されている場合のみ表示（フィルター表示時は非表示） */}
-          {selectedTaskList && selectedTaskList !== 'all' && !filters.some(filter => filter.id === selectedTaskList) && (!selectedFilter || selectedFilter === 'all') && (
+          {selectedTaskList && selectedTaskList !== 'all' && !filters.some(filter => filter.id === selectedTaskList) && (!selectedFilter || selectedFilter === 'all') && getListTitle() !== 'すべて' && (
             <IconButton
               size="small"
               onClick={handleOpenDeleteDialog}
