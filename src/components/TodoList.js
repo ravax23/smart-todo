@@ -299,7 +299,6 @@ const TodoList = () => {
         // 明示的に優先度も設定
         priority: taskDetails.priority
       };
-      };
 
       console.log('Task data to be saved:', taskData);
 
