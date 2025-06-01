@@ -394,7 +394,7 @@ const TodoList = () => {
 
   return (
     <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, pl: 2, pt: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Typography variant="h5" sx={{ fontWeight: 600 }}>
             {/* フィルターが選択されている場合はフィルター名、そうでなければリスト名を表示 */}
