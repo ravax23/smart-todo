@@ -418,18 +418,24 @@ class TasksService {
     try {
       console.log('Calling tasks.tasks.insert API with GAPI...', JSON.stringify(taskData, null, 2));
       
+      // スター状態を適切なプロパティに設定
+      let apiTaskData = { ...taskData };
+      if ('starred' in taskData) {
+        apiTaskData = setStarredStatus(apiTaskData, taskData.starred);
+      }
+      
       // Google Tasks APIの仕様に合わせてリクエストを構築
       const request = {
         tasklist: taskListId,
         // 以下のプロパティを明示的に指定
         resource: {
-          title: taskData.title,
-          notes: taskData.notes,
-          due: taskData.due,
-          status: taskData.status,
+          title: apiTaskData.title,
+          notes: apiTaskData.notes,
+          due: apiTaskData.due,
+          status: apiTaskData.status,
           // スター関連のプロパティを明示的に設定
-          starred: taskData.starred,
-          priority: taskData.priority
+          starred: apiTaskData.starred,
+          priority: apiTaskData.priority
         }
       };
       
@@ -457,15 +463,21 @@ class TasksService {
     try {
       console.log('Creating task with fetch:', JSON.stringify(taskData, null, 2));
       
+      // スター状態を適切なプロパティに設定
+      let apiTaskData = { ...taskData };
+      if ('starred' in taskData) {
+        apiTaskData = setStarredStatus(apiTaskData, taskData.starred);
+      }
+      
       // Google Tasks APIの仕様に合わせてリクエストボディを構築
       const requestBody = {
-        title: taskData.title,
-        notes: taskData.notes,
-        due: taskData.due,
-        status: taskData.status,
+        title: apiTaskData.title,
+        notes: apiTaskData.notes,
+        due: apiTaskData.due,
+        status: apiTaskData.status,
         // スター関連のプロパティを明示的に設定
-        starred: taskData.starred,
-        priority: taskData.priority
+        starred: apiTaskData.starred,
+        priority: apiTaskData.priority
       };
       
       console.log('Final fetch create request body:', JSON.stringify(requestBody, null, 2));

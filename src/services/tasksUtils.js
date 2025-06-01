@@ -43,7 +43,12 @@ export function setStarredStatus(taskData, isStarred) {
   updatedTask.starred = isStarred;
   
   // 優先度プロパティも設定（Google Tasks APIで使用される可能性がある）
-  updatedTask.priority = isStarred ? 'high' : 'normal';
+  if (isStarred) {
+    updatedTask.priority = 'high';
+  } else {
+    // 優先度を削除するのではなく、normalに設定
+    updatedTask.priority = 'normal';
+  }
   
   console.log('Updated task with star properties:', {
     title: updatedTask.title,
