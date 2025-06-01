@@ -23,7 +23,8 @@ import {
   Radio,
   FormControl,
   InputLabel,
-  Select
+  Select,
+  Avatar
 } from '@mui/material';
 import { format, parseISO, isValid, isToday, isBefore, startOfDay } from 'date-fns';
 import { ja } from 'date-fns/locale';
@@ -64,7 +65,7 @@ const TodoList = () => {
     deleteTaskList
   } = useTodo();
   
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
