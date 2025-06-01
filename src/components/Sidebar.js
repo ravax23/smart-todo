@@ -63,14 +63,17 @@ const Sidebar = () => {
 
   // フィルター別のタスク数を計算（マイリスト横断で一貫した値を表示）
   const filterCounts = useMemo(() => {
-    // 全てのタスク（allTodos）を使用して各フィルターの件数を計算
+    // 未完了のタスクのみをフィルタリング
+    const incompleteTodos = allTodos.filter(todo => todo.status !== 'completed');
+    
+    // 各フィルターの件数を計算
     const counts = {};
     
-    // すべてのタスク
-    counts['all'] = allTodos.length;
+    // すべてのタスク（未完了のみ）
+    counts['all'] = incompleteTodos.length;
     
-    // 今日のタスク
-    counts['today'] = allTodos.filter(todo => {
+    // 今日のタスク（未完了のみ）
+    counts['today'] = incompleteTodos.filter(todo => {
       if (!todo.startDate) return false;
       try {
         const date = parseISO(todo.startDate);
@@ -80,8 +83,8 @@ const Sidebar = () => {
       }
     }).length;
     
-    // 今週のタスク
-    counts['after-tomorrow'] = allTodos.filter(todo => {
+    // 今週のタスク（未完了のみ）
+    counts['after-tomorrow'] = incompleteTodos.filter(todo => {
       if (!todo.startDate) return false;
       try {
         // 今週（日曜日から土曜日まで）のタスクを表示
@@ -104,8 +107,8 @@ const Sidebar = () => {
       }
     }).length;
     
-    // 期限切れのタスク
-    counts['past'] = allTodos.filter(todo => {
+    // 期限切れのタスク（未完了のみ）
+    counts['past'] = incompleteTodos.filter(todo => {
       if (!todo.startDate) return false;
       try {
         const date = parseISO(todo.startDate);
@@ -115,8 +118,8 @@ const Sidebar = () => {
       }
     }).length;
     
-    // スター付きのタスク
-    counts['starred'] = allTodos.filter(todo => todo.starred === true).length;
+    // スター付きのタスク（未完了のみ）
+    counts['starred'] = incompleteTodos.filter(todo => todo.starred === true).length;
     
     return counts;
   }, [allTodos]); // allTodosが変更されたときだけ再計算
@@ -125,9 +128,12 @@ const Sidebar = () => {
   const listCounts = useMemo(() => {
     const counts = {};
     
-    // 各マイリストのタスク数を計算
+    // 未完了のタスクのみをフィルタリング
+    const incompleteTodos = allTodos.filter(todo => todo.status !== 'completed');
+    
+    // 各マイリストの未完了タスク数を計算
     taskLists.forEach(list => {
-      counts[list.id] = allTodos.filter(todo => todo.listId === list.id).length;
+      counts[list.id] = incompleteTodos.filter(todo => todo.listId === list.id).length;
     });
     
     return counts;
