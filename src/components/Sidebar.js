@@ -266,7 +266,8 @@ const Sidebar = () => {
       <Box sx={{ 
         display: 'flex', 
         justifyContent: 'flex-start',
-        mb: 3 
+        mb: 3,
+        pl: 1 // フィルターという文字と同じ位置に合わせる
       }}>
         <Typography 
           variant="h4" 
@@ -275,16 +276,13 @@ const Sidebar = () => {
             fontWeight: 700,
             letterSpacing: '-0.5px',
             fontFamily: "'Poppins', 'Roboto', 'Helvetica', 'Arial', sans-serif",
-            background: 'linear-gradient(45deg, #3a7bd5 0%, #00d2ff 100%)',
-            backgroundSize: '200% 200%',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
+            color: '#333333', // 白黒（黒色）に変更
             textShadow: '0px 2px 4px rgba(0,0,0,0.1)',
             transform: 'scale(1.1)',
             transition: 'all 0.3s ease'
           }}
         >
-          Smart<Box component="span" sx={{ fontWeight: 900 }}>Todo</Box>
+          Smart<Box component="span" sx={{ fontWeight: 900, color: '#000000' }}>Todo</Box>
         </Typography>
       </Box>
       
