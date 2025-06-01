@@ -153,7 +153,12 @@ export const TodoProvider = ({ children }) => {
     console.log(`Filtering todos by list: ${listId}`);
     
     // 選択されたリストのタスクのみをフィルタリング
-    const filtered = todos.filter(todo => todo.listId === listId);
+    let filtered = todos.filter(todo => todo.listId === listId);
+    
+    // 完了タスクのフィルタリング
+    if (!showCompleted) {
+      filtered = filtered.filter(todo => todo.status !== 'completed');
+    }
     
     // フィルタリングされたタスクを設定
     setFilteredTodos(filtered);
