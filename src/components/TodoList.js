@@ -571,39 +571,6 @@ const TodoList = () => {
         </DialogActions>
       </Dialog>
 
-      {/* 新規タスク追加ボタン */}
-      <Box 
-        sx={{ 
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          mb: 3,
-          mt: 1,
-          p: 2,
-          border: '2px dashed #e0e0e0',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          transition: 'all 0.2s ease',
-          '&:hover': {
-            borderColor: getThemeColor('primary'),
-            bgcolor: 'rgba(0,0,0,0.02)'
-          }
-        }}
-        onClick={() => {
-          setTaskDetails({
-            ...taskDetails,
-            title: ''
-          });
-          setEditMode(false);
-          setOpenDialog(true);
-        }}
-      >
-        <Box component="span" sx={{ fontSize: '1.5rem', mr: 1, color: 'var(--primary-color)' }} className="emoji-icon">+</Box>
-        <Typography variant="body1" sx={{ color: getThemeColor('primary'), fontWeight: 500 }}>
-          新しいタスクを追加
-        </Typography>
-      </Box>
-      
       {/* 新規タスク作成ダイアログ */}
       <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth maxWidth="sm">
         <DialogTitle>{editMode ? 'タスクの編集' : '新規タスクの作成'}</DialogTitle>
