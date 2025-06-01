@@ -328,7 +328,7 @@ export const TodoProvider = ({ children }) => {
   const selectTaskList = (taskListId) => {
     console.log(`Selecting task list: ${taskListId}`);
     setSelectedTaskList(taskListId);
-    setSelectedFilter('all'); // フィルターをリセット
+    setSelectedFilter(null); // フィルターをリセット
   };
 
   // フィルターの選択
