@@ -284,16 +284,16 @@ const Sidebar = () => {
           variant="h4" 
           component="div" 
           sx={{ 
-            fontWeight: 700,
+            fontWeight: 500, // 700から500に変更してより細く
             letterSpacing: '-0.5px',
             fontFamily: "'Poppins', 'Roboto', 'Helvetica', 'Arial', sans-serif",
-            color: '#333333', // 白黒（黒色）に変更
+            color: '#333333',
             textShadow: '0px 2px 4px rgba(0,0,0,0.1)',
             transform: 'scale(1.1)',
             transition: 'all 0.3s ease'
           }}
         >
-          Smart<Box component="span" sx={{ fontWeight: 900, color: '#000000' }}>Todo</Box>
+          Smart<Box component="span" sx={{ fontWeight: 700, color: '#000000' }}>Todo</Box>
         </Typography>
       </Box>
       
