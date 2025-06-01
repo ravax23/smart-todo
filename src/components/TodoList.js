@@ -456,35 +456,7 @@ const TodoList = () => {
         </Box>
       </Box>
       
-      <Box sx={{ display: 'flex', mb: 3, mx: 2, gap: 2 }}>
-        {/* 検索フィールド */}
-        <Box sx={{ position: 'relative', flexGrow: 1 }}>
-          <TextField
-            fullWidth
-            placeholder="タスクを検索..."
-            variant="outlined"
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                pl: 4,
-                bgcolor: '#f9fafb',
-                borderRadius: 2
-              }
-            }}
-          />
-          <Box 
-            sx={{ 
-              position: 'absolute', 
-              left: 12, 
-              top: '50%', 
-              transform: 'translateY(-50%)', 
-              color: 'text.secondary', 
-              fontSize: '1rem'
-            }}
-          >
-            🔍
-          </Box>
-        </Box>
-        
+      <Box sx={{ display: 'flex', mb: 3, mx: 2, justifyContent: 'center' }}>
         {/* 新規タスク追加ボタン */}
         <Box 
           sx={{ 
@@ -496,7 +468,7 @@ const TodoList = () => {
             borderRadius: '8px',
             cursor: 'pointer',
             transition: 'all 0.2s ease',
-            minWidth: '200px',
+            width: '250px',
             '&:hover': {
               borderColor: getThemeColor('primary'),
               bgcolor: 'rgba(0,0,0,0.02)'
