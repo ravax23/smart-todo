@@ -507,6 +507,18 @@ const TodoList = () => {
             }
           }}
         />
+        <Button
+          variant="contained"
+          onClick={handleCreateTask}
+          disabled={!newTaskTitle.trim()}
+          sx={{ 
+            ml: 1, 
+            borderRadius: 2,
+            minWidth: '80px'
+          }}
+        >
+          追加
+        </Button>
       </Box>
       
       {/* タスクリスト */}
