@@ -165,10 +165,9 @@ export const TodoProvider = ({ children }) => {
     
     let filtered = [...todosToFilter];
     
-    // 選択されたリストでフィルタリング（'all'以外の場合）
-    if (selectedTaskList && selectedFilter === 'all') {
-      // 'all'フィルターの場合は、リストでフィルタリングしない（すべてのタスクを表示）
-      // filtered = filtered.filter(todo => todo.listId === selectedTaskList);
+    // 選択されたリストでフィルタリング
+    if (selectedTaskList && selectedTaskList !== 'all') {
+      filtered = filtered.filter(todo => todo.listId === selectedTaskList);
     }
     
     // 完了タスクのフィルタリング
