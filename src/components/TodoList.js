@@ -28,6 +28,7 @@ import {
 import { format, parseISO, isValid, isToday, isBefore, startOfDay } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useTodo } from '../contexts/TodoContext';
+import { useAuth } from '../contexts/AuthContext';
 
 // フィルターリストの定義（Sidebarと同じ定義を持つ）
 const filters = [
@@ -63,9 +64,12 @@ const TodoList = () => {
     deleteTaskList
   } = useTodo();
   
+  const { user } = useAuth();
+  
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [userMenuAnchorEl, setUserMenuAnchorEl] = useState(null);
   
   // 削除確認ダイアログの状態
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -449,6 +453,27 @@ const TodoList = () => {
           >
             <Box component="span" sx={{ fontSize: '1.2rem', display: 'block' }} className="emoji-icon">⚙️</Box>
           </IconButton>
+          
+          {/* ユーザーメニュー */}
+          {user && (
+            <IconButton
+              size="small"
+              sx={{ ml: 1 }}
+              onClick={(e) => setUserMenuAnchorEl(e.currentTarget)}
+            >
+              {user.picture ? (
+                <Avatar 
+                  src={user.picture} 
+                  alt={user.name}
+                  sx={{ width: 32, height: 32 }}
+                />
+              ) : (
+                <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
+                  {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                </Avatar>
+              )}
+            </IconButton>
+          )}
         </Box>
       </Box>
       
@@ -482,18 +507,6 @@ const TodoList = () => {
             }
           }}
         />
-        <Button
-          variant="contained"
-          onClick={handleCreateTask}
-          disabled={!newTaskTitle.trim()}
-          sx={{ 
-            ml: 1, 
-            borderRadius: 2,
-            minWidth: '80px'
-          }}
-        >
-          追加
-        </Button>
       </Box>
       
       {/* タスクリスト */}
@@ -666,6 +679,30 @@ const TodoList = () => {
             {list.title}
           </MenuItem>
         ))}
+      </Menu>
+      
+      {/* ユーザーメニュー */}
+      <Menu
+        anchorEl={userMenuAnchorEl}
+        open={Boolean(userMenuAnchorEl)}
+        onClose={() => setUserMenuAnchorEl(null)}
+      >
+        {user && (
+          <MenuItem disabled sx={{ opacity: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+              <Typography variant="subtitle2">{user.name}</Typography>
+              <Typography variant="caption" color="text.secondary">{user.email}</Typography>
+            </Box>
+          </MenuItem>
+        )}
+        <MenuItem onClick={() => {
+          setUserMenuAnchorEl(null);
+          // ログアウト処理
+          if (typeof signOut === 'function') signOut();
+        }}>
+          <Box component="span" sx={{ fontSize: '1.2rem', mr: 1 }}>🚪</Box>
+          ログアウト
+        </MenuItem>
       </Menu>
 
       {/* 削除確認ダイアログ */}
