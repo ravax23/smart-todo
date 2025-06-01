@@ -420,8 +420,8 @@ const TodoList = () => {
             {getListTitle()}
           </Typography>
           
-          {/* マイリスト削除ボタン - マイリストが選択されている場合のみ表示 */}
-          {selectedTaskList && selectedTaskList !== 'all' && selectedTaskList !== 'today' && selectedTaskList !== 'tomorrow' && selectedTaskList !== 'after-tomorrow' && selectedTaskList !== 'past' && (
+          {/* マイリスト削除ボタン - マイリストが選択されている場合のみ表示（フィルター表示時は非表示） */}
+          {selectedTaskList && !selectedFilter && selectedTaskList !== 'all' && (
             <IconButton
               size="small"
               onClick={handleOpenDeleteDialog}
