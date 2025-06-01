@@ -96,9 +96,9 @@ const TodoList = () => {
 
   // タスクリストのタイトルを取得する関数
   const getListTitle = () => {
-    if (selectedFilter !== 'all') {
+    if (selectedFilter && selectedFilter !== 'all') {
       return selectedFilterInfo?.name || 'すべてのタスク';
-    } else if (!selectedTaskList) {
+    } else if (selectedFilter === 'all' || !selectedTaskList) {
       return 'すべてのタスク';
     } else {
       return selectedListInfo.title;
