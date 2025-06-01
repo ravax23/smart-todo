@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import TasksService from '../services/tasksService';
+import syncService from '../services/syncService';
 import { extractStarredStatus } from '../services/tasksUtils';
 import { requestTasksScope } from '../services/authService';
 import { isToday, isTomorrow, addDays, isBefore, parseISO, startOfDay } from 'date-fns';
@@ -16,14 +17,22 @@ export const TodoProvider = ({ children }) => {
   const [showCompleted, setShowCompleted] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [syncStatus, setSyncStatus] = useState({ isSyncing: false, lastSyncTime: null });
   const { isAuthenticated } = useAuth();
 
   // 初期データの読み込み
   useEffect(() => {
     if (isAuthenticated) {
       console.log('User is authenticated, fetching task lists');
-      // 直接タスクリストを取得
-      fetchTaskLists();
+      // 初期同期を実行
+      initialSync();
+      // 定期的な同期を開始（5分間隔）
+      syncService.startPeriodicSync(300000);
+      
+      // コンポーネントのアンマウント時に定期同期を停止
+      return () => {
+        syncService.stopPeriodicSync();
+      };
     } else {
       console.log('User is not authenticated, skipping task fetch');
       setTaskLists([]);
@@ -33,32 +42,116 @@ export const TodoProvider = ({ children }) => {
     }
   }, [isAuthenticated]);
 
-  // タスクリストが選択されたときにタスクを取得
+  // 初期同期処理
+  const initialSync = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // 初期同期を実行
+      const { taskLists: lists, tasks } = await syncService.initialSync();
+      
+      console.log('Initial sync completed, received data:', { lists, tasks });
+      
+      // タスクリストを設定
+      setTaskLists(lists);
+      
+      // タスクを設定
+      const tasksWithMetadata = tasks.map(task => {
+        // スター状態を抽出
+        const isStarred = extractStarredStatus(task);
+        
+        return {
+          ...task,
+          startDate: task.due, // dueフィールドをstartDateとして使用
+          starred: isStarred // 抽出したスター状態を設定
+        };
+      });
+      
+      // タスクをposition順にソート
+      const sortedTasks = [...tasksWithMetadata].sort((a, b) => {
+        // positionが文字列の場合は数値に変換
+        const posA = typeof a.position === 'string' ? parseFloat(a.position) : a.position;
+        const posB = typeof b.position === 'string' ? parseFloat(b.position) : b.position;
+        return posA - posB;
+      });
+      
+      setTodos(sortedTasks);
+      
+      // デフォルトのタスクリストを選択
+      if (lists && lists.length > 0) {
+        const defaultList = lists.find(list => list.title === 'マイタスク') || lists[0];
+        setSelectedTaskList(defaultList.id);
+      }
+      
+      // 同期状態を更新
+      updateSyncStatus();
+    } catch (err) {
+      console.error('Failed to perform initial sync:', err);
+      
+      // スコープ不足エラーの場合、明示的なスコープ承認を要求
+      if (err.message && (err.message.includes('insufficient authentication scopes') || 
+          err.message.includes('API error: 401'))) {
+        console.log('Insufficient scopes detected, requesting explicit authorization');
+        requestTasksScope();
+        return;
+      } else {
+        setError(`初期同期に失敗しました。${err.message}`);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 同期状態の更新
+  const updateSyncStatus = () => {
+    const status = syncService.getSyncStatus();
+    setSyncStatus({
+      isSyncing: status.isSyncing,
+      lastSyncTime: status.lastSyncTime,
+      queueLength: status.queueLength,
+      pendingChanges: status.pendingChanges
+    });
+  };
+
+  // タスクリストが選択されたときにタスクをフィルタリング
   useEffect(() => {
     if (isAuthenticated && selectedTaskList) {
       console.log(`Selected task list changed to: ${selectedTaskList}`);
-      fetchTasks(selectedTaskList);
+      filterTodosByList(selectedTaskList);
     }
-  }, [isAuthenticated, selectedTaskList]);
+  }, [isAuthenticated, selectedTaskList, todos]);
 
-  // フィルターが変更されたときにタスクを取得またはフィルタリング
+  // フィルターが変更されたときにタスクをフィルタリング
   useEffect(() => {
     if (isAuthenticated) {
-      if (selectedFilter !== 'all' && selectedFilter) {
-        console.log(`Filter changed to: ${selectedFilter}, fetching all tasks`);
-        fetchAllTasks();
-      } else if (selectedTaskList) {
-        console.log(`Filter changed to: all, fetching tasks for list: ${selectedTaskList}`);
-        fetchTasks(selectedTaskList);
-      }
+      console.log(`Filter changed to: ${selectedFilter}`);
+      filterTodos();
     }
-  }, [isAuthenticated, selectedFilter]);
+  }, [isAuthenticated, selectedFilter, todos]);
 
   // タスクが更新されたときにフィルタリング
   useEffect(() => {
     console.log('Filtering todos based on updated data');
     filterTodos();
   }, [todos, showCompleted]);
+
+  // 選択されたリストに基づいてタスクをフィルタリング
+  const filterTodosByList = (listId) => {
+    if (!todos || !todos.length) {
+      console.log('No todos to filter by list');
+      setFilteredTodos([]);
+      return;
+    }
+
+    console.log(`Filtering todos by list: ${listId}`);
+    
+    // 選択されたリストのタスクのみをフィルタリング
+    const filtered = todos.filter(todo => todo.listId === listId);
+    
+    // フィルタリングされたタスクを設定
+    setFilteredTodos(filtered);
+  };
 
   // タスクのフィルタリング
   const filterTodos = (todosToFilter = todos) => {
@@ -70,13 +163,12 @@ export const TodoProvider = ({ children }) => {
 
     console.log(`Filtering ${todosToFilter.length} todos with filter: ${selectedFilter}`);
     
-    // デバッグ用：フィルタリング前のタスクの順序を確認
-    console.log('Tasks before filtering:', todosToFilter.map(task => ({
-      title: task.title,
-      position: task.position
-    })));
-    
     let filtered = [...todosToFilter];
+    
+    // 選択されたリストでフィルタリング（'all'以外の場合）
+    if (selectedTaskList && selectedFilter === 'all') {
+      filtered = filtered.filter(todo => todo.listId === selectedTaskList);
+    }
     
     // 完了タスクのフィルタリング
     if (!showCompleted) {
@@ -152,301 +244,34 @@ export const TodoProvider = ({ children }) => {
         break;
     }
     
-    // デバッグ用：フィルタリング後のタスクの順序を確認
-    console.log('Tasks after filtering:', filtered.map(task => ({
-      title: task.title,
-      position: task.position
-    })));
+    // タスクをposition順にソート
+    const sortedFiltered = [...filtered].sort((a, b) => {
+      // positionが文字列の場合は数値に変換
+      const posA = typeof a.position === 'string' ? parseFloat(a.position) : a.position;
+      const posB = typeof b.position === 'string' ? parseFloat(b.position) : b.position;
+      return posA - posB;
+    });
     
-    setFilteredTodos(filtered);
+    setFilteredTodos(sortedFiltered);
   };
 
-  // タスクリストの取得
-  const fetchTaskLists = async () => {
+  // 手動同期を実行
+  const manualSync = async () => {
     try {
-      console.log('Starting fetchTaskLists');
       setLoading(true);
       setError(null);
       
-      try {
-        // アクセストークンの確認
-        const token = localStorage.getItem('google_access_token');
-        if (!token) {
-          console.error('No access token available');
-          setError('認証情報が見つかりません。再度ログインしてください。');
-          setLoading(false);
-          return;
-        }
-        
-        // 直接fetchを使用してタスクリストを取得
-        const headers = {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        };
-        
-        const response = await fetch('https://tasks.googleapis.com/tasks/v1/users/@me/lists', {
-          headers,
-          cache: 'no-store'
-        });
-        
-        if (!response.ok) {
-          if (response.status === 401) {
-            // 認証エラーの場合は再認証を要求
-            console.error('Authentication error, requesting new token');
-            requestTasksScope();
-            return;
-          }
-          throw new Error(`API error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        const lists = data.items || [];
-        console.log('Received task lists:', lists);
-        setTaskLists(lists);
-        
-        // デフォルトのタスクリストを選択
-        if (lists && lists.length > 0) {
-          const defaultList = lists.find(list => list.title === 'マイタスク') || lists[0];
-          setSelectedTaskList(defaultList.id);
-          
-          // 選択したリストのタスクを取得
-          await fetchTasks(defaultList.id);
-        } else {
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error('Failed to fetch task lists:', err);
-        
-        // スコープ不足エラーの場合、明示的なスコープ承認を要求
-        if (err.message && err.message.includes('insufficient authentication scopes') || 
-            err.message && err.message.includes('API error: 401')) {
-          console.log('Insufficient scopes detected, requesting explicit authorization');
-          requestTasksScope();
-          return;
-        } else {
-          setError(`タスクリストの取得に失敗しました。${err.message}`);
-          setLoading(false);
-        }
-      }
+      // 同期キューに残っているタスクを処理
+      await syncService.startSync();
+      
+      // 同期状態を更新
+      updateSyncStatus();
+      
+      // 初期同期を再実行して最新データを取得
+      await initialSync();
     } catch (err) {
-      console.error('Error in fetchTaskLists:', err);
-      setError(`タスクリストの取得に失敗しました。${err.message}`);
-      setLoading(false);
-    }
-  };
-
-  // タスクリストの取得
-  const fetchTasks = async (taskListId = selectedTaskList) => {
-    try {
-      console.log(`Starting fetchTasks for list: ${taskListId}`);
-      setLoading(true);
-      setError(null);
-      
-      if (!taskListId) {
-        console.error('No task list ID provided');
-        setError('タスクリストが選択されていません。');
-        setLoading(false);
-        return;
-      }
-      
-      try {
-        // アクセストークンの確認
-        const token = localStorage.getItem('google_access_token');
-        if (!token) {
-          console.error('No access token available');
-          setError('認証情報が見つかりません。再度ログインしてください。');
-          setLoading(false);
-          return;
-        }
-        
-        // 直接fetchを使用してタスクを取得
-        const headers = {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        };
-        
-        const url = `https://tasks.googleapis.com/tasks/v1/lists/${taskListId}/tasks?showCompleted=true&showHidden=true&maxResults=100`;
-        console.log('Request URL:', url);
-        
-        const response = await fetch(url, {
-          headers,
-          cache: 'no-store'
-        });
-        
-        if (!response.ok) {
-          if (response.status === 401) {
-            // 認証エラーの場合は再認証を要求
-            console.error('Authentication error, requesting new token');
-            requestTasksScope();
-            return;
-          }
-          throw new Error(`API error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        console.log('API Response Data:', data);
-        
-        // 日付フィールドの処理
-        const tasks = data.items || [];
-        const tasksWithListId = tasks.map(task => {
-          // Google Tasks APIのレスポンスを確認
-          console.log('Raw task data:', task);
-          
-          // スター状態を抽出
-          const isStarred = extractStarredStatus(task);
-          console.log(`Task ${task.title} starred status:`, isStarred);
-          
-          return {
-            ...task,
-            listId: taskListId, // 明示的にlistIdを設定
-            startDate: task.due, // dueフィールドをstartDateとして使用
-            starred: isStarred // 抽出したスター状態を設定
-          };
-        });
-        
-        // タスクをposition順にソート
-        const sortedTasks = [...tasksWithListId].sort((a, b) => {
-          // positionが文字列の場合は数値に変換
-          const posA = typeof a.position === 'string' ? parseFloat(a.position) : a.position;
-          const posB = typeof b.position === 'string' ? parseFloat(b.position) : b.position;
-          return posA - posB;
-        });
-        
-        // デバッグ用：タスクの順序を確認
-        console.log('Tasks before setting to state:', sortedTasks.map(task => ({
-          title: task.title,
-          position: task.position
-        })));
-        
-        setTodos(sortedTasks);
-        // タスクを取得した後、フィルタリングを実行
-        filterTodos(sortedTasks);
-      } catch (err) {
-        console.error('Failed to fetch tasks:', err);
-        
-        // スコープ不足エラーの場合、明示的なスコープ承認を要求
-        if (err.message && err.message.includes('insufficient authentication scopes') || 
-            err.message && err.message.includes('API error: 401')) {
-          console.log('Insufficient scopes detected, requesting explicit authorization');
-          requestTasksScope();
-          return;
-        } else {
-          setError(`タスクの取得に失敗しました。${err.message}`);
-        }
-      }
-    } catch (err) {
-      console.error('Error in fetchTasks:', err);
-      setError(`タスクの取得に失敗しました。${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // すべてのタスクリストからタスクを取得
-  const fetchAllTasks = async () => {
-    try {
-      console.log('Fetching tasks from all lists');
-      setLoading(true);
-      setError(null);
-      
-      // アクセストークンの確認
-      const token = localStorage.getItem('google_access_token');
-      if (!token) {
-        console.error('No access token available');
-        setError('認証情報が見つかりません。再度ログインしてください。');
-        setLoading(false);
-        return;
-      }
-      
-      // すべてのタスクリストを取得
-      const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      };
-      
-      const listsResponse = await fetch('https://tasks.googleapis.com/tasks/v1/users/@me/lists', {
-        headers,
-        cache: 'no-store'
-      });
-      
-      if (!listsResponse.ok) {
-        if (listsResponse.status === 401) {
-          // 認証エラーの場合は再認証を要求
-          console.error('Authentication error, requesting new token');
-          requestTasksScope();
-          return;
-        }
-        throw new Error(`API error: ${listsResponse.status}`);
-      }
-      
-      const listsData = await listsResponse.json();
-      const lists = listsData.items || [];
-      console.log('Received all task lists:', lists);
-      
-      if (!lists || lists.length === 0) {
-        console.log('No task lists found');
-        setTodos([]);
-        setFilteredTodos([]);
-        setLoading(false);
-        return;
-      }
-      
-      // すべてのタスクリストからタスクを取得
-      let allTasks = [];
-      for (const list of lists) {
-        try {
-          const url = `https://tasks.googleapis.com/tasks/v1/lists/${list.id}/tasks?showCompleted=true&showHidden=true&maxResults=100`;
-          const taskResponse = await fetch(url, {
-            headers,
-            cache: 'no-store'
-          });
-          
-          if (!taskResponse.ok) {
-            console.error(`Failed to fetch tasks from list ${list.id}: ${taskResponse.status}`);
-            continue;
-          }
-          
-          const taskData = await taskResponse.json();
-          const tasks = taskData.items || [];
-          
-          // タスクにlistIdを追加
-          const tasksWithListId = tasks.map(task => {
-            // Google Tasks APIのレスポンスを確認
-            console.log('Raw task data from all lists:', task);
-            
-            // スター状態を抽出
-            const isStarred = extractStarredStatus(task);
-            console.log(`Task ${task.title} starred status:`, isStarred);
-            
-            return {
-              ...task,
-              listId: list.id,
-              startDate: task.due, // dueフィールドをstartDateとして使用
-              starred: isStarred // 抽出したスター状態を設定
-            };
-          });
-          
-          allTasks = [...allTasks, ...tasksWithListId];
-        } catch (err) {
-          console.error(`Failed to fetch tasks from list ${list.id}:`, err);
-        }
-      }
-      
-      // タスクをposition順にソート
-      const sortedTasks = [...allTasks].sort((a, b) => {
-        // positionが文字列の場合は数値に変換
-        const posA = typeof a.position === 'string' ? parseFloat(a.position) : a.position;
-        const posB = typeof b.position === 'string' ? parseFloat(b.position) : b.position;
-        return posA - posB;
-      });
-      
-      console.log('All tasks from all lists:', sortedTasks);
-      setTodos(sortedTasks);
-      // タスクを取得した後、フィルタリングを実行
-      filterTodos(sortedTasks);
-    } catch (err) {
-      console.error('Error in fetchAllTasks:', err);
-      setError(`すべてのタスクの取得に失敗しました。${err.message}`);
+      console.error('Manual sync failed:', err);
+      setError(`手動同期に失敗しました。${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -460,24 +285,41 @@ export const TodoProvider = ({ children }) => {
       
       console.log(`Creating new task in list ${listId} with data:`, taskData);
       
-      const newTask = await TasksService.createTask(listId, taskData);
-      console.log('Created new task:', newTask);
+      // 新しいタスクのIDを生成（一時的なID）
+      const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
-      // タスクリストを再取得して最新の状態を反映
-      if (selectedFilter !== 'all') {
-        fetchAllTasks();
-      } else if (selectedTaskList) {
-        fetchTasks(selectedTaskList);
-      } else {
-        fetchAllTasks();
-      }
+      // 新しいタスクオブジェクトを作成
+      const newTask = {
+        id: tempId,
+        title: taskData.title,
+        notes: taskData.notes || '',
+        due: taskData.due,
+        status: 'needsAction',
+        starred: taskData.starred || false,
+        listId: listId,
+        position: `${Date.now()}`, // 一時的なposition値
+        startDate: taskData.due // dueフィールドをstartDateとして使用
+      };
+      
+      // メモリ内のタスクリストに追加
+      setTodos(prevTodos => [...prevTodos, newTask]);
+      
+      // 同期キューに追加
+      syncService.addToSyncQueue('task', 'create', {
+        ...newTask,
+        listId: listId
+      });
+      
+      // 同期状態を更新
+      updateSyncStatus();
       
       return newTask;
     } catch (err) {
       console.error('Failed to create task:', err);
       setError(`タスクの作成に失敗しました。${err.message}`);
-      setLoading(false);
       throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -486,30 +328,12 @@ export const TodoProvider = ({ children }) => {
     console.log(`Selecting task list: ${taskListId}`);
     setSelectedTaskList(taskListId);
     setSelectedFilter('all'); // フィルターをリセット
-    
-    // 選択されたタスクリストのタスクを取得
-    if (taskListId) {
-      fetchTasks(taskListId);
-    }
   };
 
   // フィルターの選択
   const selectFilter = (filterId) => {
     console.log(`Selecting filter: ${filterId}`);
     setSelectedFilter(filterId);
-    
-    // フィルターが選択された場合の処理
-    if (filterId === 'all') {
-      // 'all'フィルターの場合は、タスクリスト選択をクリア
-      setSelectedTaskList(null);
-      // すべてのタスクを取得
-      fetchAllTasks();
-    } else {
-      // その他のフィルターの場合も、タスクリスト選択をクリア
-      setSelectedTaskList(null);
-      // すべてのタスクリストからタスクを取得してフィルタリング
-      fetchAllTasks();
-    }
   };
 
   // 完了タスクの表示/非表示を切り替え
@@ -521,24 +345,27 @@ export const TodoProvider = ({ children }) => {
   const updateTaskListTitle = async (taskListId, newTitle) => {
     try {
       setLoading(true);
-      // 実際のAPIを呼び出す前に、UIを先に更新（オプティミスティックUI更新）
+      
+      // メモリ内のタスクリストを更新
       setTaskLists(prevLists => 
         prevLists.map(list => 
           list.id === taskListId ? { ...list, title: newTitle } : list
         )
       );
       
-      // APIを呼び出してタスクリストのタイトルを更新する
-      await TasksService.updateTaskList(taskListId, { title: newTitle });
+      // 同期キューに追加
+      syncService.addToSyncQueue('taskList', 'update', {
+        id: taskListId,
+        title: newTitle
+      });
       
-      // 成功した場合は何もしない（すでに更新済み）
+      // 同期状態を更新
+      updateSyncStatus();
+      
       console.log(`Task list ${taskListId} title updated to: ${newTitle}`);
     } catch (err) {
       console.error('Failed to update task list title:', err);
       setError(`タスクリストの更新に失敗しました。${err.message}`);
-      
-      // 失敗した場合は元に戻す
-      fetchTaskLists();
     } finally {
       setLoading(false);
     }
@@ -551,24 +378,29 @@ export const TodoProvider = ({ children }) => {
       const taskToMove = todos.find(task => task.id === taskId);
       if (!taskToMove) return;
       
-      // 現在のリストからタスクを削除
-      setTodos(prevTodos => prevTodos.filter(task => task.id !== taskId));
+      const sourceListId = taskToMove.listId;
       
-      // APIを呼び出してタスクを移動する
-      await TasksService.moveTask(taskId, selectedTaskList, targetListId);
+      // メモリ内のタスクを更新
+      setTodos(prevTodos => 
+        prevTodos.map(task => 
+          task.id === taskId ? { ...task, listId: targetListId } : task
+        )
+      );
       
-      // 移動先のリストが現在表示中のリストなら、タスクを再取得
-      if (targetListId === selectedTaskList) {
-        fetchTasks(targetListId);
-      }
+      // 同期キューに追加
+      syncService.addToSyncQueue('task', 'update', {
+        id: taskId,
+        listId: sourceListId,
+        newListId: targetListId
+      });
+      
+      // 同期状態を更新
+      updateSyncStatus();
       
       console.log(`Task ${taskId} moved to list: ${targetListId}`);
     } catch (err) {
       console.error('Failed to move task:', err);
       setError(`タスクの移動に失敗しました。${err.message}`);
-      
-      // 失敗した場合は元のリストのタスクを再取得
-      fetchTasks(selectedTaskList);
     }
   };
 
@@ -590,25 +422,22 @@ export const TodoProvider = ({ children }) => {
         throw new Error('タスクリストが見つかりません。');
       }
       
-      // 実際のAPIを呼び出す前に、UIを先に更新（オプティミスティックUI更新）
+      // メモリ内のタスクを削除
       setTodos(prevTodos => prevTodos.filter(task => task.id !== taskId));
       
-      // APIを呼び出してタスクを削除する
-      await TasksService.deleteTask(listId, taskId);
+      // 同期キューに追加
+      syncService.addToSyncQueue('task', 'delete', {
+        id: taskId,
+        listId: listId
+      });
+      
+      // 同期状態を更新
+      updateSyncStatus();
       
       console.log(`Task ${taskId} deleted successfully`);
     } catch (err) {
       console.error('Failed to delete task:', err);
       setError(`タスクの削除に失敗しました。${err.message}`);
-      
-      // 失敗した場合は元に戻す
-      if (selectedFilter !== 'all') {
-        fetchAllTasks();
-      } else if (selectedTaskList) {
-        fetchTasks(selectedTaskList);
-      } else {
-        fetchAllTasks();
-      }
     } finally {
       setLoading(false);
     }
@@ -635,29 +464,28 @@ export const TodoProvider = ({ children }) => {
       // 現在の状態の反対に切り替える
       const newStatus = currentStatus === 'completed' ? 'needsAction' : 'completed';
       
-      // 実際のAPIを呼び出す前に、UIを先に更新（オプティミスティックUI更新）
+      // メモリ内のタスクを更新
       setTodos(prevTodos => 
         prevTodos.map(task => 
           task.id === taskId ? { ...task, status: newStatus } : task
         )
       );
       
-      // APIを呼び出してタスクのステータスを更新する
-      await TasksService.updateTaskStatus(listId, taskId, newStatus);
+      // 同期キューに追加
+      syncService.addToSyncQueue('task', 'update', {
+        id: taskId,
+        listId: listId,
+        status: newStatus,
+        completed: newStatus === 'completed' ? new Date().toISOString() : null
+      });
+      
+      // 同期状態を更新
+      updateSyncStatus();
       
       console.log(`Task ${taskId} status updated to: ${newStatus}`);
     } catch (err) {
       console.error('Failed to update task status:', err);
       setError(`タスクの状態更新に失敗しました。${err.message}`);
-      
-      // 失敗した場合は元に戻す
-      if (selectedFilter !== 'all') {
-        fetchAllTasks();
-      } else if (selectedTaskList) {
-        fetchTasks(selectedTaskList);
-      } else {
-        fetchAllTasks();
-      }
     } finally {
       setLoading(false);
     }
@@ -668,10 +496,10 @@ export const TodoProvider = ({ children }) => {
     try {
       setLoading(true);
       
-      // UIを先に更新（オプティミスティックUI更新）
+      // メモリ内のタスクリストを更新
       setTaskLists(newTaskLists);
       
-      // ここでAPIを呼び出してサーバー側でも並び替えを保存する
+      // 同期キューに追加
       // Google Tasks APIには直接的なリスト並び替え機能がないため、
       // フロントエンドでの表示順序のみを管理する
       
@@ -679,9 +507,6 @@ export const TodoProvider = ({ children }) => {
     } catch (err) {
       console.error('Failed to reorder task lists:', err);
       setError(`タスクリストの並び替えに失敗しました。${err.message}`);
-      
-      // 失敗した場合は元に戻す
-      fetchTaskLists();
     } finally {
       setLoading(false);
     }
@@ -705,14 +530,15 @@ export const TodoProvider = ({ children }) => {
         throw new Error('タスクリストが見つかりません。');
       }
       
-      // 実際のAPIを呼び出す前に、UIを先に更新（オプティミスティックUI更新）
+      // メモリ内のタスクを更新
       setTodos(prevTodos => 
         prevTodos.map(task => 
           task.id === taskId ? { 
             ...task, 
             title: taskData.title,
-            description: taskData.notes,
+            notes: taskData.notes,
             startDate: taskData.due,
+            due: taskData.due,
             starred: taskData.starred,
             priority: taskData.priority // 優先度も明示的に更新
           } : task
@@ -721,30 +547,24 @@ export const TodoProvider = ({ children }) => {
       
       console.log(`Updating task ${taskId} with data:`, taskData);
       
-      // APIを呼び出してタスクを更新する
-      const updatedTask = await TasksService.updateTask(listId, taskId, taskData);
-      console.log(`Task ${taskId} updated successfully:`, updatedTask);
+      // 同期キューに追加
+      syncService.addToSyncQueue('task', 'update', {
+        id: taskId,
+        listId: listId,
+        title: taskData.title,
+        notes: taskData.notes,
+        due: taskData.due,
+        starred: taskData.starred,
+        priority: taskData.priority
+      });
       
-      // 更新後のタスクを再取得して状態を最新に保つ
-      if (selectedFilter !== 'all') {
-        fetchAllTasks();
-      } else if (selectedTaskList) {
-        fetchTasks(selectedTaskList);
-      } else {
-        fetchAllTasks();
-      }
+      // 同期状態を更新
+      updateSyncStatus();
+      
+      console.log(`Task ${taskId} updated successfully`);
     } catch (err) {
       console.error('Failed to update task:', err);
       setError(`タスクの更新に失敗しました。${err.message}`);
-      
-      // 失敗した場合は元に戻す
-      if (selectedFilter !== 'all') {
-        fetchAllTasks();
-      } else if (selectedTaskList) {
-        fetchTasks(selectedTaskList);
-      } else {
-        fetchAllTasks();
-      }
     } finally {
       setLoading(false);
     }
@@ -756,8 +576,11 @@ export const TodoProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      // 実際のAPIを呼び出す前に、UIを先に更新（オプティミスティックUI更新）
+      // メモリ内のタスクリストを削除
       setTaskLists(prevLists => prevLists.filter(list => list.id !== listId));
+      
+      // このリストに属するタスクも削除
+      setTodos(prevTodos => prevTodos.filter(task => task.listId !== listId));
       
       // 削除するリストが現在選択されているリストの場合は、デフォルトリストに切り替える
       if (selectedTaskList === listId) {
@@ -770,16 +593,16 @@ export const TodoProvider = ({ children }) => {
         }
       }
       
-      // APIを呼び出してタスクリストを削除する
-      await TasksService.deleteTaskList(listId);
+      // 同期キューに追加
+      syncService.addToSyncQueue('taskList', 'delete', listId);
+      
+      // 同期状態を更新
+      updateSyncStatus();
       
       console.log(`Task list ${listId} deleted successfully`);
     } catch (err) {
       console.error('Failed to delete task list:', err);
       setError(`タスクリストの削除に失敗しました。${err.message}`);
-      
-      // 失敗した場合は元に戻す
-      fetchTaskLists();
     } finally {
       setLoading(false);
     }
@@ -791,11 +614,26 @@ export const TodoProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      const newList = await TasksService.createTaskList(title);
-      console.log('Created new task list:', newList);
+      // 一時的なIDを生成
+      const tempId = `temp-list-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
-      // タスクリストを再取得
-      fetchTaskLists();
+      // メモリ内に新しいタスクリストを追加
+      const newList = {
+        id: tempId,
+        title: title
+      };
+      
+      setTaskLists(prevLists => [...prevLists, newList]);
+      
+      // 同期キューに追加
+      syncService.addToSyncQueue('taskList', 'create', {
+        title: title
+      });
+      
+      // 同期状態を更新
+      updateSyncStatus();
+      
+      console.log('Created new task list:', newList);
       
       return newList;
     } catch (err) {
@@ -812,45 +650,34 @@ export const TodoProvider = ({ children }) => {
     try {
       setLoading(true);
       
-      // タスクをposition順にソート
-      const sortedTasks = [...newTasks].sort((a, b) => {
-        // positionが文字列の場合は数値に変換
-        const posA = typeof a.position === 'string' ? parseFloat(a.position) : a.position;
-        const posB = typeof b.position === 'string' ? parseFloat(b.position) : b.position;
-        return posA - posB;
+      // メモリ内のタスクを更新
+      setTodos(prevTodos => {
+        // 並び替え対象のタスクのIDを取得
+        const reorderedIds = new Set(newTasks.map(task => task.id));
+        
+        // 並び替え対象外のタスクを保持
+        const unchangedTasks = prevTodos.filter(task => !reorderedIds.has(task.id));
+        
+        // 並び替えられたタスクと変更されていないタスクを結合
+        return [...unchangedTasks, ...newTasks];
       });
       
-      // UIを先に更新（オプティミスティックUI更新）
-      setTodos(sortedTasks);
-      
-      // Google Tasks APIに順序変更を反映
-      // Google Tasks APIでは、タスクの順序はprevious/parentパラメータで指定します
-      for (let i = 0; i < sortedTasks.length; i++) {
-        const task = sortedTasks[i];
-        const previousTask = i > 0 ? sortedTasks[i - 1] : null;
-        
-        try {
-          await TasksService.moveTaskInList(
-            selectedTaskList,
-            task.id,
-            previousTask ? previousTask.id : null
-          );
-        } catch (moveErr) {
-          console.error(`Failed to move task ${task.id}:`, moveErr);
-          // 個別のタスク移動エラーは無視して続行
-        }
+      // 同期キューに追加
+      if (newTasks.length > 0) {
+        const listId = newTasks[0].listId;
+        syncService.addToSyncQueue('task', 'reorder', {
+          listId,
+          tasks: newTasks
+        });
       }
       
-      // 変更後にタスクを再取得して最新の順序を反映
-      await fetchTasks(selectedTaskList);
+      // 同期状態を更新
+      updateSyncStatus();
       
-      console.log('Tasks reordered and synced with Google Tasks');
+      console.log('Tasks reordered');
     } catch (err) {
       console.error('Failed to reorder tasks:', err);
       setError(`タスクの並び替えに失敗しました。${err.message}`);
-      
-      // 失敗した場合は元に戻す
-      fetchTasks(selectedTaskList);
     } finally {
       setLoading(false);
     }
@@ -901,8 +728,8 @@ export const TodoProvider = ({ children }) => {
     showCompleted,
     loading,
     error,
-    fetchTasks,
-    fetchTaskLists,
+    syncStatus,
+    manualSync,
     createTask,
     deleteTask,
     selectTaskList,

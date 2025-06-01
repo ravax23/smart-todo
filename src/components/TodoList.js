@@ -219,7 +219,7 @@ const TodoList = () => {
     updatedTasks.splice(toIndex, 0, movedTask);
     
     // コンテキストの関数を呼び出して並び替えを保存
-    // Google Todoリストに即時反映し、データを再取得
+    // メモリ内で並び替えを行い、同期キューに追加
     reorderTasks(updatedTasks);
   };
 

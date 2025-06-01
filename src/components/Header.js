@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { useState } from 'react';
+import SyncStatusIndicator from './SyncStatusIndicator';
 
 function Header({ title }) {
   const { isAuthenticated, user, signOut } = useAuth();
@@ -78,6 +79,9 @@ function Header({ title }) {
         
         {isAuthenticated && (
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            {/* 同期状態インジケーター */}
+            <SyncStatusIndicator />
+            
             <IconButton 
               color="inherit"
               size="small"
