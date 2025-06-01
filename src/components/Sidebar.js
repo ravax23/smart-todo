@@ -55,7 +55,6 @@ const Sidebar = () => {
   // フィルターリスト
   const filters = [
     { id: 'today', name: '今日', icon: '📅' },
-    { id: 'tomorrow', name: '明日', icon: '📆' },
     { id: 'after-tomorrow', name: '今週', icon: '📆' }, // 日曜日から土曜日までのタスク
     { id: 'past', name: '期限切れ', icon: '⏱️' },
     { id: 'starred', name: 'スター付き', icon: '⭐' },
@@ -76,17 +75,6 @@ const Sidebar = () => {
       try {
         const date = parseISO(todo.startDate);
         return isToday(date);
-      } catch (e) {
-        return false;
-      }
-    }).length;
-    
-    // 明日のタスク
-    counts['tomorrow'] = allTodos.filter(todo => {
-      if (!todo.startDate) return false;
-      try {
-        const date = parseISO(todo.startDate);
-        return isTomorrow(date);
       } catch (e) {
         return false;
       }
