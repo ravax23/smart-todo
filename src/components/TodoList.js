@@ -34,7 +34,6 @@ import SettingsDialog from './SettingsDialog';
 // フィルターリストの定義（Sidebarと同じ定義を持つ）
 const filters = [
   { id: 'today', name: '今日', icon: '📅' },
-  { id: 'tomorrow', name: '明日', icon: '📆' },
   { id: 'after-tomorrow', name: '今週', icon: '📆' },
   { id: 'past', name: '期限切れ', icon: '⏱️' },
   { id: 'starred', name: 'スター付き', icon: '⭐' },
