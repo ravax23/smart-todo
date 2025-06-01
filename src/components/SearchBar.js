@@ -10,15 +10,11 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem,
-  IconButton
+  MenuItem
 } from '@mui/material';
 import { useTodo } from '../contexts/TodoContext';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { ja } from 'date-fns/locale';
 import { format } from 'date-fns';
+import { ja } from 'date-fns/locale';
 
 const SearchBar = () => {
   const { 
@@ -71,10 +67,10 @@ const SearchBar = () => {
   };
 
   // 日付の変更を処理
-  const handleDateChange = (date) => {
+  const handleDateChange = (e) => {
     setTaskDetails({
       ...taskDetails,
-      dueDate: date
+      dueDate: e.target.value
     });
   };
 
@@ -89,7 +85,7 @@ const SearchBar = () => {
       const taskData = {
         title: taskDetails.title,
         notes: taskDetails.description || '',
-        due: taskDetails.dueDate ? format(taskDetails.dueDate, "yyyy-MM-dd'T'HH:mm:ss'Z'") : null,
+        due: taskDetails.dueDate ? new Date(taskDetails.dueDate).toISOString() : null,
         starred: false,
         priority: taskDetails.priority
       };
@@ -110,7 +106,8 @@ const SearchBar = () => {
       alignItems: 'center', 
       justifyContent: 'space-between',
       mb: 3,
-      mt: 2
+      mt: 2,
+      px: 4
     }}>
       {/* 検索フィールド */}
       <Box sx={{ position: 'relative', flexGrow: 1, mr: 2 }}>
@@ -178,14 +175,16 @@ const SearchBar = () => {
               onChange={handleTaskDetailChange('description')}
             />
             
-            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ja}>
-              <DatePicker
-                label="期限"
-                value={taskDetails.dueDate}
-                onChange={handleDateChange}
-                renderInput={(params) => <TextField {...params} fullWidth />}
-              />
-            </LocalizationProvider>
+            <TextField
+              label="期限"
+              type="date"
+              fullWidth
+              value={taskDetails.dueDate}
+              onChange={handleDateChange}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
             
             <FormControl fullWidth>
               <InputLabel>優先度</InputLabel>
