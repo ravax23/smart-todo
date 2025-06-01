@@ -713,7 +713,6 @@ const TodoList = () => {
           // ログアウト処理
           if (typeof signOut === 'function') signOut();
         }}>
-          <Box component="span" sx={{ fontSize: '1.2rem', mr: 1 }}>🚪</Box>
           ログアウト
         </MenuItem>
       </Menu>
