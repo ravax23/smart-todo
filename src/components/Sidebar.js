@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Box, 
   Typography, 
@@ -14,7 +14,7 @@ import {
   Tooltip
 } from '@mui/material';
 import { useTodo } from '../contexts/TodoContext';
-import { isToday, parseISO, startOfDay, isBefore } from 'date-fns';
+import { isToday, parseISO, startOfDay, isBefore, isTomorrow } from 'date-fns';
 
 // テーマカラーを取得する関数
 const getThemeColor = (type) => {
@@ -43,8 +43,8 @@ const Sidebar = () => {
     reorderTaskLists,
     createTaskList,
     searchTasks,
-    todos,
-    filteredTodos
+    allTodos, // 全てのタスク（フィルタリング前）
+    todos // フィルタリング後のタスク
   } = useTodo();
   const [editingListId, setEditingListId] = useState(null);
   const [editingTitle, setEditingTitle] = useState('');
@@ -55,64 +55,95 @@ const Sidebar = () => {
   // フィルターリスト
   const filters = [
     { id: 'today', name: '今日', icon: '📅' },
+    { id: 'tomorrow', name: '明日', icon: '📆' },
     { id: 'after-tomorrow', name: '今週', icon: '📆' }, // 日曜日から土曜日までのタスク
     { id: 'past', name: '期限切れ', icon: '⏱️' },
     { id: 'starred', name: 'スター付き', icon: '⭐' },
     { id: 'all', name: 'すべて', icon: '📋' },
   ];
 
-  // フィルター別のタスク数を取得する関数
-  const getFilteredTaskCount = (filterId) => {
-    if (filterId === 'all') {
-      return todos.length;
-    } else if (filterId === 'today') {
-      return todos.filter(todo => {
-        if (!todo.startDate) return false;
-        try {
-          const date = parseISO(todo.startDate);
-          return isToday(date);
-        } catch (e) {
-          return false;
-        }
-      }).length;
-    } else if (filterId === 'after-tomorrow') {
-      return todos.filter(todo => {
-        if (!todo.startDate) return false;
-        try {
-          // 今週（日曜日から土曜日まで）のタスクを表示
-          const date = parseISO(todo.startDate);
-          const today = new Date();
-          const startOfWeek = startOfDay(new Date(today));
-          // 今日の曜日を取得（0: 日曜日, 1: 月曜日, ..., 6: 土曜日）
-          const dayOfWeek = today.getDay();
-          // 日曜日まで戻る
-          startOfWeek.setDate(today.getDate() - dayOfWeek);
-          
-          // 週の終わり（土曜日）
-          const endOfWeek = new Date(startOfWeek);
-          endOfWeek.setDate(startOfWeek.getDate() + 6);
-          
-          // タスクの日付が今週の範囲内かチェック
-          return date >= startOfWeek && date <= endOfWeek;
-        } catch (e) {
-          return false;
-        }
-      }).length;
-    } else if (filterId === 'past') {
-      return todos.filter(todo => {
-        if (!todo.startDate) return false;
-        try {
-          const date = parseISO(todo.startDate);
-          return isBefore(date, startOfDay(new Date()));
-        } catch (e) {
-          return false;
-        }
-      }).length;
-    } else if (filterId === 'starred') {
-      return todos.filter(todo => todo.starred === true).length;
-    }
-    return 0;
-  };
+  // フィルター別のタスク数を計算（マイリスト横断で一貫した値を表示）
+  const filterCounts = useMemo(() => {
+    // 全てのタスク（allTodos）を使用して各フィルターの件数を計算
+    const counts = {};
+    
+    // すべてのタスク
+    counts['all'] = allTodos.length;
+    
+    // 今日のタスク
+    counts['today'] = allTodos.filter(todo => {
+      if (!todo.startDate) return false;
+      try {
+        const date = parseISO(todo.startDate);
+        return isToday(date);
+      } catch (e) {
+        return false;
+      }
+    }).length;
+    
+    // 明日のタスク
+    counts['tomorrow'] = allTodos.filter(todo => {
+      if (!todo.startDate) return false;
+      try {
+        const date = parseISO(todo.startDate);
+        return isTomorrow(date);
+      } catch (e) {
+        return false;
+      }
+    }).length;
+    
+    // 今週のタスク
+    counts['after-tomorrow'] = allTodos.filter(todo => {
+      if (!todo.startDate) return false;
+      try {
+        // 今週（日曜日から土曜日まで）のタスクを表示
+        const date = parseISO(todo.startDate);
+        const today = new Date();
+        const startOfWeek = startOfDay(new Date(today));
+        // 今日の曜日を取得（0: 日曜日, 1: 月曜日, ..., 6: 土曜日）
+        const dayOfWeek = today.getDay();
+        // 日曜日まで戻る
+        startOfWeek.setDate(today.getDate() - dayOfWeek);
+        
+        // 週の終わり（土曜日）
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        
+        // タスクの日付が今週の範囲内かチェック
+        return date >= startOfWeek && date <= endOfWeek;
+      } catch (e) {
+        return false;
+      }
+    }).length;
+    
+    // 期限切れのタスク
+    counts['past'] = allTodos.filter(todo => {
+      if (!todo.startDate) return false;
+      try {
+        const date = parseISO(todo.startDate);
+        return isBefore(date, startOfDay(new Date()));
+      } catch (e) {
+        return false;
+      }
+    }).length;
+    
+    // スター付きのタスク
+    counts['starred'] = allTodos.filter(todo => todo.starred === true).length;
+    
+    return counts;
+  }, [allTodos]); // allTodosが変更されたときだけ再計算
+
+  // マイリスト別のタスク数を計算
+  const listCounts = useMemo(() => {
+    const counts = {};
+    
+    // 各マイリストのタスク数を計算
+    taskLists.forEach(list => {
+      counts[list.id] = allTodos.filter(todo => todo.listId === list.id).length;
+    });
+    
+    return counts;
+  }, [allTodos, taskLists]); // allTodosまたはtaskListsが変更されたときだけ再計算
 
   // リスト名の編集を開始
   const handleStartEditing = (list) => {
@@ -316,7 +347,7 @@ const Sidebar = () => {
                 fontSize: '0.9375rem',
                 display: 'inline',
               }}
-              secondary={`  (${getFilteredTaskCount(filter.id)})`}
+              secondary={`  (${filterCounts[filter.id] || 0})`} {/* 一貫した件数表示 */}
               secondaryTypographyProps={{ 
                 fontSize: '0.75rem', 
                 color: 'text.disabled',
@@ -402,7 +433,17 @@ const Sidebar = () => {
             ) : (
               <ListItemText 
                 primary={list.title} 
-                primaryTypographyProps={{ fontSize: '0.9375rem' }}
+                primaryTypographyProps={{ 
+                  fontSize: '0.9375rem',
+                  display: 'inline',
+                }}
+                secondary={`  (${listCounts[list.id] || 0})`} {/* 一貫した件数表示 */}
+                secondaryTypographyProps={{ 
+                  fontSize: '0.75rem', 
+                  color: 'text.disabled',
+                  display: 'inline',
+                  marginLeft: '4px',
+                }}
                 onDoubleClick={() => handleStartEditing(list)}
               />
             )}
