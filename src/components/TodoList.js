@@ -421,7 +421,7 @@ const TodoList = () => {
           </Typography>
           
           {/* マイリスト削除ボタン - マイリストが選択されている場合のみ表示（フィルター表示時は非表示） */}
-          {selectedTaskList && selectedTaskList !== 'all' && !filters.some(filter => filter.id === selectedTaskList) && (
+          {selectedTaskList && selectedTaskList !== 'all' && !filters.some(filter => filter.id === selectedTaskList) && (!selectedFilter || selectedFilter === 'all') && (
             <IconButton
               size="small"
               onClick={handleOpenDeleteDialog}
