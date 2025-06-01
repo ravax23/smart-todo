@@ -118,7 +118,13 @@ export const TodoProvider = ({ children }) => {
   useEffect(() => {
     if (isAuthenticated && selectedTaskList) {
       console.log(`Selected task list changed to: ${selectedTaskList}`);
-      filterTodosByList(selectedTaskList);
+      // フィルターが選択されている場合は、filterTodos()を使用
+      if (selectedFilter) {
+        filterTodos();
+      } else {
+        // フィルターが選択されていない場合は、filterTodosByList()を使用
+        filterTodosByList(selectedTaskList);
+      }
     }
   }, [isAuthenticated, selectedTaskList, todos]);
 
@@ -165,8 +171,8 @@ export const TodoProvider = ({ children }) => {
     
     let filtered = [...todosToFilter];
     
-    // 選択されたリストでフィルタリング
-    if (selectedTaskList && selectedTaskList !== 'all') {
+    // フィルターが選択されていない場合のみ、マイリストでフィルタリング
+    if (!selectedFilter && selectedTaskList && selectedTaskList !== 'all') {
       filtered = filtered.filter(todo => todo.listId === selectedTaskList);
     }
     
@@ -334,6 +340,7 @@ export const TodoProvider = ({ children }) => {
   const selectFilter = (filterId) => {
     console.log(`Selecting filter: ${filterId}`);
     setSelectedFilter(filterId);
+    // フィルター選択時はタスクリストの選択をクリアしない
   };
 
   // 完了タスクの表示/非表示を切り替え
