@@ -655,7 +655,7 @@ const TodoList = () => {
       
       {/* タスク一覧 */}
       {error && (
-        <Box sx={{ mb: 3 }}>
+        <Box sx={{ mb: 3, mx: 2 }}>
           <Alert 
             severity="error" 
             action={
@@ -678,7 +678,7 @@ const TodoList = () => {
           <CircularProgress />
         </Box>
       ) : todos.length === 0 ? (
-        <Box sx={{ textAlign: 'center', my: 4, p: 3, border: '1px solid #e0e0e0', borderRadius: 1 }}>
+        <Box sx={{ textAlign: 'center', my: 4, p: 3, border: '1px solid #e0e0e0', borderRadius: 1, mx: 2 }}>
           <Typography variant="body1" color="text.secondary">
             タスクが見つかりません。
           </Typography>
@@ -687,7 +687,8 @@ const TodoList = () => {
         <Box sx={{ 
           border: '1px solid #e0e0e0',
           borderRadius: '4px',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          mx: 2
         }}>
           <List sx={{ p: 0 }}>
             {todos.map((task, index) => (
