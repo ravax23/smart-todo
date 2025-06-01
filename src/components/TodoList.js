@@ -417,6 +417,38 @@ const TodoList = () => {
           )}
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          {/* 新規タスク追加ボタン */}
+          <Box 
+            sx={{ 
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              p: 1.5,
+              border: '2px dashed #e0e0e0',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              mr: 2,
+              '&:hover': {
+                borderColor: getThemeColor('primary'),
+                bgcolor: 'rgba(0,0,0,0.02)'
+              }
+            }}
+            onClick={() => {
+              setTaskDetails({
+                ...taskDetails,
+                title: ''
+              });
+              setEditMode(false);
+              setOpenDialog(true);
+            }}
+          >
+            <Box component="span" sx={{ fontSize: '1.2rem', mr: 1, color: 'var(--primary-color)' }} className="emoji-icon">+</Box>
+            <Typography variant="body2" sx={{ color: getThemeColor('primary'), fontWeight: 500 }}>
+              新しいタスクを追加
+            </Typography>
+          </Box>
+
           {/* 完了タスク表示切替 */}
           <Typography 
             variant="body2" 
@@ -455,39 +487,6 @@ const TodoList = () => {
         </Box>
       </Box>
       
-      <Box sx={{ display: 'flex', mb: 3, mx: 2, justifyContent: 'center' }}>
-        {/* 新規タスク追加ボタン */}
-        <Box 
-          sx={{ 
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            p: 2,
-            border: '2px dashed #e0e0e0',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            width: '250px',
-            '&:hover': {
-              borderColor: getThemeColor('primary'),
-              bgcolor: 'rgba(0,0,0,0.02)'
-            }
-          }}
-          onClick={() => {
-            setTaskDetails({
-              ...taskDetails,
-              title: ''
-            });
-            setEditMode(false);
-            setOpenDialog(true);
-          }}
-        >
-          <Box component="span" sx={{ fontSize: '1.5rem', mr: 1, color: 'var(--primary-color)' }} className="emoji-icon">+</Box>
-          <Typography variant="body1" sx={{ color: getThemeColor('primary'), fontWeight: 500 }}>
-            新しいタスクを追加
-          </Typography>
-        </Box>
-      </Box>
       
       {/* 設定ダイアログ */}
       <Dialog 
