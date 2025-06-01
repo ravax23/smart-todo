@@ -14,7 +14,7 @@ export const TodoProvider = ({ children }) => {
   const [taskLists, setTaskLists] = useState([]);
   const [selectedTaskList, setSelectedTaskList] = useState('@default');
   const [selectedFilter, setSelectedFilter] = useState('all');
-  const [showCompleted, setShowCompleted] = useState(true);
+  const [showCompleted, setShowCompleted] = useState(false); // デフォルトで完了タスクを非表示に変更
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [syncStatus, setSyncStatus] = useState({ isSyncing: false, lastSyncTime: null });
