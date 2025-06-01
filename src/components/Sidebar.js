@@ -255,7 +255,7 @@ const Sidebar = () => {
 
   return (
     <Box sx={{ 
-      width: 280, 
+      width: 320, 
       bgcolor: 'white', 
       borderRight: '1px solid #e0e0e0',
       display: 'flex',
