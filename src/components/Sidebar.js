@@ -266,9 +266,20 @@ const Sidebar = () => {
       <Box sx={{ 
         display: 'flex', 
         justifyContent: 'flex-start',
+        alignItems: 'center',
         mb: 3,
         pl: 1 // フィルターという文字と同じ位置に合わせる
       }}>
+        <Box 
+          component="img" 
+          src="/logo.png" 
+          alt="SmartTodo Logo" 
+          sx={{ 
+            height: 36,
+            width: 'auto',
+            mr: 1.5
+          }}
+        />
         <Typography 
           variant="h4" 
           component="div" 
