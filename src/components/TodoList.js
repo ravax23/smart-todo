@@ -297,7 +297,8 @@ const TodoList = () => {
         // priorityの代わりにstarredを使用
         starred: taskDetails.priority === 'starred',
         // 明示的に優先度も設定
-        priority: taskDetails.priority === 'starred' ? 'high' : 'normal'
+        priority: taskDetails.priority
+      };
       };
 
       console.log('Task data to be saved:', taskData);

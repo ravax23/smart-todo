@@ -339,14 +339,16 @@ export const TodoProvider = ({ children }) => {
       // 新しいタスクのIDを生成（一時的なID）
       const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
-      // スター付きの場合、priorityも'high'に設定
-      const updatedTaskData = { ...taskData };
+      // スター付きの場合の処理
+      let starred = false;
+      let priority = 'normal';
+      
       if (taskData.priority === 'starred') {
-        updatedTaskData.starred = true;
-        updatedTaskData.priority = 'high';
+        starred = true;
+        priority = 'high';
       } else {
-        updatedTaskData.starred = false;
-        updatedTaskData.priority = 'normal';
+        starred = false;
+        priority = 'normal';
       }
       
       // 新しいタスクオブジェクトを作成
@@ -356,8 +358,8 @@ export const TodoProvider = ({ children }) => {
         notes: taskData.notes || '',
         due: taskData.due,
         status: 'needsAction',
-        starred: updatedTaskData.starred,
-        priority: updatedTaskData.priority,
+        starred: starred,
+        priority: priority,
         listId: listId,
         position: `${Date.now()}`, // 一時的なposition値
         startDate: taskData.due // dueフィールドをstartDateとして使用
@@ -593,14 +595,16 @@ export const TodoProvider = ({ children }) => {
         throw new Error('タスクリストが見つかりません。');
       }
       
-      // スター付きの場合、priorityも'high'に設定
-      const updatedTaskData = { ...taskData };
+      // スター付きの場合の処理
+      let starred = false;
+      let priority = 'normal';
+      
       if (taskData.priority === 'starred') {
-        updatedTaskData.starred = true;
-        updatedTaskData.priority = 'high';
+        starred = true;
+        priority = 'high';
       } else {
-        updatedTaskData.starred = false;
-        updatedTaskData.priority = 'normal';
+        starred = false;
+        priority = 'normal';
       }
       
       // メモリ内のタスクを更新
@@ -612,13 +616,17 @@ export const TodoProvider = ({ children }) => {
             notes: taskData.notes,
             startDate: taskData.due,
             due: taskData.due,
-            starred: updatedTaskData.starred,
-            priority: updatedTaskData.priority // 優先度も明示的に更新
+            starred: starred,
+            priority: priority // 優先度も明示的に更新
           } : task
         )
       );
       
-      console.log(`Updating task ${taskId} with data:`, updatedTaskData);
+      console.log(`Updating task ${taskId} with data:`, {
+        ...taskData,
+        starred,
+        priority
+      });
       
       // 同期キューに追加
       syncService.addToSyncQueue('task', 'update', {
@@ -627,8 +635,8 @@ export const TodoProvider = ({ children }) => {
         title: taskData.title,
         notes: taskData.notes,
         due: taskData.due,
-        starred: updatedTaskData.starred,
-        priority: updatedTaskData.priority
+        starred: starred,
+        priority: priority
       });
       
       // 同期状態を更新
