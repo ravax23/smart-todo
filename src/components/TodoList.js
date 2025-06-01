@@ -658,15 +658,10 @@ const TodoList = () => {
           <Button 
             onClick={handleSaveTask} 
             variant="contained" 
-            sx={{ 
-              bgcolor: getThemeColor('primary'),
-              '&:hover': {
-                bgcolor: getThemeColor('secondary')
-              }
-            }}
+            color="primary"
             disabled={!taskDetails.title}
           >
-            {editMode ? '更新' : '保存'}
+            {editMode ? '更新' : '作成'}
           </Button>
         </DialogActions>
       </Dialog>
