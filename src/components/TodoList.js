@@ -70,6 +70,8 @@ const TodoList = () => {
   
   // 削除確認ダイアログの状態
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTaskDialogOpen, setDeleteTaskDialogOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState(null);
   
   // 状態の追加
   const [openDialog, setOpenDialog] = useState(false);
@@ -337,12 +339,30 @@ const TodoList = () => {
   
   // タスクを削除する処理
   const handleDeleteTask = async (taskId) => {
+    // 削除するタスクをセットして確認ダイアログを表示
+    setTaskToDelete(taskId);
+    setDeleteTaskDialogOpen(true);
+  };
+
+  // タスク削除の確認
+  const confirmDeleteTask = async () => {
     try {
-      // 既に取得済みのuseTodoコンテキストから削除メソッドを呼び出す
-      await deleteTask(taskId);
+      if (taskToDelete) {
+        // 既に取得済みのuseTodoコンテキストから削除メソッドを呼び出す
+        await deleteTask(taskToDelete);
+        // ダイアログを閉じてタスクIDをリセット
+        setDeleteTaskDialogOpen(false);
+        setTaskToDelete(null);
+      }
     } catch (err) {
       console.error('タスクの削除に失敗しました:', err);
     }
+  };
+
+  // タスク削除のキャンセル
+  const cancelDeleteTask = () => {
+    setDeleteTaskDialogOpen(false);
+    setTaskToDelete(null);
   };
 
   // リストの色を取得する関数（マイリストの色分けを行わない）
@@ -828,6 +848,29 @@ const TodoList = () => {
           </MenuItem>
         ))}
       </Menu>
+
+      {/* タスク削除確認ダイアログ */}
+      <Dialog
+        open={deleteTaskDialogOpen}
+        onClose={cancelDeleteTask}
+        aria-labelledby="delete-task-dialog-title"
+        aria-describedby="delete-task-dialog-description"
+      >
+        <DialogTitle id="delete-task-dialog-title">
+          タスクの削除
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-task-dialog-description">
+            このタスクを削除してもよろしいですか？この操作は元に戻せません。
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={cancelDeleteTask}>キャンセル</Button>
+          <Button onClick={confirmDeleteTask} color="error" autoFocus>
+            削除する
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* 削除確認ダイアログ */}
       <Dialog
