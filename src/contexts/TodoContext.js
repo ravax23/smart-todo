@@ -161,8 +161,8 @@ export const TodoProvider = ({ children }) => {
     }
     
     // タスクを並び替え
-    // 1. マイリスト順（この関数ではすでに特定のリストに絞られている）
-    // 2. 期限順（昇順、なしは最後）
+    // 1. 期限順（昇順、なしは最後）
+    // 2. マイリスト順（この関数ではすでに特定のリストに絞られている）
     // 3. position順
     const sortedFiltered = sortTasks(filtered);
     
@@ -262,8 +262,8 @@ export const TodoProvider = ({ children }) => {
     }
     
     // タスクを並び替え
-    // 1. マイリスト順（フィルターが選択されていない場合）
-    // 2. 期限順（昇順、なしは最後）
+    // 1. 期限順（昇順、なしは最後）
+    // 2. マイリスト順（フィルターが選択されていない場合）
     // 3. position順
     const sortedFiltered = sortTasks(filtered);
     
@@ -273,17 +273,7 @@ export const TodoProvider = ({ children }) => {
   // タスクを指定された順序で並び替える関数
   const sortTasks = (tasks) => {
     return [...tasks].sort((a, b) => {
-      // 1. マイリスト順（taskListsの順序に基づく）
-      if (a.listId !== b.listId) {
-        const listA = taskLists.findIndex(list => list.id === a.listId);
-        const listB = taskLists.findIndex(list => list.id === b.listId);
-        // findIndexが-1を返す場合（リストが見つからない場合）は最後に配置
-        const indexA = listA === -1 ? Number.MAX_SAFE_INTEGER : listA;
-        const indexB = listB === -1 ? Number.MAX_SAFE_INTEGER : listB;
-        return indexA - indexB;
-      }
-      
-      // 2. 期限順（昇順、なしは最後）
+      // 1. 期限順（昇順、なしは最後）
       if (a.startDate !== b.startDate) {
         // 期限なしのタスクは最後に配置
         if (!a.startDate) return 1;
@@ -294,9 +284,19 @@ export const TodoProvider = ({ children }) => {
           const dateB = parseISO(b.startDate);
           return dateA - dateB;
         } catch (e) {
-          // 日付の解析に失敗した場合はposition順で並べる
+          // 日付の解析に失敗した場合はマイリスト順で並べる
           console.error('Date parsing error:', e);
         }
+      }
+      
+      // 2. マイリスト順（taskListsの順序に基づく）
+      if (a.listId !== b.listId) {
+        const listA = taskLists.findIndex(list => list.id === a.listId);
+        const listB = taskLists.findIndex(list => list.id === b.listId);
+        // findIndexが-1を返す場合（リストが見つからない場合）は最後に配置
+        const indexA = listA === -1 ? Number.MAX_SAFE_INTEGER : listA;
+        const indexB = listB === -1 ? Number.MAX_SAFE_INTEGER : listB;
+        return indexA - indexB;
       }
       
       // 3. position順
