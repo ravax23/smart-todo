@@ -113,7 +113,7 @@ const AppContent = () => {
           <CategoryProvider>
             <Box sx={{ display: 'flex', minHeight: '100vh', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}>
               <Sidebar />
-              <Box sx={{ flex: 1, bgcolor: 'background.paper', display: 'flex', flexDirection: 'column' }}>
+              <Box sx={{ flex: 1, bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
                 <TodoList />
               </Box>
             </Box>

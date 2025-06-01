@@ -181,7 +181,7 @@ const TodoList = () => {
       <SearchBar />
       
       {/* タスクリスト */}
-      <Box sx={{ flex: 1, overflow: 'auto', px: 4 }}>
+      <Box sx={{ flex: 1, overflow: 'auto', px: 4, pb: 4 }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
             <CircularProgress />
@@ -204,7 +204,7 @@ const TodoList = () => {
             </Typography>
           </Box>
         ) : (
-          <List sx={{ width: '100%', bgcolor: 'background.paper', borderRadius: 2 }}>
+          <List sx={{ width: '100%', bgcolor: 'background.paper', borderRadius: 2, boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)' }}>
             {todos.map((task, index) => (
               <React.Fragment key={task.id}>
                 <ListItem
@@ -215,8 +215,8 @@ const TodoList = () => {
                     '&:hover': {
                       bgcolor: 'rgba(0, 0, 0, 0.04)'
                     },
-                    borderRadius: 1,
-                    mb: 0.5,
+                    borderRadius: 0,
+                    mb: 0,
                     cursor: 'pointer',
                     position: 'relative'
                   }}
@@ -272,7 +272,7 @@ const TodoList = () => {
                     <Box component="span" sx={{ fontSize: '1.2rem' }}>⋮</Box>
                   </IconButton>
                 </ListItem>
-                {index < todos.length - 1 && <Divider component="li" variant="middle" />}
+                {index < todos.length - 1 && <Divider />}
               </React.Fragment>
             ))}
           </List>

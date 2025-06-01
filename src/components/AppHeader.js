@@ -106,7 +106,7 @@ const AppHeader = ({ title }) => {
         bgcolor: 'background.paper'
       }}
     >
-      <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
+      <Toolbar sx={{ display: 'flex', justifyContent: 'space-between', px: 4 }}>
         {/* 左側：アプリタイトル */}
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Box 
