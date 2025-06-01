@@ -166,10 +166,10 @@ class SyncService {
         console.log('Creating task:', task);
         await TasksService.createTask(task.listId, {
           title: task.title,
-          notes: task.notes,
+          notes: task.notes || '',
           due: task.due,
           starred: task.starred,
-          status: task.status
+          status: task.status || 'needsAction'
         });
       } catch (error) {
         console.error('Error creating task:', error);
@@ -186,7 +186,7 @@ class SyncService {
         
         // 必要なフィールドのみを含める
         if (task.title !== undefined) updateData.title = task.title;
-        if (task.notes !== undefined) updateData.notes = task.notes;
+        if (task.notes !== undefined) updateData.notes = task.notes || '';
         if (task.due !== undefined) updateData.due = task.due;
         if (task.starred !== undefined) updateData.starred = task.starred;
         if (task.status !== undefined) updateData.status = task.status;

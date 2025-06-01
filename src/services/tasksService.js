@@ -430,11 +430,10 @@ class TasksService {
         // 以下のプロパティを明示的に指定
         resource: {
           title: apiTaskData.title,
-          notes: apiTaskData.notes,
+          notes: apiTaskData.notes || '',
           due: apiTaskData.due,
-          status: apiTaskData.status,
-          // スター関連のプロパティを明示的に設定
-          starred: apiTaskData.starred,
+          status: apiTaskData.status || 'needsAction',
+          // スター関連のプロパティを明示的に設定（priorityのみ）
           priority: apiTaskData.priority
         }
       };
@@ -472,11 +471,10 @@ class TasksService {
       // Google Tasks APIの仕様に合わせてリクエストボディを構築
       const requestBody = {
         title: apiTaskData.title,
-        notes: apiTaskData.notes,
+        notes: apiTaskData.notes || '',
         due: apiTaskData.due,
-        status: apiTaskData.status,
-        // スター関連のプロパティを明示的に設定
-        starred: apiTaskData.starred,
+        status: apiTaskData.status || 'needsAction',
+        // スター関連のプロパティを明示的に設定（priorityのみ）
         priority: apiTaskData.priority
       };
       
@@ -615,24 +613,28 @@ class TasksService {
       // 更新データをマージ
       const updatedTask = { ...currentTask, ...updates };
       
+      // スター状態を適切に設定
+      if ('starred' in updates) {
+        const starredUpdates = setStarredStatus({}, updates.starred);
+        updatedTask.priority = starredUpdates.priority;
+      }
+      
       console.log('Calling tasks.tasks.update API with GAPI...', JSON.stringify(updatedTask, null, 2));
       
       // Google Tasks APIの仕様に合わせてリクエストを構築
-      // 注意: resourceパラメータではなく、直接プロパティを指定する必要がある場合がある
       const request = {
         tasklist: taskListId,
         task: taskId,
         // 以下のプロパティを明示的に指定
         title: updatedTask.title,
-        notes: updatedTask.notes,
+        notes: updatedTask.notes || '',
         due: updatedTask.due,
         status: updatedTask.status,
         completed: updatedTask.completed,
         deleted: updatedTask.deleted,
         hidden: updatedTask.hidden,
         links: updatedTask.links,
-        // スター関連のプロパティを明示的に設定
-        starred: updatedTask.starred,
+        // スター関連のプロパティを明示的に設定（priorityのみ）
         priority: updatedTask.priority
       };
       
@@ -664,21 +666,26 @@ class TasksService {
       // 更新データをマージ
       const updatedTask = { ...currentTask, ...updates };
       
+      // スター状態を適切に設定
+      if ('starred' in updates) {
+        const starredUpdates = setStarredStatus({}, updates.starred);
+        updatedTask.priority = starredUpdates.priority;
+      }
+      
       console.log('Updating task with fetch:', JSON.stringify(updatedTask, null, 2));
       
       // Google Tasks APIの仕様に合わせてリクエストボディを構築
       // 必要なプロパティのみを含める
       const requestBody = {
         title: updatedTask.title,
-        notes: updatedTask.notes,
+        notes: updatedTask.notes || '',
         due: updatedTask.due,
         status: updatedTask.status,
         completed: updatedTask.completed,
         deleted: updatedTask.deleted,
         hidden: updatedTask.hidden,
         links: updatedTask.links,
-        // スター関連のプロパティを明示的に設定
-        starred: updatedTask.starred,
+        // スター関連のプロパティを明示的に設定（priorityのみ）
         priority: updatedTask.priority
       };
       

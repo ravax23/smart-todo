@@ -1,64 +1,41 @@
 /**
  * Google Tasks APIのレスポンスからスター状態を抽出する
- * Google Tasks APIでは、スターの情報が異なるプロパティに格納されている可能性がある
- * 
- * 注意: Google Tasks APIには公式にstarredプロパティが存在しないため、
- * 独自の方法でスター状態を管理する必要がある
+ * Google Tasks APIでは、スターの情報はpriorityプロパティに格納されている
  */
 export function extractStarredStatus(taskData) {
   // Google Tasks APIのレスポンスを詳細に調査
   console.log('Extracting starred status from:', JSON.stringify(taskData, null, 2));
   
-  // 可能性のあるプロパティをチェック
-  if (taskData.starred !== undefined) {
-    console.log(`  Found 'starred' property: ${taskData.starred}`);
-    return taskData.starred;
-  }
-  
-  // Google Tasks APIでは、優先度が別のプロパティに格納されている可能性がある
+  // Google Tasks APIでは、優先度プロパティでスター状態を管理
   if (taskData.priority !== undefined) {
     const isStarred = taskData.priority === 'high';
     console.log(`  Found 'priority' property: ${taskData.priority} -> isStarred: ${isStarred}`);
     return isStarred;
   }
   
-  // その他の可能性のあるプロパティをチェック
-  if (taskData.flagged !== undefined) {
-    console.log(`  Found 'flagged' property: ${taskData.flagged}`);
-    return taskData.flagged;
-  }
-  
-  console.log('  No star property found, returning false');
+  console.log('  No priority property found, returning false');
   // デフォルトはfalse
   return false;
 }
 
 /**
  * タスクデータにスター状態を設定する
- * Google Tasks APIで認識される可能性のあるすべてのプロパティを設定
- * 
- * 注意: Google Tasks APIには公式にstarredプロパティが存在しないため、
- * priorityプロパティを使用してスター状態を表現する
+ * Google Tasks APIではpriorityプロパティを使用してスター状態を表現する
  */
 export function setStarredStatus(taskData, isStarred) {
   console.log(`Setting starred status to ${isStarred} for task:`, taskData.title || taskData.id);
   
   const updatedTask = { ...taskData };
   
-  // スター状態を設定
-  updatedTask.starred = isStarred;
-  
-  // 優先度プロパティも設定（Google Tasks APIで使用される可能性がある）
+  // Google Tasks APIに合わせて、priorityプロパティのみを使用
   if (isStarred) {
     updatedTask.priority = 'high';
   } else {
-    // 優先度を削除するのではなく、normalに設定
     updatedTask.priority = 'normal';
   }
   
   console.log('Updated task with star properties:', {
     title: updatedTask.title,
-    starred: updatedTask.starred,
     priority: updatedTask.priority
   });
   

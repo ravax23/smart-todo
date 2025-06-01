@@ -588,7 +588,7 @@ export const TodoProvider = ({ children }) => {
           task.id === taskId ? { 
             ...task, 
             title: taskData.title,
-            notes: taskData.notes,
+            notes: taskData.notes || '',
             startDate: taskData.due,
             due: taskData.due,
             starred: taskData.starred
@@ -603,7 +603,7 @@ export const TodoProvider = ({ children }) => {
         id: taskId,
         listId: listId,
         title: taskData.title,
-        notes: taskData.notes,
+        notes: taskData.notes || '',
         due: taskData.due,
         starred: taskData.starred
       });
