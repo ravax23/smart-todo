@@ -347,7 +347,7 @@ const Sidebar = () => {
                 fontSize: '0.9375rem',
                 display: 'inline',
               }}
-              secondary={`  (${filterCounts[filter.id] || 0})`} {/* 一貫した件数表示 */}
+              secondary={`  (${filterCounts[filter.id] || 0})`}
               secondaryTypographyProps={{ 
                 fontSize: '0.75rem', 
                 color: 'text.disabled',
@@ -437,7 +437,7 @@ const Sidebar = () => {
                   fontSize: '0.9375rem',
                   display: 'inline',
                 }}
-                secondary={`  (${listCounts[list.id] || 0})`} {/* 一貫した件数表示 */}
+                secondary={`  (${listCounts[list.id] || 0})`}
                 secondaryTypographyProps={{ 
                   fontSize: '0.75rem', 
                   color: 'text.disabled',
