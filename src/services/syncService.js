@@ -180,13 +180,20 @@ class SyncService {
     for (const task of this.pendingChanges.tasks.updated) {
       try {
         console.log('Updating task:', task);
-        await TasksService.updateTask(task.listId, task.id, {
-          title: task.title,
-          notes: task.notes,
-          due: task.due,
-          starred: task.starred,
-          status: task.status
-        });
+        
+        // タスクの更新データを準備
+        const updateData = {};
+        
+        // 必要なフィールドのみを含める
+        if (task.title !== undefined) updateData.title = task.title;
+        if (task.notes !== undefined) updateData.notes = task.notes;
+        if (task.due !== undefined) updateData.due = task.due;
+        if (task.starred !== undefined) updateData.starred = task.starred;
+        if (task.status !== undefined) updateData.status = task.status;
+        if (task.completed !== undefined) updateData.completed = task.completed;
+        
+        // タスクを更新
+        await TasksService.updateTask(task.listId, task.id, updateData);
       } catch (error) {
         console.error('Error updating task:', error);
       }
