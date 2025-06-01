@@ -287,17 +287,16 @@ const TodoList = () => {
 
     try {
       // スター状態をログ出力
-      console.log(`Saving task with priority: ${taskDetails.priority}, starred: ${taskDetails.priority === 'starred'}`);
+      const isStarred = taskDetails.priority === 'starred';
+      console.log(`Saving task with priority: ${taskDetails.priority}, starred: ${isStarred}`);
       
       const taskData = {
         title: taskDetails.title.trim(),
         notes: taskDetails.description || '',
         // Google Tasks APIが受け付ける形式に変換
         due: taskDetails.dueDate ? new Date(taskDetails.dueDate).toISOString() : null,
-        // priorityの代わりにstarredを使用
-        starred: taskDetails.priority === 'starred',
-        // 明示的に優先度も設定
-        priority: taskDetails.priority
+        // スター状態を明示的に設定
+        starred: isStarred
       };
 
       console.log('Task data to be saved:', taskData);
