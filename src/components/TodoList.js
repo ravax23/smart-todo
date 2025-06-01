@@ -31,19 +31,13 @@ const TodoList = () => {
     deleteTask,
     toggleTaskCompletion,
     updateTask,
-    reorderTasks
+    reorderTasks,
+    taskLists
   } = useTodo();
   
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
   
-  // タスクのマイリスト名を取得する関数
-  const getTaskListName = (task) => {
-    if (!task || !task.listId) return '';
-    const list = taskLists.find(list => list.id === task.listId);
-    return list ? list.title : '';
-  };
-
   // テーマカラーを取得する関数
   const getThemeColor = (type) => {
     // CSSカスタムプロパティを使用
@@ -105,20 +99,8 @@ const TodoList = () => {
   const handleEditTask = () => {
     if (!selectedTask) return;
     
-    // タスク編集ダイアログを開く処理
-    setOpenDialog(true);
-    setEditMode(true);
-    
-    // 選択されたタスクの情報をフォームにセット
-    setTaskDetails({
-      taskId: selectedTask.id,
-      title: selectedTask.title || '',
-      description: selectedTask.notes || '',
-      dueDate: selectedTask.startDate ? parseISO(selectedTask.startDate) : null,
-      priority: selectedTask.priority || 'normal',
-      categoryId: selectedTask.listId || ''
-    });
-    
+    // 編集機能は別コンポーネントに移動したため、ここでは単純にメニューを閉じる
+    console.log('Edit task:', selectedTask);
     handleMenuClose();
   };
 
@@ -199,7 +181,7 @@ const TodoList = () => {
       <SearchBar />
       
       {/* タスクリスト */}
-      <Box sx={{ flex: 1, overflow: 'auto' }}>
+      <Box sx={{ flex: 1, overflow: 'auto', px: 4 }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
             <CircularProgress />
