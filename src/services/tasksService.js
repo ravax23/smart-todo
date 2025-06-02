@@ -609,6 +609,7 @@ class TasksService {
     try {
       // 現在のタスクを取得
       const currentTask = await this.getTask(taskListId, taskId);
+      console.log('Current task before update:', currentTask);
       
       // 更新データをマージ
       const updatedTask = { ...currentTask };
@@ -632,15 +633,7 @@ class TasksService {
       const request = {
         tasklist: taskListId,
         task: taskId,
-        resource: {
-          id: taskId,
-          title: updatedTask.title,
-          notes: updatedTask.notes || '',
-          due: updatedTask.due,
-          status: updatedTask.status || 'needsAction',
-          completed: updatedTask.completed,
-          priority: updatedTask.priority
-        }
+        resource: updatedTask
       };
       
       console.log('Final GAPI request:', JSON.stringify(request, null, 2));
@@ -667,6 +660,7 @@ class TasksService {
     try {
       // 現在のタスクを取得
       const currentTask = await this.getTask(taskListId, taskId);
+      console.log('Current task before update:', currentTask);
       
       // 更新データをマージ
       const updatedTask = { ...currentTask };
@@ -687,15 +681,8 @@ class TasksService {
       console.log('Updating task with fetch:', JSON.stringify(updatedTask, null, 2));
       
       // Google Tasks APIの仕様に合わせてリクエストボディを構築
-      const requestBody = {
-        id: taskId,
-        title: updatedTask.title,
-        notes: updatedTask.notes || '',
-        due: updatedTask.due,
-        status: updatedTask.status || 'needsAction',
-        completed: updatedTask.completed,
-        priority: updatedTask.priority
-      };
+      // 現在のタスクデータをそのまま使用し、必要なフィールドのみを更新
+      const requestBody = updatedTask;
       
       console.log('Final fetch request body:', JSON.stringify(requestBody, null, 2));
       

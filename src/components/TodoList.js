@@ -270,7 +270,7 @@ const TodoList = () => {
     setTaskDetails({
       taskId: task.id,
       title: task.title,
-      description: task.description || '',
+      description: task.notes || '', // notesプロパティを使用
       dueDate: formattedDate,
       priority: task.starred ? 'starred' : 'normal',
       categoryId: task.listId || ''
