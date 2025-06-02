@@ -290,11 +290,20 @@ const TodoList = () => {
       const isStarred = taskDetails.priority === 'starred';
       console.log(`Saving task with priority: ${taskDetails.priority}, starred: ${isStarred}`);
       
+      // 期限の処理
+      let dueDate = null;
+      if (taskDetails.dueDate) {
+        dueDate = new Date(taskDetails.dueDate);
+        // 時間を23:59:59に設定して、その日の終わりを表す
+        dueDate.setHours(23, 59, 59, 999);
+        dueDate = dueDate.toISOString();
+      }
+      
       const taskData = {
         title: taskDetails.title.trim(),
         notes: taskDetails.description || '',
         // Google Tasks APIが受け付ける形式に変換
-        due: taskDetails.dueDate ? new Date(taskDetails.dueDate).toISOString() : null,
+        due: dueDate,
         // スター状態を明示的に設定
         starred: isStarred
       };

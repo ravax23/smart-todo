@@ -611,7 +611,14 @@ class TasksService {
       const currentTask = await this.getTask(taskListId, taskId);
       
       // 更新データをマージ
-      const updatedTask = { ...currentTask, ...updates };
+      const updatedTask = { ...currentTask };
+      
+      // 明示的に各フィールドを更新
+      if (updates.title !== undefined) updatedTask.title = updates.title;
+      if (updates.notes !== undefined) updatedTask.notes = updates.notes || '';
+      if (updates.due !== undefined) updatedTask.due = updates.due;
+      if (updates.status !== undefined) updatedTask.status = updates.status;
+      if (updates.completed !== undefined) updatedTask.completed = updates.completed;
       
       // スター状態を適切に設定
       if ('starred' in updates) {
@@ -625,17 +632,15 @@ class TasksService {
       const request = {
         tasklist: taskListId,
         task: taskId,
-        // 以下のプロパティを明示的に指定
-        title: updatedTask.title,
-        notes: updatedTask.notes || '',
-        due: updatedTask.due,
-        status: updatedTask.status,
-        completed: updatedTask.completed,
-        deleted: updatedTask.deleted,
-        hidden: updatedTask.hidden,
-        links: updatedTask.links,
-        // スター関連のプロパティを明示的に設定（priorityのみ）
-        priority: updatedTask.priority
+        resource: {
+          id: taskId,
+          title: updatedTask.title,
+          notes: updatedTask.notes || '',
+          due: updatedTask.due,
+          status: updatedTask.status || 'needsAction',
+          completed: updatedTask.completed,
+          priority: updatedTask.priority
+        }
       };
       
       console.log('Final GAPI request:', JSON.stringify(request, null, 2));
@@ -664,7 +669,14 @@ class TasksService {
       const currentTask = await this.getTask(taskListId, taskId);
       
       // 更新データをマージ
-      const updatedTask = { ...currentTask, ...updates };
+      const updatedTask = { ...currentTask };
+      
+      // 明示的に各フィールドを更新
+      if (updates.title !== undefined) updatedTask.title = updates.title;
+      if (updates.notes !== undefined) updatedTask.notes = updates.notes || '';
+      if (updates.due !== undefined) updatedTask.due = updates.due;
+      if (updates.status !== undefined) updatedTask.status = updates.status;
+      if (updates.completed !== undefined) updatedTask.completed = updates.completed;
       
       // スター状態を適切に設定
       if ('starred' in updates) {
@@ -675,17 +687,13 @@ class TasksService {
       console.log('Updating task with fetch:', JSON.stringify(updatedTask, null, 2));
       
       // Google Tasks APIの仕様に合わせてリクエストボディを構築
-      // 必要なプロパティのみを含める
       const requestBody = {
+        id: taskId,
         title: updatedTask.title,
         notes: updatedTask.notes || '',
         due: updatedTask.due,
-        status: updatedTask.status,
+        status: updatedTask.status || 'needsAction',
         completed: updatedTask.completed,
-        deleted: updatedTask.deleted,
-        hidden: updatedTask.hidden,
-        links: updatedTask.links,
-        // スター関連のプロパティを明示的に設定（priorityのみ）
         priority: updatedTask.priority
       };
       
