@@ -21,6 +21,11 @@ export function extractStarredStatus(taskData) {
 /**
  * タスクデータにスター状態を設定する
  * Google Tasks APIではpriorityプロパティを使用してスター状態を表現する
+ * 
+ * 注意: Google Tasks APIには公式にstarredプロパティが存在しないため、
+ * priorityプロパティを使用してスター状態を表現する必要がある
+ * 
+ * 参考: https://issuetracker.google.com/issues/236524523
  */
 export function setStarredStatus(taskData, isStarred) {
   console.log(`Setting starred status to ${isStarred} for task:`, taskData.title || taskData.id);

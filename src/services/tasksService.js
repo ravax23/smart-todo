@@ -623,8 +623,9 @@ class TasksService {
       
       // スター状態を適切に設定
       if ('starred' in updates) {
-        const starredUpdates = setStarredStatus({}, updates.starred);
-        updatedTask.priority = starredUpdates.priority;
+        // スター状態を直接設定せず、priorityプロパティを使用
+        updatedTask.priority = updates.starred ? 'high' : 'normal';
+        console.log(`Setting priority to ${updatedTask.priority} based on starred=${updates.starred}`);
       }
       
       console.log('Calling tasks.tasks.update API with GAPI...', JSON.stringify(updatedTask, null, 2));
@@ -674,8 +675,9 @@ class TasksService {
       
       // スター状態を適切に設定
       if ('starred' in updates) {
-        const starredUpdates = setStarredStatus({}, updates.starred);
-        updatedTask.priority = starredUpdates.priority;
+        // スター状態を直接設定せず、priorityプロパティを使用
+        updatedTask.priority = updates.starred ? 'high' : 'normal';
+        console.log(`Setting priority to ${updatedTask.priority} based on starred=${updates.starred}`);
       }
       
       console.log('Updating task with fetch:', JSON.stringify(updatedTask, null, 2));
