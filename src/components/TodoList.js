@@ -504,49 +504,69 @@ const TodoList = ({ isMobile }) => {
                   p: 1.5,
                   border: '2px dashed #e0e0e0',
                   borderRadius: '8px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              mr: isMobile ? 0 : 2,
-              '&:hover': {
-                borderColor: getThemeColor('primary'),
-                bgcolor: 'rgba(0,0,0,0.02)'
-              }
-            }}
-            onClick={() => {
-              setTaskDetails({
-                ...taskDetails,
-                title: ''
-              });
-              setEditMode(false);
-              setOpenDialog(true);
-            }}
-          >
-            <Box component="span" sx={{ fontSize: '1.2rem', mr: 1, color: 'var(--primary-color)' }} className="emoji-icon">+</Box>
-            <Typography variant="body2" sx={{ color: getThemeColor('primary'), fontWeight: 500 }}>
-              新しいタスクを追加
-            </Typography>
-          </Box>
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  mr: 2,
+                  '&:hover': {
+                    borderColor: getThemeColor('primary'),
+                    bgcolor: 'rgba(0,0,0,0.02)'
+                  }
+                }}
+                onClick={() => {
+                  setTaskDetails({
+                    ...taskDetails,
+                    title: ''
+                  });
+                  setEditMode(false);
+                  setOpenDialog(true);
+                }}
+              >
+                <Box component="span" sx={{ fontSize: '1.2rem', mr: 1, color: 'var(--primary-color)' }} className="emoji-icon">+</Box>
+                <Typography variant="body2" sx={{ color: getThemeColor('primary'), fontWeight: 500 }}>
+                  新しいタスクを追加
+                </Typography>
+              </Box>
 
-          {/* 完了タスク表示切替 */}
-          <Typography 
-            variant="body2" 
-            component="label" 
-            className={isMobile ? 'completed-tasks-toggle-mobile' : ''}
-            sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              cursor: 'pointer',
-              userSelect: 'none',
-              mr: 1
-            }}
-          >
-            <Checkbox 
-              checked={showCompleted} 
-              onChange={toggleShowCompleted}
-              size="small"
-            />
-            完了タスクを表示
-          </Typography>
+              {/* 完了タスク表示切替 */}
+              <Typography 
+                variant="body2" 
+                component="label" 
+                className={isMobile ? 'completed-tasks-toggle-mobile' : ''}
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  mr: 1
+                }}
+              >
+                <Checkbox 
+                  checked={showCompleted} 
+                  onChange={toggleShowCompleted}
+                  size="small"
+                />
+                完了タスクを表示
+              </Typography>
+              
+              {/* 設定ボタン（歯車アイコン） */}
+              <IconButton
+                size="small"
+                onClick={handleOpenSettingsDialog}
+                sx={{ 
+                  color: 'text.secondary',
+                  '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' },
+                  mr: 0.5
+                }}
+                title="設定"
+              >
+                <Box component="span" sx={{ fontSize: '1.2rem', display: 'block' }} className="emoji-icon">⚙️</Box>
+              </IconButton>
+              
+              <UserMenu />
+            </Box>
+          </>
+        )}
+      </Box>
           
           {/* 設定ボタン（歯車アイコン） */}
           <IconButton
