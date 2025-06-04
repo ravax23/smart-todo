@@ -128,7 +128,13 @@ const AppContent = () => {
                   className="mobile-menu-button"
                   onClick={toggleSidebar}
                   sx={{
-                    display: { xs: 'flex', md: 'none' }
+                    position: 'fixed',
+                    top: '10px',
+                    left: '10px',
+                    zIndex: 1300,
+                    bgcolor: 'background.paper',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    '&:hover': { bgcolor: 'background.default' }
                   }}
                 >
                   <Box component="span" sx={{ fontSize: '1.5rem' }}>☰</Box>
