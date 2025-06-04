@@ -267,7 +267,7 @@ const Sidebar = ({ closeSidebar, isMobile }) => {
     <Box sx={{ 
       width: 320, 
       bgcolor: 'white', 
-      borderRight: '1px solid #e0e0e0',
+      borderRight: isMobile ? 'none' : '1px solid #e0e0e0',
       display: 'flex',
       flexDirection: 'column',
       p: 2,

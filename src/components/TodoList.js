@@ -439,45 +439,71 @@ const TodoList = ({ isMobile }) => {
           pr: isMobile ? 0 : 2
         }}
       >
-        <Box 
-          className={isMobile ? 'header-item-mobile' : ''}
-          sx={{ display: 'flex', alignItems: 'center' }}
-        >
-          <Typography variant="h5" sx={{ fontWeight: 600 }}>
-            {/* フィルターが選択されている場合はフィルター名、そうでなければリスト名を表示 */}
-            {getListTitle()}
-          </Typography>
-          
-          {/* マイリスト削除ボタン - マイリストが選択されている場合のみ表示（フィルター表示時は非表示） */}
-          {selectedTaskList && selectedTaskList !== 'all' && !filters.some(filter => filter.id === selectedTaskList) && !selectedFilter && (
-            <IconButton
-              size="small"
-              onClick={handleOpenDeleteDialog}
-              sx={{ 
-                color: 'text.secondary',
-                ml: 0.5,
-                '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
-              }}
-              title="マイリストを削除"
-            >
-              <Box component="span" sx={{ fontSize: '1.2rem', display: 'block' }} className="emoji-icon">🗑️</Box>
-            </IconButton>
-          )}
-        </Box>
-        <Box 
-          className={isMobile ? 'header-item-mobile' : ''}
-          sx={{ display: 'flex', alignItems: 'center' }}
-        >
-          {/* 新規タスク追加ボタン */}
-          <Box 
-            className={isMobile ? 'add-task-button-mobile' : ''}
-            sx={{ 
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              p: isMobile ? 1 : 1.5,
-              border: '2px dashed #e0e0e0',
-              borderRadius: '8px',
+        {isMobile ? (
+          <>
+            {/* モバイル用シンプルヘッダー */}
+            <Typography variant="h5" sx={{ fontWeight: 600 }}>
+              {getListTitle()}
+            </Typography>
+            
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              {/* 新規タスク追加ボタン */}
+              <IconButton
+                className="mobile-action-button"
+                onClick={() => {
+                  setTaskDetails({
+                    ...taskDetails,
+                    title: ''
+                  });
+                  setEditMode(false);
+                  setOpenDialog(true);
+                }}
+                sx={{ 
+                  color: 'primary.main',
+                  mr: 1
+                }}
+              >
+                <Box component="span" sx={{ fontSize: '1.5rem' }}>+</Box>
+              </IconButton>
+              
+              {/* ユーザーメニュー */}
+              <UserMenu />
+            </Box>
+          </>
+        ) : (
+          <>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                {/* フィルターが選択されている場合はフィルター名、そうでなければリスト名を表示 */}
+                {getListTitle()}
+              </Typography>
+              
+              {/* マイリスト削除ボタン - マイリストが選択されている場合のみ表示（フィルター表示時は非表示） */}
+              {selectedTaskList && selectedTaskList !== 'all' && !filters.some(filter => filter.id === selectedTaskList) && !selectedFilter && (
+                <IconButton
+                  size="small"
+                  onClick={handleOpenDeleteDialog}
+                  sx={{ 
+                    color: 'text.secondary',
+                    ml: 0.5,
+                    '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
+                  }}
+                  title="マイリストを削除"
+                >
+                  <Box component="span" sx={{ fontSize: '1.2rem', display: 'block' }} className="emoji-icon">🗑️</Box>
+                </IconButton>
+              )}
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              {/* 新規タスク追加ボタン */}
+              <Box 
+                sx={{ 
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  p: 1.5,
+                  border: '2px dashed #e0e0e0',
+                  borderRadius: '8px',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
               mr: isMobile ? 0 : 2,
@@ -746,24 +772,25 @@ const TodoList = ({ isMobile }) => {
             {todos.map((task, index) => (
               <React.Fragment key={task.id}>
                 <ListItem 
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, index, task.id)}
+                  draggable={!isMobile}
+                  onDragStart={(e) => !isMobile && handleDragStart(e, index, task.id)}
                   onDragEnd={handleDragEnd}
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, index)}
-                  onDoubleClick={() => handleEditTask(task)}
+                  onClick={() => isMobile ? handleEditTask(task) : null}
+                  onDoubleClick={() => !isMobile && handleEditTask(task)}
                   className={isMobile ? 'task-item-mobile' : ''}
                   sx={{ 
                     py: 1.5,
                     px: 2,
                     bgcolor: getTaskBackgroundColor(task),
-                    borderLeft: `4px solid ${getThemeColor('primary')}`,
+                    borderLeft: isMobile ? 'none' : `4px solid ${getThemeColor('primary')}`,
                     '&:hover': { 
                       bgcolor: getThemeColor('background'),
-                      cursor: 'grab'
+                      cursor: isMobile ? 'pointer' : 'grab'
                     },
                     '&:active': {
-                      cursor: 'grabbing'
+                      cursor: isMobile ? 'pointer' : 'grabbing'
                     }
                   }}
                 >
@@ -783,6 +810,7 @@ const TodoList = ({ isMobile }) => {
                   <Box sx={{ flex: 1 }}>
                     <Typography 
                       variant="body1" 
+                      className={isMobile ? 'task-title-mobile' : ''}
                       sx={{
                         textDecoration: task.status === 'completed' ? 'line-through' : 'none',
                         color: task.status === 'completed' ? 'text.secondary' : 'text.primary',
@@ -794,7 +822,7 @@ const TodoList = ({ isMobile }) => {
                       {task.title}
                     </Typography>
                     <Box 
-                      className={isMobile ? 'task-meta-mobile' : ''}
+                      className={isMobile ? 'task-details-mobile' : ''}
                       sx={{ display: 'flex', alignItems: 'center', fontSize: '0.75rem', color: 'text.secondary' }}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -822,7 +850,7 @@ const TodoList = ({ isMobile }) => {
                       )}
                     </Box>
                   </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Box sx={{ display: isMobile ? 'none' : 'flex', alignItems: 'center' }}>
                     <IconButton 
                       size="small" 
                       sx={{ 

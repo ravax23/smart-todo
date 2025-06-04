@@ -14,6 +14,7 @@
     transition: transform 0.3s ease !important;
     background-color: #ffffff !important;
     overflow-y: auto !important;
+    border-right: none !important; /* 縦ラインを削除 */
   }
   
   .sidebar-mobile.open {
@@ -40,62 +41,66 @@
     justify-content: center !important;
   }
   
-  /* モバイルでのヘッダーレイアウト */
+  /* モバイルでのヘッダーレイアウト - シンプル化 */
   .header-mobile {
-    flex-direction: column !important;
+    flex-direction: row !important;
     padding: 0 16px !important;
     margin-top: 48px !important;
-  }
-  
-  .header-item-mobile {
-    width: 100% !important;
-    margin-bottom: 12px !important;
     justify-content: space-between !important;
   }
   
-  /* モバイルでの新規タスク追加ボタン */
-  .add-task-button-mobile {
-    width: 100% !important;
-    margin-right: 0 !important;
-    margin-bottom: 12px !important;
-    padding: 10px !important;
+  /* モバイルでのヘッダーアクションボタン */
+  .mobile-action-button {
+    width: 40px !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
   
-  /* モバイルでのタスクアイテムのレイアウト */
+  /* モバイルでのタスクアイテムのレイアウト - シンプル化 */
   .task-item-mobile {
-    flex-direction: column !important;
-    align-items: flex-start !important;
+    padding: 12px 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+    cursor: pointer !important;
   }
   
-  /* モバイルでのタスクアイテムのアクション */
+  /* モバイルでのタスクタイトル */
+  .task-title-mobile {
+    margin-left: 12px !important;
+    flex: 1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  
+  /* モバイルでのタスク詳細情報（非表示） */
+  .task-details-mobile {
+    display: none !important;
+  }
+  
+  /* モバイルでのタスクアクションボタン（非表示） */
   .task-actions-mobile {
-    margin-top: 8px !important;
+    display: none !important;
+  }
+  
+  /* モバイルでのアクションメニュー */
+  .mobile-action-menu {
     width: 100% !important;
+  }
+  
+  /* モバイルでのアクションメニュー項目 */
+  .mobile-action-menu-item {
+    padding: 12px 16px !important;
     display: flex !important;
-    justify-content: flex-end !important;
+    align-items: center !important;
   }
   
-  /* モバイルでのタスクメタ情報 */
-  .task-meta-mobile {
-    flex-wrap: wrap !important;
-    gap: 8px !important;
-  }
-  
-  .task-meta-item-mobile {
-    margin-left: 0 !important;
-  }
-  
-  /* モバイルでのユーザーメニューとアクションボタン */
-  .mobile-actions {
-    display: flex !important;
-    justify-content: space-between !important;
-    width: 100% !important;
-    margin-top: 8px !important;
-  }
-  
-  /* モバイルでの完了タスク表示切替 */
-  .completed-tasks-toggle-mobile {
-    margin-right: 0 !important;
+  /* モバイルでのアクションメニューアイコン */
+  .mobile-action-menu-icon {
+    margin-right: 12px !important;
   }
 }
 
