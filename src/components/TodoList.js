@@ -434,9 +434,9 @@ const TodoList = ({ isMobile }) => {
           justifyContent: 'space-between', 
           alignItems: 'center', 
           mb: 3, 
-          pl: 2, 
+          pl: isMobile ? 0 : 2, 
           pt: 2,
-          pr: 2
+          pr: isMobile ? 0 : 2
         }}
       >
         <Box 
@@ -475,12 +475,12 @@ const TodoList = ({ isMobile }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              p: 1.5,
+              p: isMobile ? 1 : 1.5,
               border: '2px dashed #e0e0e0',
               borderRadius: '8px',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
-              mr: 2,
+              mr: isMobile ? 0 : 2,
               '&:hover': {
                 borderColor: getThemeColor('primary'),
                 bgcolor: 'rgba(0,0,0,0.02)'
@@ -505,6 +505,7 @@ const TodoList = ({ isMobile }) => {
           <Typography 
             variant="body2" 
             component="label" 
+            className={isMobile ? 'completed-tasks-toggle-mobile' : ''}
             sx={{ 
               display: 'flex', 
               alignItems: 'center', 

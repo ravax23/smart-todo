@@ -133,11 +133,13 @@ const AppContent = () => {
                     left: '10px',
                     zIndex: 1300,
                     bgcolor: 'background.paper',
+                    width: '40px',
+                    height: '40px',
                     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                     '&:hover': { bgcolor: 'background.default' }
                   }}
                 >
-                  <Box component="span" sx={{ fontSize: '1.5rem' }}>☰</Box>
+                  <Box component="span" sx={{ fontSize: '1.5rem', lineHeight: 1 }}>☰</Box>
                 </IconButton>
               )}
               
