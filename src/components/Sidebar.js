@@ -31,7 +31,7 @@ const getThemeColor = (type) => {
   return colors[type] || colors.primary;
 };
 
-const Sidebar = () => {
+const Sidebar = ({ closeSidebar, isMobile }) => {
   const { 
     taskLists, 
     selectedTaskList, 
@@ -246,6 +246,22 @@ const Sidebar = () => {
     setIsAddingNewList(false);
     setNewListTitle('');
   };
+  
+  // フィルターをクリックしたときの処理
+  const handleFilterClick = (filterId) => {
+    selectFilter(filterId);
+    if (isMobile) {
+      closeSidebar();
+    }
+  };
+
+  // タスクリストをクリックしたときの処理
+  const handleTaskListClick = (listId) => {
+    selectTaskList(listId);
+    if (isMobile) {
+      closeSidebar();
+    }
+  };
 
   return (
     <Box sx={{ 
@@ -254,12 +270,14 @@ const Sidebar = () => {
       borderRight: '1px solid #e0e0e0',
       display: 'flex',
       flexDirection: 'column',
-      p: 2
+      p: 2,
+      height: isMobile ? '100%' : 'auto',
+      overflowY: 'auto'
     }}>
       {/* アプリタイトル */}
       <Box sx={{ 
         display: 'flex', 
-        justifyContent: 'flex-start',
+        justifyContent: isMobile ? 'space-between' : 'flex-start',
         alignItems: 'center',
         mb: 3,
         pl: 1 // フィルターという文字と同じ位置に合わせる
@@ -289,6 +307,19 @@ const Sidebar = () => {
         >
           Smart<Box component="span" sx={{ fontWeight: 700, color: '#000000' }}>Todo</Box>
         </Typography>
+        
+        {/* モバイル用の閉じるボタン */}
+        {isMobile && (
+          <IconButton
+            onClick={closeSidebar}
+            sx={{
+              color: 'text.secondary',
+              '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' }
+            }}
+          >
+            <Box component="span" sx={{ fontSize: '1.5rem' }}>✕</Box>
+          </IconButton>
+        )}
       </Box>
       
       {/* 検索フィールド */}
@@ -336,7 +367,7 @@ const Sidebar = () => {
             key={filter.id}
             button
             selected={filter.id === selectedFilter}
-            onClick={() => selectFilter(filter.id)}
+            onClick={() => handleFilterClick(filter.id)}
             sx={{
               borderRadius: 1,
               mb: 0.5,
@@ -397,7 +428,7 @@ const Sidebar = () => {
             onDragEnd={handleDragEndItem}
             onDrop={(e) => handleDrop(e, list.id)}
             selected={list.id === selectedTaskList}
-            onClick={() => selectTaskList(list.id)}
+            onClick={() => handleTaskListClick(list.id)}
             sx={{
               borderRadius: 1,
               mb: 0.5,

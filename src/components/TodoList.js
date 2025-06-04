@@ -45,7 +45,7 @@ const categoryColors = {
   'default': '#1976d2'
 };
 
-const TodoList = () => {
+const TodoList = ({ isMobile }) => {
   const { 
     todos, 
     taskLists, 
@@ -427,8 +427,22 @@ const TodoList = () => {
 
   return (
     <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, pl: 2, pt: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      <Box 
+        className={isMobile ? 'header-mobile' : ''}
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          mb: 3, 
+          pl: 2, 
+          pt: 2,
+          pr: 2
+        }}
+      >
+        <Box 
+          className={isMobile ? 'header-item-mobile' : ''}
+          sx={{ display: 'flex', alignItems: 'center' }}
+        >
           <Typography variant="h5" sx={{ fontWeight: 600 }}>
             {/* フィルターが選択されている場合はフィルター名、そうでなければリスト名を表示 */}
             {getListTitle()}
@@ -450,9 +464,13 @@ const TodoList = () => {
             </IconButton>
           )}
         </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <Box 
+          className={isMobile ? 'header-item-mobile' : ''}
+          sx={{ display: 'flex', alignItems: 'center' }}
+        >
           {/* 新規タスク追加ボタン */}
           <Box 
+            className={isMobile ? 'add-task-button-mobile' : ''}
             sx={{ 
               display: 'flex',
               alignItems: 'center',
@@ -604,7 +622,13 @@ const TodoList = () => {
       </Dialog>
 
       {/* 新規タスク作成ダイアログ */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth maxWidth="sm">
+      <Dialog 
+        open={openDialog} 
+        onClose={handleCloseDialog} 
+        fullWidth 
+        maxWidth="sm"
+        fullScreen={isMobile}
+      >
         <DialogTitle>{editMode ? 'タスクの編集' : '新規タスクの作成'}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
@@ -715,7 +739,7 @@ const TodoList = () => {
           border: '1px solid #e0e0e0',
           borderRadius: '4px',
           overflow: 'hidden',
-          mx: 2
+          mx: isMobile ? 1 : 2
         }}>
           <List sx={{ p: 0 }}>
             {todos.map((task, index) => (
@@ -727,6 +751,7 @@ const TodoList = () => {
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, index)}
                   onDoubleClick={() => handleEditTask(task)}
+                  className={isMobile ? 'task-item-mobile' : ''}
                   sx={{ 
                     py: 1.5,
                     px: 2,
@@ -767,20 +792,29 @@ const TodoList = () => {
                     >
                       {task.title}
                     </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', fontSize: '0.75rem', color: 'text.secondary' }}>
+                    <Box 
+                      className={isMobile ? 'task-meta-mobile' : ''}
+                      sx={{ display: 'flex', alignItems: 'center', fontSize: '0.75rem', color: 'text.secondary' }}
+                    >
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <span className="emoji-icon" style={{ marginRight: '4px' }}>📅</span>
                         {task.startDate ? format(parseISO(task.startDate), 'yyyy年MM月dd日', { locale: ja }) : '期限なし'}
                       </Box>
                       {task.starred && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
+                        <Box 
+                          className={isMobile ? 'task-meta-item-mobile' : ''}
+                          sx={{ display: 'flex', alignItems: 'center', ml: 2 }}
+                        >
                           <span className="emoji-icon" style={{ marginRight: '4px' }}>⭐</span>
                           スター付き
                         </Box>
                       )}
                       {/* マイリスト名を表示 */}
                       {task.listId && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
+                        <Box 
+                          className={isMobile ? 'task-meta-item-mobile' : ''}
+                          sx={{ display: 'flex', alignItems: 'center', ml: 2 }}
+                        >
                           <span className="emoji-icon" style={{ marginRight: '4px' }}>📁</span>
                           {getTaskListName(task)}
                         </Box>
