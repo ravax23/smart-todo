@@ -13,7 +13,7 @@ export const TodoProvider = ({ children }) => {
   const [filteredTodos, setFilteredTodos] = useState([]);
   const [taskLists, setTaskLists] = useState([]);
   const [selectedTaskList, setSelectedTaskList] = useState('@default');
-  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [selectedFilter, setSelectedFilter] = useState('today'); // 初期表示を「今日」に変更
   const [showCompleted, setShowCompleted] = useState(false); // デフォルトで完了タスクを非表示に変更
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
