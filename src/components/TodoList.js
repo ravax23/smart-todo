@@ -567,25 +567,6 @@ const TodoList = ({ isMobile }) => {
           </>
         )}
       </Box>
-          
-          {/* 設定ボタン（歯車アイコン） */}
-          <IconButton
-            size="small"
-            onClick={handleOpenSettingsDialog}
-            sx={{ 
-              color: 'text.secondary',
-              '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' },
-              mr: 0.5
-            }}
-            title="設定"
-          >
-            <Box component="span" sx={{ fontSize: '1.2rem', display: 'block' }} className="emoji-icon">⚙️</Box>
-          </IconButton>
-          
-          <UserMenu />
-        </Box>
-      </Box>
-      
       
       {/* 設定ダイアログ */}
       <Dialog 
