@@ -84,6 +84,15 @@
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
+    max-width: calc(100% - 40px) !important;
+  }
+  
+  /* マイリスト名の省略表示 */
+  .mylist-title-mobile {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 200px !important;
   }
   
   /* モバイルでのタスク詳細情報（非表示） */

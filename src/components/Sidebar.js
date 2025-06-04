@@ -482,6 +482,7 @@ const Sidebar = ({ closeSidebar, isMobile }) => {
                 primaryTypographyProps={{ 
                   fontSize: '0.9375rem',
                   display: 'inline',
+                  className: isMobile ? 'mylist-title-mobile' : ''
                 }}
                 secondary={`  (${listCounts[list.id] || 0})`}
                 secondaryTypographyProps={{ 

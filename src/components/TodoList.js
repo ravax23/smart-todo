@@ -801,7 +801,10 @@ const TodoList = ({ isMobile }) => {
                 >
                   <Checkbox 
                     checked={task.status === 'completed'} 
-                    onChange={() => toggleTaskCompletion(task.id, task.status)}
+                    onChange={(e) => {
+                      e.stopPropagation(); // イベントの伝播を停止
+                      toggleTaskCompletion(task.id, task.status);
+                    }}
                     sx={{ 
                       mr: 1,
                       width: 22,
