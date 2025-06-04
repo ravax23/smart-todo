@@ -267,12 +267,13 @@ const Sidebar = ({ closeSidebar, isMobile }) => {
     <Box sx={{ 
       width: 320, 
       bgcolor: 'white', 
-      borderRight: isMobile ? 'none' : '1px solid #e0e0e0',
+      borderRight: '1px solid #e0e0e0', // 常に縦ラインを表示
       display: 'flex',
       flexDirection: 'column',
       p: 2,
       height: isMobile ? '100%' : 'auto',
-      overflowY: 'auto'
+      overflowY: 'auto',
+      overflowX: 'hidden' // 横スクロール禁止
     }}>
       {/* アプリタイトル */}
       <Box sx={{ 
@@ -322,34 +323,36 @@ const Sidebar = ({ closeSidebar, isMobile }) => {
         )}
       </Box>
       
-      {/* 検索フィールド */}
-      <Box sx={{ position: 'relative', mb: 3 }}>
-        <TextField
-          fullWidth
-          placeholder="タスクを検索..."
-          variant="outlined"
-          value={searchQuery}
-          onChange={handleSearchChange}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              pl: 4,
-              bgcolor: '#f9fafb',
-            }
-          }}
-        />
-        <Box 
-          sx={{ 
-            position: 'absolute', 
-            left: 12, 
-            top: '50%', 
-            transform: 'translateY(-50%)', 
-            color: 'text.secondary', 
-            fontSize: '1rem'
-          }}
-        >
-          🔍
+      {/* 検索フィールド - モバイル時は非表示 */}
+      {!isMobile && (
+        <Box sx={{ position: 'relative', mb: 3 }}>
+          <TextField
+            fullWidth
+            placeholder="タスクを検索..."
+            variant="outlined"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                pl: 4,
+                bgcolor: '#f9fafb',
+              }
+            }}
+          />
+          <Box 
+            sx={{ 
+              position: 'absolute', 
+              left: 12, 
+              top: '50%', 
+              transform: 'translateY(-50%)', 
+              color: 'text.secondary', 
+              fontSize: '1rem'
+            }}
+          >
+            🔍
+          </Box>
         </Box>
-      </Box>
+      )}
 
       {/* フィルターリスト */}
       <Typography variant="caption" sx={{ 

@@ -435,14 +435,18 @@ const TodoList = ({ isMobile }) => {
           alignItems: 'center', 
           mb: 3, 
           pl: isMobile ? 0 : 2, 
-          pt: 2,
+          pt: isMobile ? 0 : 2,
           pr: isMobile ? 0 : 2
         }}
       >
         {isMobile ? (
           <>
             {/* モバイル用シンプルヘッダー */}
-            <Typography variant="h5" sx={{ fontWeight: 600 }}>
+            <Typography 
+              variant="h5" 
+              sx={{ fontWeight: 600 }}
+              className="header-title-mobile"
+            >
               {getListTitle()}
             </Typography>
             

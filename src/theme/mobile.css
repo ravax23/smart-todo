@@ -14,7 +14,8 @@
     transition: transform 0.3s ease !important;
     background-color: #ffffff !important;
     overflow-y: auto !important;
-    border-right: none !important; /* 縦ラインを削除 */
+    overflow-x: hidden !important;
+    border-right: 1px solid #e0e0e0 !important; /* 縦ラインを表示 */
   }
   
   .sidebar-mobile.open {
@@ -23,7 +24,9 @@
   
   /* メインコンテンツのスタイル */
   .main-content-mobile {
-    padding-top: 56px !important; /* モバイルメニューボタンの下にコンテンツを表示 */
+    padding-top: 0 !important; /* 上部のパディングを削除 */
+    overflow-x: hidden !important; /* 横スクロール禁止 */
+    width: 100% !important;
   }
   
   /* モバイルメニューボタン */
@@ -45,8 +48,15 @@
   .header-mobile {
     flex-direction: row !important;
     padding: 0 16px !important;
-    margin-top: 48px !important;
+    margin-top: 0 !important; /* 上部マージンを削除 */
     justify-content: space-between !important;
+    height: 56px !important; /* ヘッダーの高さを固定 */
+    align-items: center !important;
+  }
+  
+  /* モバイルでのヘッダータイトル */
+  .header-title-mobile {
+    margin-left: 40px !important; /* ハンバーガーメニューの幅分ずらす */
   }
   
   /* モバイルでのヘッダーアクションボタン */
@@ -86,21 +96,9 @@
     display: none !important;
   }
   
-  /* モバイルでのアクションメニュー */
-  .mobile-action-menu {
-    width: 100% !important;
-  }
-  
-  /* モバイルでのアクションメニュー項目 */
-  .mobile-action-menu-item {
-    padding: 12px 16px !important;
-    display: flex !important;
-    align-items: center !important;
-  }
-  
-  /* モバイルでのアクションメニューアイコン */
-  .mobile-action-menu-icon {
-    margin-right: 12px !important;
+  /* 検索フィールドを非表示 */
+  .search-field-mobile {
+    display: none !important;
   }
 }
 
