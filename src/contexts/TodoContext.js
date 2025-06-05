@@ -138,8 +138,11 @@ export const TodoProvider = ({ children }) => {
 
   // タスクが更新されたときにフィルタリング
   useEffect(() => {
-    console.log('Filtering todos based on updated data');
-    filterTodos();
+    console.log('[DEBUG] todos または showCompleted が変更されました');
+    // 次のレンダリングサイクルで確実に実行
+    if (todos.length > 0) {
+      setTimeout(() => filterTodos(), 0);
+    }
   }, [todos, showCompleted]);
 
   // 選択されたリストに基づいてタスクをフィルタリング
@@ -179,6 +182,14 @@ export const TodoProvider = ({ children }) => {
     }
 
     console.log(`[DEBUG] Filtering ${todosToFilter.length} todos with filter: ${selectedFilter}`);
+    
+    // フィルタリング前の順序を記録
+    const originalOrder = {};
+    todosToFilter.forEach((task, index) => {
+      originalOrder[task.id] = index;
+    });
+    
+    console.log('[DEBUG] 元の順序:', originalOrder);
     
     let filtered = [...todosToFilter];
     
@@ -270,16 +281,28 @@ export const TodoProvider = ({ children }) => {
       id: task.id,
       title: task.title,
       position: task.position,
-      startDate: task.startDate
+      startDate: task.startDate,
+      originalIndex: originalOrder[task.id]
     })));
     
-    const sortedFiltered = sortTasks(filtered);
+    // 基本的なソートを適用
+    let sortedFiltered = sortTasks(filtered);
+    
+    // 同じ日付、同じリストのタスクは元の順序を維持
+    sortedFiltered = sortedFiltered.sort((a, b) => {
+      // 同じ日付、同じリストの場合は元の順序を維持
+      if (a.startDate === b.startDate && a.listId === b.listId) {
+        return originalOrder[a.id] - originalOrder[b.id];
+      }
+      return 0; // 他の条件はsortTasks内で処理済み
+    });
     
     console.log('[DEBUG] ソート後のタスク:', sortedFiltered.map(task => ({
       id: task.id,
       title: task.title,
       position: task.position,
-      startDate: task.startDate
+      startDate: task.startDate,
+      originalIndex: originalOrder[task.id]
     })));
     
     setFilteredTodos(sortedFiltered);
@@ -612,28 +635,32 @@ export const TodoProvider = ({ children }) => {
         startDate: taskToUpdate.startDate
       });
       
-      // メモリ内のタスクを更新
+      // メモリ内のタスクを更新（インデックスを保持する方法に変更）
       setTodos(prevTodos => {
-        const updatedTodos = prevTodos.map(task => 
-          task.id === taskId ? { 
-            ...task, 
-            title: taskData.title,
-            notes: taskData.notes || '',
-            startDate: taskData.due,
-            due: taskData.due,
-            starred: taskData.starred,
-            // positionは更新しない（元の値を保持）
-          } : task
-        );
+        const index = prevTodos.findIndex(task => task.id === taskId);
+        if (index === -1) return prevTodos;
+        
+        const updatedTodos = [...prevTodos];
+        updatedTodos[index] = { 
+          ...updatedTodos[index], 
+          title: taskData.title,
+          notes: taskData.notes || '',
+          startDate: taskData.due,
+          due: taskData.due,
+          starred: taskData.starred,
+          // positionは更新しない（元の値を保持）
+        };
         
         // 更新後のタスクをログ出力
-        const updatedTask = updatedTodos.find(task => task.id === taskId);
         console.log(`[DEBUG] 更新後のタスク:`, {
-          id: updatedTask.id,
-          title: updatedTask.title,
-          position: updatedTask.position,
-          startDate: updatedTask.startDate
+          id: updatedTodos[index].id,
+          title: updatedTodos[index].title,
+          position: updatedTodos[index].position,
+          startDate: updatedTodos[index].startDate
         });
+        
+        // 次のティックでフィルタリングを実行
+        setTimeout(() => filterTodos(updatedTodos), 0);
         
         return updatedTodos;
       });
