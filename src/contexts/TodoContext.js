@@ -143,11 +143,11 @@ export const TodoProvider = ({ children }) => {
     // フィルタリングはupdateTask内で直接制御する
     console.log('[DEBUG] todos または showCompleted が変更されました');
     
-    // 初回ロード時やshowCompletedの変更時のみフィルタリングを実行
+    // タスク更新中でなければフィルタリングを実行
     if (todos.length > 0 && !isUpdatingTask) {
       filterTodos();
     }
-  }, [todos, showCompleted]);
+  }, [todos, showCompleted, isUpdatingTask]);
 
   // 選択されたリストに基づいてタスクをフィルタリング
   const filterTodosByList = (listId) => {
@@ -289,18 +289,8 @@ export const TodoProvider = ({ children }) => {
       originalIndex: originalOrder[task.id]
     })));
     
-    // ソートを一時的に無効化し、元の順序を維持
-    // let sortedFiltered = sortTasks(filtered);
-    let sortedFiltered = [...filtered];
-    
-    // 同じ日付、同じリストのタスクは元の順序を維持
-    // sortedFiltered = sortedFiltered.sort((a, b) => {
-    //   // 同じ日付、同じリストの場合は元の順序を維持
-    //   if (a.startDate === b.startDate && a.listId === b.listId) {
-    //     return originalOrder[a.id] - originalOrder[b.id];
-    //   }
-    //   return 0; // 他の条件はsortTasks内で処理済み
-    // });
+    // タスク更新中でなければソートを適用
+    let sortedFiltered = isUpdatingTask ? filtered : sortTasks(filtered);
     
     console.log('[DEBUG] ソート後のタスク:', sortedFiltered.map(task => ({
       id: task.id,
@@ -317,9 +307,44 @@ export const TodoProvider = ({ children }) => {
   const sortTasks = (tasks) => {
     console.log('[DEBUG] sortTasks called - タスクのソート開始');
     
-    // ソートを行わず、元の配列をそのまま返す
-    // これにより、フィルタリング後の配列の順序が維持される
-    return tasks;
+    return [...tasks].sort((a, b) => {
+      // 1. 期限順（昇順、なしは最後）
+      if (a.startDate !== b.startDate) {
+        // 期限なしのタスクは最後に配置
+        if (!a.startDate) return 1;
+        if (!b.startDate) return -1;
+        
+        try {
+          const dateA = parseISO(a.startDate);
+          const dateB = parseISO(b.startDate);
+          console.log(`[DEBUG] 日付比較: ${a.title} (${a.startDate}) vs ${b.title} (${b.startDate}) = ${dateA - dateB}`);
+          return dateA - dateB;
+        } catch (e) {
+          // 日付の解析に失敗した場合はマイリスト順で並べる
+          console.error('[DEBUG] Date parsing error:', e);
+        }
+      }
+      
+      // 2. マイリスト順（taskListsの順序に基づく）
+      if (a.listId !== b.listId) {
+        const listA = taskLists.findIndex(list => list.id === a.listId);
+        const listB = taskLists.findIndex(list => list.id === b.listId);
+        // findIndexが-1を返す場合（リストが見つからない場合）は最後に配置
+        const indexA = listA === -1 ? Number.MAX_SAFE_INTEGER : listA;
+        const indexB = listB === -1 ? Number.MAX_SAFE_INTEGER : listB;
+        console.log(`[DEBUG] リスト比較: ${a.title} (listIdx: ${indexA}) vs ${b.title} (listIdx: ${indexB}) = ${indexA - indexB}`);
+        return indexA - indexB;
+      }
+      
+      // 3. position順（同じ日付、同じリストの場合）
+      // positionが存在しない場合は0として扱う
+      const posA = a.position ? (typeof a.position === 'string' ? parseFloat(a.position) : a.position) : 0;
+      const posB = b.position ? (typeof b.position === 'string' ? parseFloat(b.position) : b.position) : 0;
+      
+      console.log(`[DEBUG] Position比較: ${a.title} (pos: ${posA}) vs ${b.title} (pos: ${posB}) = ${posA - posB}`);
+      
+      return posA - posB;
+    });
   };
 
   // 手動同期を実行
@@ -609,6 +634,9 @@ export const TodoProvider = ({ children }) => {
       // 更新前のフィルタリング済みタスクの順序を保存
       const taskIndex = filteredTodos.findIndex(task => task.id === taskId);
       
+      // 日付が変更されたかチェック
+      const isDateChanged = taskToUpdate.startDate !== taskData.due;
+      
       // メモリ内のタスクを更新
       setTodos(prevTodos => {
         const updatedTodos = prevTodos.map(task => 
@@ -635,20 +663,27 @@ export const TodoProvider = ({ children }) => {
         return updatedTodos;
       });
       
-      // 更新後のフィルタリング済みタスクを直接更新して順序を保持
-      if (taskIndex !== -1) {
-        setFilteredTodos(prevFilteredTodos => {
-          const updatedFilteredTodos = [...prevFilteredTodos];
-          updatedFilteredTodos[taskIndex] = {
-            ...updatedFilteredTodos[taskIndex],
-            title: taskData.title,
-            notes: taskData.notes || '',
-            startDate: taskData.due,
-            due: taskData.due,
-            starred: taskData.starred
-          };
-          return updatedFilteredTodos;
-        });
+      // 日付が変更された場合は再ソートが必要なので、フィルタリングを実行
+      if (isDateChanged) {
+        console.log('[DEBUG] 日付が変更されたため、再ソートを実行');
+        // 次のティックでフィルタリングを実行（タスク更新中フラグはまだtrueのまま）
+        setTimeout(() => filterTodos(), 0);
+      } else {
+        // 日付が変更されていない場合は、filteredTodosを直接更新して順序を保持
+        if (taskIndex !== -1) {
+          setFilteredTodos(prevFilteredTodos => {
+            const updatedFilteredTodos = [...prevFilteredTodos];
+            updatedFilteredTodos[taskIndex] = {
+              ...updatedFilteredTodos[taskIndex],
+              title: taskData.title,
+              notes: taskData.notes || '',
+              startDate: taskData.due,
+              due: taskData.due,
+              starred: taskData.starred
+            };
+            return updatedFilteredTodos;
+          });
+        }
       }
       
       console.log(`Updating task ${taskId} with data:`, taskData);
