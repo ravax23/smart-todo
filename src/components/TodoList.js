@@ -446,6 +446,8 @@ const TodoList = ({ isMobile }) => {
               variant="h5" 
               sx={{ fontWeight: 600 }}
               className="header-title-mobile"
+              noWrap
+              title={getListTitle()} // ツールチップとして完全なタイトルを表示
             >
               {getListTitle()}
             </Typography>
@@ -477,7 +479,11 @@ const TodoList = ({ isMobile }) => {
         ) : (
           <>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Typography variant="h5" sx={{ fontWeight: 600 }}>
+              <Typography variant="h5" 
+                sx={{ fontWeight: 600 }}
+                noWrap
+                title={getListTitle()}
+              >
                 {/* フィルターが選択されている場合はフィルター名、そうでなければリスト名を表示 */}
                 {getListTitle()}
               </Typography>

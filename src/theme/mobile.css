@@ -57,6 +57,10 @@
   /* モバイルでのヘッダータイトル */
   .header-title-mobile {
     margin-left: 40px !important; /* ハンバーガーメニューの幅分ずらす */
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: calc(100% - 100px) !important; /* ユーザーメニューとの間隔を確保 */
   }
   
   /* モバイルでのヘッダーアクションボタン */
