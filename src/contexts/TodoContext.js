@@ -173,12 +173,12 @@ export const TodoProvider = ({ children }) => {
   // タスクのフィルタリング
   const filterTodos = (todosToFilter = todos) => {
     if (!todosToFilter || !todosToFilter.length) {
-      console.log('No todos to filter');
+      console.log('[DEBUG] No todos to filter');
       setFilteredTodos([]);
       return;
     }
 
-    console.log(`Filtering ${todosToFilter.length} todos with filter: ${selectedFilter}`);
+    console.log(`[DEBUG] Filtering ${todosToFilter.length} todos with filter: ${selectedFilter}`);
     
     let filtered = [...todosToFilter];
     
@@ -265,13 +265,30 @@ export const TodoProvider = ({ children }) => {
     // 1. 期限順（昇順、なしは最後）
     // 2. マイリスト順（フィルターが選択されていない場合）
     // 3. position順
+    console.log('[DEBUG] フィルタリング後のタスク数:', filtered.length);
+    console.log('[DEBUG] ソート前のタスク:', filtered.map(task => ({
+      id: task.id,
+      title: task.title,
+      position: task.position,
+      startDate: task.startDate
+    })));
+    
     const sortedFiltered = sortTasks(filtered);
+    
+    console.log('[DEBUG] ソート後のタスク:', sortedFiltered.map(task => ({
+      id: task.id,
+      title: task.title,
+      position: task.position,
+      startDate: task.startDate
+    })));
     
     setFilteredTodos(sortedFiltered);
   };
 
   // タスクを指定された順序で並び替える関数
   const sortTasks = (tasks) => {
+    console.log('[DEBUG] sortTasks called - タスクのソート開始');
+    
     return [...tasks].sort((a, b) => {
       // 1. 期限順（昇順、なしは最後）
       if (a.startDate !== b.startDate) {
@@ -282,10 +299,11 @@ export const TodoProvider = ({ children }) => {
         try {
           const dateA = parseISO(a.startDate);
           const dateB = parseISO(b.startDate);
+          console.log(`[DEBUG] 日付比較: ${a.title} (${a.startDate}) vs ${b.title} (${b.startDate}) = ${dateA - dateB}`);
           return dateA - dateB;
         } catch (e) {
           // 日付の解析に失敗した場合はマイリスト順で並べる
-          console.error('Date parsing error:', e);
+          console.error('[DEBUG] Date parsing error:', e);
         }
       }
       
@@ -296,6 +314,7 @@ export const TodoProvider = ({ children }) => {
         // findIndexが-1を返す場合（リストが見つからない場合）は最後に配置
         const indexA = listA === -1 ? Number.MAX_SAFE_INTEGER : listA;
         const indexB = listB === -1 ? Number.MAX_SAFE_INTEGER : listB;
+        console.log(`[DEBUG] リスト比較: ${a.title} (listIdx: ${indexA}) vs ${b.title} (listIdx: ${indexB}) = ${indexA - indexB}`);
         return indexA - indexB;
       }
       
@@ -304,8 +323,7 @@ export const TodoProvider = ({ children }) => {
       const posA = a.position ? (typeof a.position === 'string' ? parseFloat(a.position) : a.position) : 0;
       const posB = b.position ? (typeof b.position === 'string' ? parseFloat(b.position) : b.position) : 0;
       
-      // デバッグ用ログ
-      console.log(`Sorting tasks: ${a.title} (pos: ${posA}) vs ${b.title} (pos: ${posB})`);
+      console.log(`[DEBUG] Position比較: ${a.title} (pos: ${posA}) vs ${b.title} (pos: ${posB}) = ${posA - posB}`);
       
       return posA - posB;
     });
@@ -587,9 +605,16 @@ export const TodoProvider = ({ children }) => {
         throw new Error('タスクリストが見つかりません。');
       }
       
+      console.log(`[DEBUG] 更新前のタスク:`, {
+        id: taskToUpdate.id,
+        title: taskToUpdate.title,
+        position: taskToUpdate.position,
+        startDate: taskToUpdate.startDate
+      });
+      
       // メモリ内のタスクを更新
-      setTodos(prevTodos => 
-        prevTodos.map(task => 
+      setTodos(prevTodos => {
+        const updatedTodos = prevTodos.map(task => 
           task.id === taskId ? { 
             ...task, 
             title: taskData.title,
@@ -599,8 +624,19 @@ export const TodoProvider = ({ children }) => {
             starred: taskData.starred,
             // positionは更新しない（元の値を保持）
           } : task
-        )
-      );
+        );
+        
+        // 更新後のタスクをログ出力
+        const updatedTask = updatedTodos.find(task => task.id === taskId);
+        console.log(`[DEBUG] 更新後のタスク:`, {
+          id: updatedTask.id,
+          title: updatedTask.title,
+          position: updatedTask.position,
+          startDate: updatedTask.startDate
+        });
+        
+        return updatedTodos;
+      });
       
       console.log(`Updating task ${taskId} with data:`, taskData);
       
