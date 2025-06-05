@@ -299,9 +299,9 @@ export const TodoProvider = ({ children }) => {
         return indexA - indexB;
       }
       
-      // 3. position順
-      const posA = typeof a.position === 'string' ? parseFloat(a.position) : a.position;
-      const posB = typeof b.position === 'string' ? parseFloat(b.position) : b.position;
+      // 3. position順（同じ日付、同じリストの場合）
+      const posA = typeof a.position === 'string' ? parseFloat(a.position) : (a.position || 0);
+      const posB = typeof b.position === 'string' ? parseFloat(b.position) : (b.position || 0);
       return posA - posB;
     });
   };
@@ -591,7 +591,8 @@ export const TodoProvider = ({ children }) => {
             notes: taskData.notes || '',
             startDate: taskData.due,
             due: taskData.due,
-            starred: taskData.starred
+            starred: taskData.starred,
+            // positionは更新しない（元の値を保持）
           } : task
         )
       );
