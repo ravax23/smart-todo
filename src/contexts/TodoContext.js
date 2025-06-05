@@ -300,8 +300,13 @@ export const TodoProvider = ({ children }) => {
       }
       
       // 3. position順（同じ日付、同じリストの場合）
-      const posA = typeof a.position === 'string' ? parseFloat(a.position) : (a.position || 0);
-      const posB = typeof b.position === 'string' ? parseFloat(b.position) : (b.position || 0);
+      // positionが存在しない場合は0として扱う
+      const posA = a.position ? (typeof a.position === 'string' ? parseFloat(a.position) : a.position) : 0;
+      const posB = b.position ? (typeof b.position === 'string' ? parseFloat(b.position) : b.position) : 0;
+      
+      // デバッグ用ログ
+      console.log(`Sorting tasks: ${a.title} (pos: ${posA}) vs ${b.title} (pos: ${posB})`);
+      
       return posA - posB;
     });
   };
@@ -606,7 +611,8 @@ export const TodoProvider = ({ children }) => {
         title: taskData.title,
         notes: taskData.notes || '',
         due: taskData.due,
-        starred: taskData.starred
+        starred: taskData.starred,
+        position: taskToUpdate.position // positionも同期キューに追加
       });
       
       // 同期状態を更新
