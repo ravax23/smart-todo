@@ -153,6 +153,31 @@ function AddTodo({ onAddTodo, initialCategoryId = null }) {
                 </IconButton>
                 <IconButton
                   onClick={() => {
+                    try {
+                      document.getElementById('date-picker').showPicker();
+                    } catch (e) {
+                      document.getElementById('date-picker').click();
+                    }
+                  }}
+                  color={dueDate ? 'primary' : 'default'}
+                  size="small"
+                  sx={{ 
+                    mr: 0.5,
+                    padding: '4px',
+                    opacity: 0.7,
+                    '&:hover': {
+                      opacity: 1,
+                      backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                    }
+                  }}
+                >
+                  <CalendarTodayIcon fontSize="small" />
+                </IconButton>
+                >
+                  <LabelIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  onClick={() => {
                     // モバイルとPC両方で動作するカレンダー表示方法
                     try {
                       // 標準のshowPicker()メソッドを試す（モダンブラウザ）
@@ -204,6 +229,7 @@ function AddTodo({ onAddTodo, initialCategoryId = null }) {
             setTaskDetails({...taskDetails, dueDate: e.target.value});
           }}
           style={{ display: 'none' }}
+          onClick={(e) => e.stopPropagation()} // クリックイベントの伝播を停止
         />
       </form>
 

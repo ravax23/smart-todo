@@ -690,13 +690,32 @@ const TodoList = ({ isMobile }) => {
             
             <TextField
               label="期限"
-              type="date"
+              type="text"
               fullWidth
-              value={taskDetails.dueDate}
-              onChange={handleTaskDetailChange('dueDate')}
-              InputLabelProps={{
-                shrink: true,
+              value={taskDetails.dueDate || ''}
+              onClick={() => {
+                try {
+                  document.getElementById('edit-date-picker').showPicker();
+                } catch (e) {
+                  document.getElementById('edit-date-picker').click();
+                }
               }}
+              InputProps={{
+                readOnly: true,
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <CalendarTodayIcon color="action" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <input
+              id="edit-date-picker"
+              type="date"
+              value={taskDetails.dueDate || ''}
+              onChange={handleTaskDetailChange('dueDate')}
+              style={{ display: 'none' }}
+              onClick={(e) => e.stopPropagation()} // クリックイベントの伝播を停止
             />
             
             <Box>

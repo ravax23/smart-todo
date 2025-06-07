@@ -617,7 +617,10 @@ export const TodoProvider = ({ children }) => {
       // 日付が変更されたかチェック
       const isDateChanged = taskToUpdate.startDate !== taskData.due;
       
-      // 更新されたタスクオブジェクトを作成
+      // 更新前のfilteredTodosの状態を保存
+      const prevFilteredTodos = [...filteredTodos];
+      
+      // 更新されたタスクオブジェクト
       const updatedTask = {
         ...taskToUpdate,
         title: taskData.title,
@@ -634,21 +637,37 @@ export const TodoProvider = ({ children }) => {
         startDate: updatedTask.startDate
       });
       
-      // todosを更新
-      setTodos(prevTodos => 
-        prevTodos.map(task => task.id === taskId ? updatedTask : task)
-      );
-      
-      // 日付が変更された場合は再ソートが必要なので、フィルタリングを実行
+      // 日付が変更された場合
       if (isDateChanged) {
         console.log('[DEBUG] 日付が変更されたため、再ソートを実行');
-        // 次のティックでフィルタリングを実行
-        setTimeout(() => filterTodos(), 0);
+        
+        // todosを更新
+        const newTodos = todos.map(task => task.id === taskId ? updatedTask : task);
+        setTodos(newTodos);
+        
+        // 完全に新しいフィルタリングを実行（次のレンダリングサイクルで）
+        setTimeout(() => {
+          // 日付変更時は完全に新しいフィルタリングを実行
+          const filtered = applyFilters(newTodos);
+          const sorted = applySorting(filtered);
+          setFilteredTodos(sorted);
+        }, 0);
       } else {
-        // 日付が変更されていない場合は、filteredTodosも同様に更新（順序を維持）
-        setFilteredTodos(prevFilteredTodos => 
-          prevFilteredTodos.map(task => task.id === taskId ? updatedTask : task)
-        );
+        // 日付が変更されていない場合
+        
+        // todosを更新
+        setTodos(todos.map(task => task.id === taskId ? updatedTask : task));
+        
+        // filteredTodosの中でタスクを直接置き換え（順序を維持）
+        const taskIndex = prevFilteredTodos.findIndex(task => task.id === taskId);
+        if (taskIndex !== -1) {
+          const newFilteredTodos = [...prevFilteredTodos];
+          newFilteredTodos[taskIndex] = updatedTask;
+          setFilteredTodos(newFilteredTodos);
+          
+          console.log('[DEBUG] filteredTodosを直接更新:', 
+            newFilteredTodos.map(t => ({ id: t.id, title: t.title })));
+        }
       }
       
       console.log(`Updating task ${taskId} with data:`, taskData);
@@ -869,3 +888,71 @@ export const useTodo = () => {
 };
 
 export default TodoContext;
+  // フィルタリングのみを行う関数（ソートなし）
+  const applyFilters = (tasksToFilter) => {
+    let filtered = [...tasksToFilter];
+    
+    // フィルターが選択されていない場合のみ、マイリストでフィルタリング
+    if (!selectedFilter && selectedTaskList && selectedTaskList !== 'all') {
+      filtered = filtered.filter(todo => todo.listId === selectedTaskList);
+    }
+    
+    // 完了タスクのフィルタリング
+    if (!showCompleted) {
+      filtered = filtered.filter(todo => todo.status !== 'completed');
+    }
+    
+    // 日付フィルターの適用
+    switch (selectedFilter) {
+      case 'today':
+        // 今日のタスクをフィルタリング
+        filtered = filtered.filter(todo => {
+          if (!todo.startDate) return false;
+          try {
+            const date = parseISO(todo.startDate);
+            return isToday(date);
+          } catch (e) {
+            return false;
+          }
+        });
+        break;
+      case 'after-tomorrow':
+        // 今週のタスクをフィルタリング
+        filtered = filtered.filter(todo => {
+          if (!todo.startDate) return false;
+          try {
+            const date = parseISO(todo.startDate);
+            return isThisWeek(date) && !isToday(date);
+          } catch (e) {
+            return false;
+          }
+        });
+        break;
+      case 'past':
+        filtered = filtered.filter(todo => {
+          if (!todo.startDate) return false;
+          try {
+            const date = parseISO(todo.startDate);
+            return isBefore(date, startOfDay(new Date()));
+          } catch (e) {
+            return false;
+          }
+        });
+        break;
+      case 'starred':
+        // スター付きのタスクをフィルタリング
+        filtered = filtered.filter(todo => todo.starred === true);
+        break;
+      case 'all':
+      default:
+        // すべてのタスクを表示（フィルタリングなし）
+        break;
+    }
+    
+    return filtered;
+  };
+  
+  // ソートのみを行う関数
+  const applySorting = (tasks) => {
+    return sortTasks(tasks);
+  };
