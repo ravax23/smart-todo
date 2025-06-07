@@ -4,7 +4,7 @@ import TasksService from '../services/tasksService';
 import syncService from '../services/syncService';
 import { extractStarredStatus } from '../services/tasksUtils';
 import { requestTasksScope } from '../services/authService';
-import { isToday, isTomorrow, addDays, isBefore, parseISO, startOfDay } from 'date-fns';
+import { isToday, isTomorrow, addDays, isBefore, parseISO, startOfDay, isThisWeek } from 'date-fns';
 
 const TodoContext = createContext();
 
@@ -648,9 +648,7 @@ export const TodoProvider = ({ children }) => {
         // 完全に新しいフィルタリングを実行（次のレンダリングサイクルで）
         setTimeout(() => {
           // 日付変更時は完全に新しいフィルタリングを実行
-          const filtered = applyFilters(newTodos);
-          const sorted = applySorting(filtered);
-          setFilteredTodos(sorted);
+          const filtered = filterTodos(newTodos);
         }, 0);
       } else {
         // 日付が変更されていない場合
