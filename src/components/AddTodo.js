@@ -152,7 +152,16 @@ function AddTodo({ onAddTodo, initialCategoryId = null }) {
                   <LabelIcon fontSize="small" />
                 </IconButton>
                 <IconButton
-                  onClick={() => document.getElementById('date-picker').showPicker()}
+                  onClick={() => {
+                    // モバイルとPC両方で動作するカレンダー表示方法
+                    try {
+                      // 標準のshowPicker()メソッドを試す（モダンブラウザ）
+                      document.getElementById('date-picker').showPicker();
+                    } catch (e) {
+                      // showPicker()がサポートされていない場合は、クリックイベントをトリガー
+                      document.getElementById('date-picker').click();
+                    }
+                  }}
                   color={dueDate ? 'primary' : 'default'}
                   size="small"
                   sx={{ 

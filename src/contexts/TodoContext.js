@@ -178,22 +178,14 @@ export const TodoProvider = ({ children }) => {
   };
 
   // タスクのフィルタリング
-  const filterTodos = (todosToFilter = todos, skipForUpdate = false) => {
+  const filterTodos = (todosToFilter = todos) => {
     if (!todosToFilter || !todosToFilter.length) {
       console.log('[DEBUG] No todos to filter');
       setFilteredTodos([]);
       return;
     }
 
-    console.log(`[DEBUG] Filtering ${todosToFilter.length} todos with filter: ${selectedFilter}, skipForUpdate: ${skipForUpdate}`);
-    
-    // フィルタリング前の順序を記録
-    const originalOrder = {};
-    todosToFilter.forEach((task, index) => {
-      originalOrder[task.id] = index;
-    });
-    
-    console.log('[DEBUG] 元の順序:', originalOrder);
+    console.log(`[DEBUG] Filtering ${todosToFilter.length} todos with filter: ${selectedFilter}`);
     
     let filtered = [...todosToFilter];
     
@@ -281,23 +273,15 @@ export const TodoProvider = ({ children }) => {
     // 2. マイリスト順（フィルターが選択されていない場合）
     // 3. position順
     console.log('[DEBUG] フィルタリング後のタスク数:', filtered.length);
-    console.log('[DEBUG] ソート前のタスク:', filtered.map(task => ({
-      id: task.id,
-      title: task.title,
-      position: task.position,
-      startDate: task.startDate,
-      originalIndex: originalOrder[task.id]
-    })));
     
-    // タスク更新時はソートをスキップ
-    let sortedFiltered = skipForUpdate ? filtered : sortTasks(filtered);
+    // ソートを適用
+    let sortedFiltered = sortTasks(filtered);
     
     console.log('[DEBUG] ソート後のタスク:', sortedFiltered.map(task => ({
       id: task.id,
       title: task.title,
       position: task.position,
-      startDate: task.startDate,
-      originalIndex: originalOrder[task.id]
+      startDate: task.startDate
     })));
     
     setFilteredTodos(sortedFiltered);
@@ -633,13 +617,6 @@ export const TodoProvider = ({ children }) => {
       // 日付が変更されたかチェック
       const isDateChanged = taskToUpdate.startDate !== taskData.due;
       
-      // 更新前のfilteredTodosを保存
-      const prevFilteredTodos = [...filteredTodos];
-      
-      // 更新対象のタスクのインデックスを取得
-      const todoIndex = todos.findIndex(task => task.id === taskId);
-      const filteredIndex = filteredTodos.findIndex(task => task.id === taskId);
-      
       // 更新されたタスクオブジェクトを作成
       const updatedTask = {
         ...taskToUpdate,
@@ -657,44 +634,21 @@ export const TodoProvider = ({ children }) => {
         startDate: updatedTask.startDate
       });
       
-      // 日付が変更された場合は再ソートが必要
+      // todosを更新
+      setTodos(prevTodos => 
+        prevTodos.map(task => task.id === taskId ? updatedTask : task)
+      );
+      
+      // 日付が変更された場合は再ソートが必要なので、フィルタリングを実行
       if (isDateChanged) {
         console.log('[DEBUG] 日付が変更されたため、再ソートを実行');
-        
-        // todosを更新
-        const newTodos = [...todos];
-        if (todoIndex !== -1) {
-          newTodos[todoIndex] = updatedTask;
-        }
-        setTodos(newTodos);
-        
-        // 完全に新しいフィルタリングを実行
-        setTimeout(() => filterTodos(newTodos, false), 0);
+        // 次のティックでフィルタリングを実行
+        setTimeout(() => filterTodos(), 0);
       } else {
-        // 日付が変更されていない場合は、順序を維持
-        
-        // todosを更新
-        const newTodos = [...todos];
-        if (todoIndex !== -1) {
-          newTodos[todoIndex] = updatedTask;
-        }
-        setTodos(newTodos);
-        
-        // filteredTodosを直接更新して順序を維持
-        if (filteredIndex !== -1) {
-          const newFilteredTodos = [...prevFilteredTodos];
-          newFilteredTodos[filteredIndex] = updatedTask;
-          
-          // フィルタリングをスキップして直接更新
-          setFilteredTodos(newFilteredTodos);
-          
-          console.log('[DEBUG] filteredTodosを直接更新:', 
-            newFilteredTodos.map(t => ({ id: t.id, title: t.title })));
-        } else {
-          // フィルタリング対象外のタスクが更新された場合は、フィルタリングを実行
-          // ただし、ソートはスキップして順序を維持
-          setTimeout(() => filterTodos(newTodos, true), 0);
-        }
+        // 日付が変更されていない場合は、filteredTodosも同様に更新（順序を維持）
+        setFilteredTodos(prevFilteredTodos => 
+          prevFilteredTodos.map(task => task.id === taskId ? updatedTask : task)
+        );
       }
       
       console.log(`Updating task ${taskId} with data:`, taskData);
