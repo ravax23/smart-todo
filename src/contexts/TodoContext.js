@@ -648,7 +648,7 @@ export const TodoProvider = ({ children }) => {
         // 完全に新しいフィルタリングを実行（次のレンダリングサイクルで）
         setTimeout(() => {
           // 日付変更時は完全に新しいフィルタリングを実行
-          const filtered = filterTodos(newTodos);
+          filterTodos(newTodos);
         }, 0);
       } else {
         // 日付が変更されていない場合
@@ -886,71 +886,4 @@ export const useTodo = () => {
 };
 
 export default TodoContext;
-  // フィルタリングのみを行う関数（ソートなし）
-  const applyFilters = (tasksToFilter) => {
-    let filtered = [...tasksToFilter];
-    
-    // フィルターが選択されていない場合のみ、マイリストでフィルタリング
-    if (!selectedFilter && selectedTaskList && selectedTaskList !== 'all') {
-      filtered = filtered.filter(todo => todo.listId === selectedTaskList);
-    }
-    
-    // 完了タスクのフィルタリング
-    if (!showCompleted) {
-      filtered = filtered.filter(todo => todo.status !== 'completed');
-    }
-    
-    // 日付フィルターの適用
-    switch (selectedFilter) {
-      case 'today':
-        // 今日のタスクをフィルタリング
-        filtered = filtered.filter(todo => {
-          if (!todo.startDate) return false;
-          try {
-            const date = parseISO(todo.startDate);
-            return isToday(date);
-          } catch (e) {
-            return false;
-          }
-        });
-        break;
-      case 'after-tomorrow':
-        // 今週のタスクをフィルタリング
-        filtered = filtered.filter(todo => {
-          if (!todo.startDate) return false;
-          try {
-            const date = parseISO(todo.startDate);
-            return isThisWeek(date) && !isToday(date);
-          } catch (e) {
-            return false;
-          }
-        });
-        break;
-      case 'past':
-        filtered = filtered.filter(todo => {
-          if (!todo.startDate) return false;
-          try {
-            const date = parseISO(todo.startDate);
-            return isBefore(date, startOfDay(new Date()));
-          } catch (e) {
-            return false;
-          }
-        });
-        break;
-      case 'starred':
-        // スター付きのタスクをフィルタリング
-        filtered = filtered.filter(todo => todo.starred === true);
-        break;
-      case 'all':
-      default:
-        // すべてのタスクを表示（フィルタリングなし）
-        break;
-    }
-    
-    return filtered;
-  };
-  
-  // ソートのみを行う関数
-  const applySorting = (tasks) => {
-    return sortTasks(tasks);
-  };
+
