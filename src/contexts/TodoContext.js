@@ -345,33 +345,6 @@ export const TodoProvider = ({ children }) => {
     
     return sorted;
   };
-        if (listDiff !== 0) {
-          console.log(`[DEBUG] リストソート: ${a.title} vs ${b.title} = ${listDiff}`);
-          return listDiff;
-        }
-      }
-      
-      // 3. position順（同じ日付、同じリストの場合）
-      const posA = a.position ? (typeof a.position === 'string' ? parseFloat(a.position) : a.position) : 0;
-      const posB = b.position ? (typeof b.position === 'string' ? parseFloat(b.position) : b.position) : 0;
-      
-      const posDiff = posA - posB;
-      if (posDiff !== 0) {
-        console.log(`[DEBUG] Positionソート: ${a.title} vs ${b.title} = ${posDiff}`);
-        return posDiff;
-      }
-      
-      // 4. 最後の手段として、IDで安定ソート
-      const idDiff = a.id.localeCompare(b.id);
-      if (idDiff !== 0) {
-        console.log(`[DEBUG] IDソート: ${a.title} vs ${b.title} = ${idDiff}`);
-      }
-      return idDiff;
-    });
-    
-    console.log('[DEBUG] ソート後のタスク順序:', sorted.map(t => ({ id: t.id, title: t.title, position: t.position })));
-    return sorted;
-  };
 
   // 手動同期を実行
   const manualSync = async () => {
