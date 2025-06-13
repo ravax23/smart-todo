@@ -47,8 +47,23 @@ export const TodoProvider = ({ children }) => {
       const lists = await TasksService.getTaskLists();
       setTaskLists(lists);
       
-      // タスクを取得
-      const allTasks = await TasksService.getAllTasks(lists);
+      // 各タスクリストからタスクを取得
+      const allTasks = [];
+      for (const list of lists) {
+        try {
+          const tasks = await TasksService.getTasks(list.id);
+          // タスクにリストIDを追加
+          const tasksWithListId = tasks.map(task => ({
+            ...task,
+            listId: list.id,
+            startDate: task.due // dueフィールドをstartDateとして使用
+          }));
+          allTasks.push(...tasksWithListId);
+        } catch (err) {
+          console.error(`Error fetching tasks for list ${list.id}:`, err);
+        }
+      }
+      
       setTodos(allTasks);
       
       // 同期状態を更新
