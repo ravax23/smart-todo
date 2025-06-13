@@ -190,12 +190,12 @@ export const TodoProvider = ({ children }) => {
   // タスクのフィルタリング
   const filterTodos = (todosToFilter = todos) => {
     if (!todosToFilter || !todosToFilter.length) {
-      console.log('[DEBUG] No todos to filter');
+      // console.log('[DEBUG] No todos to filter');
       setFilteredTodos([]);
       return;
     }
 
-    console.log(`[DEBUG] Filtering ${todosToFilter.length} todos with filter: ${selectedFilter}`);
+    // console.log(`[DEBUG] Filtering ${todosToFilter.length} todos with filter: ${selectedFilter}`);
     
     let filtered = [...todosToFilter];
     
@@ -279,18 +279,18 @@ export const TodoProvider = ({ children }) => {
     }
     
     // フィルタリング前後のタスク数をログ出力
-    console.log(`[DEBUG] フィルタリング後のタスク数: ${filtered.length}`);
+    // console.log(`[DEBUG] フィルタリング後のタスク数: ${filtered.length}`);
     
     // 常に基本的なソート順序でソート
     const sortedFiltered = sortTasks(filtered);
     
     // ソート結果をログ出力
-    console.log('[DEBUG] ソート後のタスク:', sortedFiltered.map(task => ({
-      id: task.id.substring(0, 8),
-      title: task.title,
-      position: task.position,
-      startDate: task.startDate
-    })));
+    // console.log('[DEBUG] ソート後のタスク:', sortedFiltered.map(task => ({
+    //   id: task.id.substring(0, 8),
+    //   title: task.title,
+    //   position: task.position,
+    //   startDate: task.startDate
+    // })));
     
     // フィルタリング結果を設定
     setFilteredTodos(sortedFiltered);
@@ -298,7 +298,7 @@ export const TodoProvider = ({ children }) => {
 
   // タスクを指定された順序で並び替える関数
   const sortTasks = (tasks) => {
-    console.log('[DEBUG] sortTasks called - タスクのソート開始');
+    // console.log('[DEBUG] sortTasks called - タスクのソート開始');
     console.log('[DEBUG] ソート前のタスク:', tasks.map(task => ({
       id: task.id.substring(0, 8),
       title: task.title,
@@ -317,7 +317,7 @@ export const TodoProvider = ({ children }) => {
           const dateA = parseISO(a.startDate);
           const dateB = parseISO(b.startDate);
           const dateDiff = dateA - dateB;
-          console.log(`[DEBUG] 日付比較: ${a.title} (${a.startDate}) vs ${b.title} (${b.startDate}) = ${dateDiff}`);
+          // console.log(`[DEBUG] 日付比較: ${a.title} (${a.startDate}) vs ${b.title} (${b.startDate}) = ${dateDiff}`);
           return dateDiff;
         } catch (e) {
           console.error('[DEBUG] Date parsing error:', e);
@@ -330,7 +330,7 @@ export const TodoProvider = ({ children }) => {
         const listB = taskLists.findIndex(list => list.id === b.listId);
         const indexA = listA === -1 ? Number.MAX_SAFE_INTEGER : listA;
         const indexB = listB === -1 ? Number.MAX_SAFE_INTEGER : listB;
-        console.log(`[DEBUG] リスト比較: ${a.title} (listIdx: ${indexA}) vs ${b.title} (listIdx: ${indexB}) = ${indexA - indexB}`);
+        // console.log(`[DEBUG] リスト比較: ${a.title} (listIdx: ${indexA}) vs ${b.title} (listIdx: ${indexB}) = ${indexA - indexB}`);
         return indexA - indexB;
       }
       
@@ -630,9 +630,9 @@ export const TodoProvider = ({ children }) => {
         throw new Error('タスクリストが見つかりません。');
       }
       
-      console.log(`[DEBUG] タスク更新開始: ${taskToUpdate.title}`);
+      // console.log(`[DEBUG] タスク更新開始: ${taskToUpdate.title}`);
       console.log(`[DEBUG] 更新前のタスク:`, {
-        id: taskToUpdate.id,
+        id: taskToUpdate.id.substring(0, 8),
         title: taskToUpdate.title,
         position: taskToUpdate.position,
         startDate: taskToUpdate.startDate
@@ -650,7 +650,7 @@ export const TodoProvider = ({ children }) => {
       };
       
       console.log(`[DEBUG] 更新後のタスク:`, {
-        id: updatedTask.id,
+        id: updatedTask.id.substring(0, 8),
         title: updatedTask.title,
         position: updatedTask.position,
         startDate: updatedTask.startDate
@@ -685,7 +685,7 @@ export const TodoProvider = ({ children }) => {
       // 同期状態を更新
       updateSyncStatus();
       
-      console.log(`[DEBUG] タスク更新完了: ${taskData.title}`);
+      // console.log(`[DEBUG] タスク更新完了: ${taskData.title}`);
     } catch (err) {
       console.error('Failed to update task:', err);
       setError(`タスクの更新に失敗しました。${err.message}`);
