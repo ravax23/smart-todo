@@ -658,7 +658,6 @@ export const TodoProvider = ({ children }) => {
       const list = taskLists.find(l => l.id === listId);
       const listName = list ? list.title : 'unknown';
       
-      // console.log(`[DEBUG] タスク更新開始: ${taskToUpdate.title}`);
       console.log(`[DEBUG] 更新前のタスク:`, {
         id: taskToUpdate.id.substring(0, 8),
         title: taskToUpdate.title,
@@ -675,8 +674,8 @@ export const TodoProvider = ({ children }) => {
         notes: taskData.notes || '',
         startDate: taskData.due,
         due: taskData.due,
-        starred: taskData.starred
-        // positionは更新しない（元の値を保持）
+        starred: taskData.starred,
+        position: taskToUpdate.position // 明示的にposition値を保持
       };
       
       console.log(`[DEBUG] 更新後のタスク:`, {
@@ -688,20 +687,13 @@ export const TodoProvider = ({ children }) => {
         formattedDate: updatedTask.startDate ? new Date(updatedTask.startDate).toLocaleDateString() : 'なし'
       });
       
-      // メモリ内のタスクを更新
-      const newTodos = todos.map(task => 
-        task.id === taskId ? updatedTask : task
-      );
-      
-      // 状態を更新
-      setTodos(newTodos);
-      
-      // 明示的にフィルタリングを実行（初期表示と同じソート処理を使用）
-      if (selectedFilter) {
-        filterTodos(newTodos);
-      } else if (selectedTaskList) {
-        filterTodosByList(selectedTaskList);
-      }
+      // メモリ内のタスクリストに追加（新規作成と同じ方法）
+      setTodos(prevTodos => {
+        // 更新対象のタスクを除外
+        const filteredTodos = prevTodos.filter(task => task.id !== taskId);
+        // 更新したタスクを追加
+        return [...filteredTodos, updatedTask];
+      });
       
       // 同期キューに追加
       syncService.addToSyncQueue('task', 'update', {
@@ -717,7 +709,6 @@ export const TodoProvider = ({ children }) => {
       // 同期状態を更新
       updateSyncStatus();
       
-      // console.log(`[DEBUG] タスク更新完了: ${taskData.title}`);
     } catch (err) {
       console.error('Failed to update task:', err);
       setError(`タスクの更新に失敗しました。${err.message}`);
