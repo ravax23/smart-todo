@@ -299,12 +299,21 @@ export const TodoProvider = ({ children }) => {
   // タスクを指定された順序で並び替える関数
   const sortTasks = (tasks) => {
     // console.log('[DEBUG] sortTasks called - タスクのソート開始');
-    console.log('[DEBUG] ソート前のタスク:', tasks.map(task => ({
-      id: task.id.substring(0, 8),
-      title: task.title,
-      position: task.position,
-      startDate: task.startDate
-    })));
+    console.log('[DEBUG] ソート前のタスク:', tasks.map(task => {
+      // マイリスト名を取得
+      const list = taskLists.find(l => l.id === task.listId);
+      const listName = list ? list.title : 'unknown';
+      
+      return {
+        id: task.id.substring(0, 8),
+        title: task.title,
+        position: task.position,
+        startDate: task.startDate,
+        listName: listName,
+        // 日付を読みやすい形式に変換
+        formattedDate: task.startDate ? new Date(task.startDate).toLocaleDateString() : 'なし'
+      };
+    }));
     
     const sorted = [...tasks].sort((a, b) => {
       // 1. 期限順（昇順、なしは最後）
@@ -339,17 +348,32 @@ export const TodoProvider = ({ children }) => {
       const posA = a.position ? (typeof a.position === 'string' ? parseFloat(a.position) : a.position) : 0;
       const posB = b.position ? (typeof b.position === 'string' ? parseFloat(b.position) : b.position) : 0;
       
-      console.log(`[DEBUG] Position比較: ${a.title} (pos: ${posA}) vs ${b.title} (pos: ${posB}) = ${posA - posB}`);
+      // マイリスト名を取得
+      const listA = taskLists.find(l => l.id === a.listId);
+      const listB = taskLists.find(l => l.id === b.listId);
+      const listNameA = listA ? listA.title : 'unknown';
+      const listNameB = listB ? listB.title : 'unknown';
+      
+      console.log(`[DEBUG] Position比較: ${a.title} (リスト: ${listNameA}, 期限: ${a.startDate ? new Date(a.startDate).toLocaleDateString() : 'なし'}, pos: ${posA}) vs ${b.title} (リスト: ${listNameB}, 期限: ${b.startDate ? new Date(b.startDate).toLocaleDateString() : 'なし'}, pos: ${posB}) = ${posA - posB}`);
       
       return posA - posB;
     });
     
-    console.log('[DEBUG] ソート後の順序:', sorted.map(task => ({
-      id: task.id.substring(0, 8),
-      title: task.title,
-      position: task.position,
-      startDate: task.startDate
-    })));
+    console.log('[DEBUG] ソート後の順序:', sorted.map(task => {
+      // マイリスト名を取得
+      const list = taskLists.find(l => l.id === task.listId);
+      const listName = list ? list.title : 'unknown';
+      
+      return {
+        id: task.id.substring(0, 8),
+        title: task.title,
+        position: task.position,
+        startDate: task.startDate,
+        listName: listName,
+        // 日付を読みやすい形式に変換
+        formattedDate: task.startDate ? new Date(task.startDate).toLocaleDateString() : 'なし'
+      };
+    }));
     
     return sorted;
   };
@@ -630,12 +654,18 @@ export const TodoProvider = ({ children }) => {
         throw new Error('タスクリストが見つかりません。');
       }
       
+      // マイリスト名を取得
+      const list = taskLists.find(l => l.id === listId);
+      const listName = list ? list.title : 'unknown';
+      
       // console.log(`[DEBUG] タスク更新開始: ${taskToUpdate.title}`);
       console.log(`[DEBUG] 更新前のタスク:`, {
         id: taskToUpdate.id.substring(0, 8),
         title: taskToUpdate.title,
         position: taskToUpdate.position,
-        startDate: taskToUpdate.startDate
+        startDate: taskToUpdate.startDate,
+        listName: listName,
+        formattedDate: taskToUpdate.startDate ? new Date(taskToUpdate.startDate).toLocaleDateString() : 'なし'
       });
       
       // 更新されたタスクオブジェクト
@@ -653,7 +683,9 @@ export const TodoProvider = ({ children }) => {
         id: updatedTask.id.substring(0, 8),
         title: updatedTask.title,
         position: updatedTask.position,
-        startDate: updatedTask.startDate
+        startDate: updatedTask.startDate,
+        listName: listName,
+        formattedDate: updatedTask.startDate ? new Date(updatedTask.startDate).toLocaleDateString() : 'なし'
       });
       
       // メモリ内のタスクを更新
