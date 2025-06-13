@@ -668,6 +668,44 @@ export const TodoProvider = ({ children }) => {
     }
   };
   
+  // タスクリストを削除
+  const deleteTaskList = async (listId) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // メモリ内のタスクリストを削除
+      setTaskLists(prevLists => prevLists.filter(list => list.id !== listId));
+      
+      // このリストに属するタスクも削除
+      setTodos(prevTodos => prevTodos.filter(task => task.listId !== listId));
+      
+      // 削除するリストが現在選択されているリストの場合は、デフォルトリストに切り替える
+      if (selectedTaskList === listId) {
+        // 最初のリストか、なければ 'all' フィルターに切り替え
+        const firstList = taskLists.find(list => list.id !== listId);
+        if (firstList) {
+          selectTaskList(firstList.id);
+        } else {
+          selectFilter('all');
+        }
+      }
+      
+      // 同期キューに追加
+      syncService.addToSyncQueue('taskList', 'delete', listId);
+      
+      // 同期状態を更新
+      updateSyncStatus();
+      
+      console.log(`Task list ${listId} deleted successfully`);
+    } catch (err) {
+      console.error('Failed to delete task list:', err);
+      setError(`タスクリストの削除に失敗しました。${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   // タスクの一括更新（同期後）
   const updateTasksAfterSync = (updatedTasks) => {
     if (!updatedTasks || !updatedTasks.length) return;
