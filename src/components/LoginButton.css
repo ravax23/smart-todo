@@ -1,0 +1,40 @@
+/* Google Login Button 固定サイズ設定 */
+.google-login-button-container {
+  width: 240px !important;
+  height: 40px !important;
+  min-width: 240px !important;
+  min-height: 40px !important;
+  max-width: 240px !important;
+  max-height: 40px !important;
+  overflow: hidden;
+}
+
+/* Google Identity Services のボタン要素を強制的に固定サイズに */
+.google-login-button-container > div,
+.google-login-button-container > div > div,
+.google-login-button-container iframe {
+  width: 240px !important;
+  height: 40px !important;
+  min-width: 240px !important;
+  min-height: 40px !important;
+  max-width: 240px !important;
+  max-height: 40px !important;
+}
+
+/* ボタン内のテキストとアイコンの配置を調整 */
+.google-login-button-container [role="button"] {
+  width: 240px !important;
+  height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 14px !important;
+  line-height: 40px !important;
+}
+
+/* エラー状態でもサイズを維持 */
+.google-login-button-container.error-state > div,
+.google-login-button-container.error-state iframe {
+  width: 240px !important;
+  height: 40px !important;
+}
