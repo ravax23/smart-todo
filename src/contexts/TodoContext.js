@@ -322,7 +322,8 @@ export const TodoProvider = ({ children }) => {
         status: 'needsAction',
         starred: taskData.starred,
         listId: listId,
-        position: `${Date.now()}`, // 一時的なposition値
+        // positionはGoogle Tasks APIから取得される値を使用（一時的にはnull）
+        position: null,
         startDate: taskData.due // dueフィールドをstartDateとして使用
       };
       
@@ -569,9 +570,6 @@ export const TodoProvider = ({ children }) => {
         throw new Error('タスクリストが見つかりません。');
       }
       
-      // 日付が変更されたかチェック
-      const dateChanged = taskToUpdate.due !== taskData.due;
-      
       // メモリ内のタスクを更新
       const updatedTodos = todos.map(task => 
         task.id === taskId ? { 
@@ -581,8 +579,8 @@ export const TodoProvider = ({ children }) => {
           startDate: taskData.due,
           due: taskData.due,
           starred: taskData.starred,
-          // positionは日付が変更された場合のみ更新
-          position: dateChanged ? `${Date.now()}` : task.position
+          // positionはGoogle Tasks APIから取得した値のみを保持
+          position: task.position
         } : task
       );
       
@@ -601,8 +599,8 @@ export const TodoProvider = ({ children }) => {
         title: taskData.title,
         notes: taskData.notes || '',
         due: taskData.due,
-        starred: taskData.starred,
-        position: updatedTask.position // 更新後のposition値を使用
+        starred: taskData.starred
+        // positionは同期時にGoogle Tasks APIから取得される値を使用
       });
       
       // 同期状態を更新
@@ -666,10 +664,12 @@ export const TodoProvider = ({ children }) => {
   // タスクの並び替え
   const reorderTasks = (updatedTodos) => {
     try {
-      // 並び替えられたタスクにposition値を設定
+      // 並び替えられたタスクの順序を保持
+      // positionの更新はGoogle Tasks APIとの同期時に行う
       const todosWithPosition = updatedTodos.map((task, index) => ({
         ...task,
-        position: `${Date.now() + index}`
+        // positionはGoogle Tasks APIから取得した値を保持
+        position: task.position
       }));
       
       // 状態を更新
