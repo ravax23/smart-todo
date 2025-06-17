@@ -716,7 +716,16 @@ const TodoList = ({ isMobile }) => {
               type="date"
               value={taskDetails.dueDate || ''}
               onChange={handleTaskDetailChange('dueDate')}
-              style={{ display: 'none' }}
+              style={{ 
+                position: 'absolute',
+                top: '100%',
+                left: '0',
+                zIndex: 1000,
+                opacity: 0,
+                height: '1px',
+                width: '1px',
+                overflow: 'hidden'
+              }}
               onClick={(e) => e.stopPropagation()} // クリックイベントの伝播を停止
             />
             
