@@ -153,9 +153,16 @@ export const TodoProvider = ({ children }) => {
       // スター状態を抽出
       const tasksWithStarred = allTasks.map(task => ({
         ...task,
-        starred: extractStarredStatus(task)
+        starred: extractStarredStatus(task),
+        startDate: task.due // dueフィールドをstartDateとして設定
       }));
       
+      console.log('[DEBUG] タスクデータ例:', tasksWithStarred.length > 0 ? {
+        id: tasksWithStarred[0].id,
+        title: tasksWithStarred[0].title,
+        due: tasksWithStarred[0].due,
+        startDate: tasksWithStarred[0].startDate
+      } : 'タスクなし');
       // タスクを設定
       setTodos(tasksWithStarred);
       
