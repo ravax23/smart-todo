@@ -284,8 +284,40 @@ class TasksService {
   }
   
   /**
-   * タスクリストのタスクを取得
+   * すべてのタスクリストからタスクを取得
    */
+  static async getAllTasks(taskLists) {
+    try {
+      console.log('Fetching tasks from all lists');
+      
+      if (!taskLists || !taskLists.length) {
+        console.log('No task lists provided');
+        return [];
+      }
+      
+      // 各タスクリストからタスクを取得
+      const tasksPromises = taskLists.map(list => this.getTasks(list.id));
+      const tasksResults = await Promise.all(tasksPromises);
+      
+      // 各タスクにリストIDを追加して結合
+      const allTasks = [];
+      tasksResults.forEach((tasks, index) => {
+        if (tasks && tasks.length) {
+          const tasksWithListId = tasks.map(task => ({
+            ...task,
+            listId: taskLists[index].id
+          }));
+          allTasks.push(...tasksWithListId);
+        }
+      });
+      
+      console.log(`Fetched ${allTasks.length} tasks from all lists`);
+      return allTasks;
+    } catch (error) {
+      console.error('Error fetching all tasks:', error);
+      throw error;
+    }
+  }
   static async getTasks(taskListId) {
     try {
       console.log(`Fetching tasks from list ${taskListId}`);
