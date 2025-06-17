@@ -22,10 +22,10 @@ export const TodoProvider = ({ children }) => {
 
   // 共通のフィルタリングとソート処理
   const applyFilterAndSort = (tasksToProcess = todos) => {
-    console.log('[DEBUG] applyFilterAndSort called - 共通フィルタリングとソート処理開始');
+    // console.log('[DEBUG] applyFilterAndSort called - 共通フィルタリングとソート処理開始');
     
     if (!tasksToProcess || tasksToProcess.length === 0) {
-      console.log('[DEBUG] No tasks to process');
+      // console.log('[DEBUG] No tasks to process');
       setFilteredTodos([]);
       return [];
     }
@@ -101,17 +101,19 @@ export const TodoProvider = ({ children }) => {
       filtered = filtered.filter(todo => todo.listId === selectedTaskList);
     }
     
-    console.log(`[DEBUG] フィルタリング後のタスク数: ${filtered.length}`);
+    // console.log(`[DEBUG] フィルタリング後のタスク数: ${filtered.length}`);
     
     // ソート処理を適用
     const sortedTasks = sortTasks(filtered);
     
+    /*
     console.log('[DEBUG] ソート後のタスク:', sortedTasks.map(task => ({
       id: task.id.substring(0, 8),
       title: task.title,
       position: task.position,
       startDate: task.startDate
     })));
+    */
     
     // 結果を状態に設定
     setFilteredTodos(sortedTasks);
@@ -157,12 +159,14 @@ export const TodoProvider = ({ children }) => {
         startDate: task.due // dueフィールドをstartDateとして設定
       }));
       
+      /*
       console.log('[DEBUG] タスクデータ例:', tasksWithStarred.length > 0 ? {
         id: tasksWithStarred[0].id,
         title: tasksWithStarred[0].title,
         due: tasksWithStarred[0].due,
         startDate: tasksWithStarred[0].startDate
       } : 'タスクなし');
+      */
       // タスクを設定
       setTodos(tasksWithStarred);
       
@@ -204,7 +208,7 @@ export const TodoProvider = ({ children }) => {
   // タスクリストが選択されたときにタスクをフィルタリング
   useEffect(() => {
     if (isAuthenticated && selectedTaskList) {
-      console.log(`Selected task list changed to: ${selectedTaskList}`);
+      // console.log(`Selected task list changed to: ${selectedTaskList}`);
       applyFilterAndSort();
     }
   }, [isAuthenticated, selectedTaskList, todos]);
@@ -212,20 +216,20 @@ export const TodoProvider = ({ children }) => {
   // フィルターが変更されたときにタスクをフィルタリング
   useEffect(() => {
     if (isAuthenticated) {
-      console.log(`Filter changed to: ${selectedFilter}`);
+      // console.log(`Filter changed to: ${selectedFilter}`);
       applyFilterAndSort();
     }
   }, [isAuthenticated, selectedFilter, todos]);
 
   // タスクが更新されたときにフィルタリング
   useEffect(() => {
-    console.log('Filtering todos based on updated data');
+    // console.log('Filtering todos based on updated data');
     applyFilterAndSort();
   }, [todos, showCompleted]);
 
   // タスクを指定された順序で並び替える関数
   const sortTasks = (tasks) => {
-    console.log('[DEBUG] sortTasks called - タスクのソート開始');
+    // console.log('[DEBUG] sortTasks called - タスクのソート開始');
     
     if (!tasks || tasks.length === 0) {
       return [];
@@ -241,11 +245,11 @@ export const TodoProvider = ({ children }) => {
         try {
           const dateA = parseISO(a.startDate);
           const dateB = parseISO(b.startDate);
-          console.log(`[DEBUG] 日付比較: ${a.title} (${a.startDate}) vs ${b.title} (${b.startDate}) = ${dateA - dateB}`);
+          // console.log(`[DEBUG] 日付比較: ${a.title} (${a.startDate}) vs ${b.title} (${b.startDate}) = ${dateA - dateB}`);
           return dateA - dateB;
         } catch (e) {
           // 日付の解析に失敗した場合はマイリスト順で並べる
-          console.error('[DEBUG] Date parsing error:', e);
+          // console.error('[DEBUG] Date parsing error:', e);
         }
       }
       
@@ -256,7 +260,7 @@ export const TodoProvider = ({ children }) => {
         // findIndexが-1を返す場合（リストが見つからない場合）は最後に配置
         const indexA = listA === -1 ? Number.MAX_SAFE_INTEGER : listA;
         const indexB = listB === -1 ? Number.MAX_SAFE_INTEGER : listB;
-        console.log(`[DEBUG] リスト比較: ${a.title} (listIdx: ${indexA}) vs ${b.title} (listIdx: ${indexB}) = ${indexA - indexB}`);
+        // console.log(`[DEBUG] リスト比較: ${a.title} (listIdx: ${indexA}) vs ${b.title} (listIdx: ${indexB}) = ${indexA - indexB}`);
         return indexA - indexB;
       }
       
@@ -265,7 +269,7 @@ export const TodoProvider = ({ children }) => {
       const posA = a.position ? (typeof a.position === 'string' ? parseFloat(a.position) : a.position) : 0;
       const posB = b.position ? (typeof b.position === 'string' ? parseFloat(b.position) : b.position) : 0;
       
-      console.log(`[DEBUG] Position比較: ${a.title} (pos: ${posA}) vs ${b.title} (pos: ${posB}) = ${posA - posB}`);
+      // console.log(`[DEBUG] Position比較: ${a.title} (pos: ${posA}) vs ${b.title} (pos: ${posB}) = ${posA - posB}`);
       
       return posA - posB;
     });
@@ -560,12 +564,12 @@ export const TodoProvider = ({ children }) => {
         throw new Error('タスクリストが見つかりません。');
       }
       
-      console.log(`[DEBUG] 更新前のタスク:`, {
-        id: taskToUpdate.id,
-        title: taskToUpdate.title,
-        position: taskToUpdate.position,
-        startDate: taskToUpdate.startDate
-      });
+      // console.log(`[DEBUG] 更新前のタスク:`, {
+      //   id: taskToUpdate.id,
+      //   title: taskToUpdate.title,
+      //   position: taskToUpdate.position,
+      //   startDate: taskToUpdate.startDate
+      // });
       
       // メモリ内のタスクを更新
       const updatedTodos = todos.map(task => 
@@ -582,12 +586,12 @@ export const TodoProvider = ({ children }) => {
       
       // 更新後のタスクをログ出力
       const updatedTask = updatedTodos.find(task => task.id === taskId);
-      console.log(`[DEBUG] 更新後のタスク:`, {
-        id: updatedTask.id,
-        title: updatedTask.title,
-        position: updatedTask.position,
-        startDate: updatedTask.startDate
-      });
+      // console.log(`[DEBUG] 更新後のタスク:`, {
+      //   id: updatedTask.id,
+      //   title: updatedTask.title,
+      //   position: updatedTask.position,
+      //   startDate: updatedTask.startDate
+      // });
       
       // 状態を更新
       setTodos(updatedTodos);
