@@ -2,6 +2,10 @@
 
 シンプルで使いやすいタスク管理アプリケーション
 
+## 🌐 ライブデモ
+
+**本番環境**: https://d1yqrgdl6vrr4q.cloudfront.net
+
 ## 機能
 
 - Google認証によるログイン
@@ -17,6 +21,25 @@
 - UI改善: マイリスト名の横にゴミ箱アイコンを表示
 - フィルター表示の修正: フィルター選択時とマイリスト選択時の表示を明確に区別
 - パッケージの更新: @mui/x-date-pickers を 8.5.0 にアップデート
+- AWS展開: S3 + CloudFront による本番環境構築
+
+## AWS インフラストラクチャ
+
+### 構成
+- **S3バケット**: `smarttodo-app-static-hosting`
+- **CloudFront**: `E2E6NVYTYW4IE8`
+- **ドメイン**: `d1yqrgdl6vrr4q.cloudfront.net`
+
+### デプロイメント
+```bash
+# 自動デプロイ
+./deploy.sh
+
+# 手動デプロイ
+npm run build
+aws s3 sync build/ s3://smarttodo-app-static-hosting --delete
+aws cloudfront create-invalidation --distribution-id E2E6NVYTYW4IE8 --paths "/*"
+```
 
 ## セットアップ
 
