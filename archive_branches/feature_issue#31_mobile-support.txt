@@ -1,0 +1,1 @@
+a7dc49440b5d2aac051e61c1b7c985ce5a096025 Feature: モバイル対応の完了
