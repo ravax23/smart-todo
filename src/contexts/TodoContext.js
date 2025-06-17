@@ -245,8 +245,13 @@ export const TodoProvider = ({ children }) => {
         try {
           const dateA = parseISO(a.startDate);
           const dateB = parseISO(b.startDate);
-          // console.log(`[DEBUG] 日付比較: ${a.title} (${a.startDate}) vs ${b.title} (${b.startDate}) = ${dateA - dateB}`);
-          return dateA - dateB;
+          
+          // 日付部分のみを比較するために、時間情報をリセット
+          const dateAOnly = new Date(dateA.getFullYear(), dateA.getMonth(), dateA.getDate());
+          const dateBOnly = new Date(dateB.getFullYear(), dateB.getMonth(), dateB.getDate());
+          
+          // console.log(`[DEBUG] 日付比較: ${a.title} (${a.startDate}) vs ${b.title} (${b.startDate}) = ${dateAOnly - dateBOnly}`);
+          return dateAOnly - dateBOnly;
         } catch (e) {
           // 日付の解析に失敗した場合はマイリスト順で並べる
           // console.error('[DEBUG] Date parsing error:', e);

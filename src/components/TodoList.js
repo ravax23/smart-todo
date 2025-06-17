@@ -296,8 +296,8 @@ const TodoList = ({ isMobile }) => {
       let dueDate = null;
       if (taskDetails.dueDate) {
         dueDate = new Date(taskDetails.dueDate);
-        // 時間を23:59:59に設定して、その日の終わりを表す
-        dueDate.setHours(23, 59, 59, 999);
+        // 時間を0:00:00に設定して、日付のみを考慮
+        dueDate.setHours(0, 0, 0, 0);
         dueDate = dueDate.toISOString();
       }
       
