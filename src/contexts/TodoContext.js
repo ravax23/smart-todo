@@ -152,11 +152,12 @@ export const TodoProvider = ({ children }) => {
       const allTasks = await TasksService.getAllTasks(lists);
       console.log(`Fetched ${allTasks.length} tasks`);
       
-      // スター状態を抽出
+      // スター状態を抽出し、期限値を正規化
       const tasksWithStarred = allTasks.map(task => ({
         ...task,
         starred: extractStarredStatus(task),
-        startDate: task.due // dueフィールドをstartDateとして設定
+        due: task.due || null, // 期限値を正規化
+        startDate: task.due || null // 正規化されたdueフィールドをstartDateとして設定
       }));
       
       /*
@@ -236,25 +237,30 @@ export const TodoProvider = ({ children }) => {
     }
     
     return [...tasks].sort((a, b) => {
+      // 期限値を正規化（null, undefined, 空文字列をnullに統一）
+      const startDateA = a.startDate || null;
+      const startDateB = b.startDate || null;
+      
       // 1. 期限順（昇順、なしは最後）
-      if (a.startDate !== b.startDate) {
+      if (startDateA !== startDateB) {
         // 期限なしのタスクは最後に配置
-        if (!a.startDate) return 1;
-        if (!b.startDate) return -1;
+        if (!startDateA) return 1;
+        if (!startDateB) return -1;
         
         try {
-          const dateA = parseISO(a.startDate);
-          const dateB = parseISO(b.startDate);
+          const dateA = parseISO(startDateA);
+          const dateB = parseISO(startDateB);
           
           // 日付部分のみを比較するために、時間情報をリセット
           const dateAOnly = new Date(dateA.getFullYear(), dateA.getMonth(), dateA.getDate());
           const dateBOnly = new Date(dateB.getFullYear(), dateB.getMonth(), dateB.getDate());
           
-          // console.log(`[DEBUG] 日付比較: ${a.title} (${a.startDate}) vs ${b.title} (${b.startDate}) = ${dateAOnly - dateBOnly}`);
+          // console.log(`[DEBUG] 日付比較: ${a.title} (${startDateA}) vs ${b.title} (${startDateB}) = ${dateAOnly - dateBOnly}`);
           return dateAOnly - dateBOnly;
         } catch (e) {
-          // 日付の解析に失敗した場合はマイリスト順で並べる
+          // 日付の解析に失敗した場合は同順位として扱う
           // console.error('[DEBUG] Date parsing error:', e);
+          return 0;
         }
       }
       
@@ -313,18 +319,21 @@ export const TodoProvider = ({ children }) => {
       // 新しいタスクのIDを生成（一時的なID）
       const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
+      // 期限値を正規化（null, undefined, 空文字列をnullに統一）
+      const normalizedDue = taskData.due || null;
+      
       // 新しいタスクオブジェクトを作成
       const newTask = {
         id: tempId,
         title: taskData.title,
         notes: taskData.notes || '',
-        due: taskData.due,
+        due: normalizedDue,
         status: 'needsAction',
         starred: taskData.starred,
         listId: listId,
         // positionはGoogle Tasks APIから取得される値を使用（一時的にはnull）
         position: null,
-        startDate: taskData.due // dueフィールドをstartDateとして使用
+        startDate: normalizedDue // 正規化されたdueフィールドをstartDateとして使用
       };
       
       // メモリ内のタスクリストに追加
@@ -334,7 +343,8 @@ export const TodoProvider = ({ children }) => {
       // 同期キューに追加
       syncService.addToSyncQueue('task', 'create', {
         ...newTask,
-        listId: listId
+        listId: listId,
+        due: normalizedDue // 正規化された期限値を使用
       });
       
       // 同期状態を更新
@@ -570,14 +580,17 @@ export const TodoProvider = ({ children }) => {
         throw new Error('タスクリストが見つかりません。');
       }
       
+      // 期限値を正規化（null, undefined, 空文字列をnullに統一）
+      const normalizedDue = taskData.due || null;
+      
       // メモリ内のタスクを更新
       const updatedTodos = todos.map(task => 
         task.id === taskId ? { 
           ...task, 
           title: taskData.title,
           notes: taskData.notes || '',
-          startDate: taskData.due,
-          due: taskData.due,
+          startDate: normalizedDue,
+          due: normalizedDue,
           starred: taskData.starred,
           // positionはGoogle Tasks APIから取得した値のみを保持
           position: task.position
@@ -598,7 +611,7 @@ export const TodoProvider = ({ children }) => {
         listId: listId,
         title: taskData.title,
         notes: taskData.notes || '',
-        due: taskData.due,
+        due: normalizedDue,
         starred: taskData.starred
         // positionは同期時にGoogle Tasks APIから取得される値を使用
       });
