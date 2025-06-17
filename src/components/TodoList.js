@@ -315,6 +315,18 @@ const TodoList = ({ isMobile }) => {
       if (editMode) {
         // 既存タスクの更新
         console.log(`Updating task ${taskDetails.taskId} with data:`, taskData);
+        
+        // 現在のタスクを取得
+        const currentTask = todos.find(task => task.id === taskDetails.taskId);
+        
+        // マイリストが変更されたかチェック
+        if (currentTask && taskDetails.categoryId && currentTask.listId !== taskDetails.categoryId) {
+          // マイリストが変更された場合は、moveTaskToListを使用
+          console.log(`Moving task from list ${currentTask.listId} to ${taskDetails.categoryId}`);
+          await moveTaskToList(taskDetails.taskId, taskDetails.categoryId);
+        }
+        
+        // タスクの他の情報を更新
         await updateTask(taskDetails.taskId, taskData);
       } else {
         // 新規タスクの作成

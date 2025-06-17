@@ -564,12 +564,8 @@ export const TodoProvider = ({ children }) => {
         throw new Error('タスクリストが見つかりません。');
       }
       
-      // console.log(`[DEBUG] 更新前のタスク:`, {
-      //   id: taskToUpdate.id,
-      //   title: taskToUpdate.title,
-      //   position: taskToUpdate.position,
-      //   startDate: taskToUpdate.startDate
-      // });
+      // 日付が変更されたかチェック
+      const dateChanged = taskToUpdate.due !== taskData.due;
       
       // メモリ内のタスクを更新
       const updatedTodos = todos.map(task => 
@@ -580,18 +576,13 @@ export const TodoProvider = ({ children }) => {
           startDate: taskData.due,
           due: taskData.due,
           starred: taskData.starred,
-          // positionは更新しない（元の値を保持）
+          // positionは日付が変更された場合のみ更新
+          position: dateChanged ? `${Date.now()}` : task.position
         } : task
       );
       
-      // 更新後のタスクをログ出力
+      // 更新後のタスク
       const updatedTask = updatedTodos.find(task => task.id === taskId);
-      // console.log(`[DEBUG] 更新後のタスク:`, {
-      //   id: updatedTask.id,
-      //   title: updatedTask.title,
-      //   position: updatedTask.position,
-      //   startDate: updatedTask.startDate
-      // });
       
       // 状態を更新
       setTodos(updatedTodos);
@@ -606,7 +597,7 @@ export const TodoProvider = ({ children }) => {
         notes: taskData.notes || '',
         due: taskData.due,
         starred: taskData.starred,
-        position: taskToUpdate.position // positionも同期キューに追加
+        position: updatedTask.position // 更新後のposition値を使用
       });
       
       // 同期状態を更新
