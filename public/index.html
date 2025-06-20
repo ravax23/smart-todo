@@ -22,6 +22,41 @@
           'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+        height: 100%;
+        overflow: hidden;
+      }
+      
+      html {
+        height: 100%;
+      }
+      
+      #root {
+        height: 100%;
+        overflow: hidden;
+      }
+      
+      /* モバイル用のスタイル */
+      @media (max-width: 768px) {
+        .sidebar-mobile {
+          position: fixed;
+          left: -320px;
+          top: 0;
+          bottom: 0;
+          z-index: 1200;
+          transition: left 0.3s ease;
+          height: 100vh;
+          overflow-y: auto;
+        }
+        
+        .sidebar-mobile.open {
+          left: 0;
+        }
+        
+        .main-content-mobile {
+          height: 100vh;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+        }
       }
     </style>
   </head>

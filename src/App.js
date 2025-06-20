@@ -190,8 +190,9 @@ const AppContent = () => {
                   bgcolor: 'background.default', 
                   display: 'flex', 
                   flexDirection: 'column',
-                  overflow: 'hidden',
-                  width: '100%'
+                  overflow: 'auto',
+                  width: '100%',
+                  height: isMobile ? '100vh' : 'auto'
                 }}
               >
                 <TodoList isMobile={isMobile} />

@@ -271,7 +271,7 @@ const Sidebar = ({ closeSidebar, isMobile }) => {
       display: 'flex',
       flexDirection: 'column',
       p: 2,
-      height: isMobile ? '100%' : 'auto',
+      height: '100%',
       overflowY: 'auto',
       overflowX: 'hidden' // 横スクロール禁止
     }}>
@@ -417,7 +417,7 @@ const Sidebar = ({ closeSidebar, isMobile }) => {
         マイリスト
       </Typography>
       
-      <List sx={{ p: 0, maxHeight: '400px', overflowY: 'auto' }}>
+      <List sx={{ p: 0 }}>
         {/* タスクリスト一覧 */}
         {taskLists && taskLists.map((list, index) => (
           <ListItem

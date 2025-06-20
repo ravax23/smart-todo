@@ -232,6 +232,15 @@ export const TodoProvider = ({ children }) => {
     if (isAuthenticated && selectedTaskList) {
       // console.log(`Selected task list changed to: ${selectedTaskList}`);
       applyFilterAndSort();
+      
+      // メイン画面を最上部にスクロール
+      window.scrollTo(0, 0);
+      
+      // モバイル環境の場合、メインコンテンツ要素を最上部にスクロール
+      const mainContent = document.querySelector('.main-content-mobile');
+      if (mainContent) {
+        mainContent.scrollTop = 0;
+      }
     }
   }, [isAuthenticated, selectedTaskList, todos]);
 
@@ -240,6 +249,15 @@ export const TodoProvider = ({ children }) => {
     if (isAuthenticated) {
       // console.log(`Filter changed to: ${selectedFilter}`);
       applyFilterAndSort();
+      
+      // メイン画面を最上部にスクロール
+      window.scrollTo(0, 0);
+      
+      // モバイル環境の場合、メインコンテンツ要素を最上部にスクロール
+      const mainContent = document.querySelector('.main-content-mobile');
+      if (mainContent) {
+        mainContent.scrollTop = 0;
+      }
     }
   }, [isAuthenticated, selectedFilter, todos]);
 
