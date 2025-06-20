@@ -499,7 +499,9 @@ const TodoList = ({ isMobile }) => {
               </IconButton>
               
               {/* ユーザーメニュー */}
-              <UserMenu />
+              <Box sx={{ ml: 'auto' }}>
+                <UserMenu />
+              </Box>
             </Box>
           </>
         ) : (
@@ -529,6 +531,11 @@ const TodoList = ({ isMobile }) => {
                   <Box component="span" sx={{ fontSize: '1.2rem', display: 'block' }} className="emoji-icon">🗑️</Box>
                 </IconButton>
               )}
+              
+              {/* ユーザーメニュー（右寄せ） */}
+              <Box sx={{ ml: 'auto' }}>
+                <UserMenu />
+              </Box>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               {/* 新規タスク追加ボタン */}
@@ -597,8 +604,6 @@ const TodoList = ({ isMobile }) => {
               >
                 <Box component="span" sx={{ fontSize: '1.2rem', display: 'block' }} className="emoji-icon">⚙️</Box>
               </IconButton>
-              
-              <UserMenu />
             </Box>
           </>
         )}
