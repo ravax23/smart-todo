@@ -71,9 +71,15 @@ export const TodoProvider = ({ children }) => {
               
               const endOfWeek = new Date(startOfWeek);
               endOfWeek.setDate(startOfWeek.getDate() + 6);
+              endOfWeek.setHours(23, 59, 59, 999); // 時間を23:59:59.999に設定
+              
+              console.log(`[DEBUG] 今週フィルター - タスク: ${todo.title}, 日付: ${todo.startDate}`);
+              console.log(`[DEBUG] 今週の範囲: ${startOfWeek.toISOString()} ~ ${endOfWeek.toISOString()}`);
+              console.log(`[DEBUG] 日付の比較結果: ${date >= startOfWeek && date <= endOfWeek}`);
               
               return date >= startOfWeek && date <= endOfWeek;
             } catch (e) {
+              console.error('[DEBUG] 日付の解析エラー:', e);
               return false;
             }
           });
