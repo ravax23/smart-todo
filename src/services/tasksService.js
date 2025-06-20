@@ -670,7 +670,13 @@ class TasksService {
       // 明示的に各フィールドを更新
       if (updates.title !== undefined) updatedTask.title = updates.title;
       if (updates.notes !== undefined) updatedTask.notes = updates.notes || '';
-      if (updates.due !== undefined) updatedTask.due = updates.due;
+      
+      // 期限の更新を明示的に処理
+      if (updates.due !== undefined) {
+        console.log(`Explicitly updating due date from ${currentTask.due} to ${updates.due}`);
+        updatedTask.due = updates.due;
+      }
+      
       if (updates.status !== undefined) updatedTask.status = updates.status;
       if (updates.completed !== undefined) updatedTask.completed = updates.completed;
       
@@ -722,7 +728,13 @@ class TasksService {
       // 明示的に各フィールドを更新
       if (updates.title !== undefined) updatedTask.title = updates.title;
       if (updates.notes !== undefined) updatedTask.notes = updates.notes || '';
-      if (updates.due !== undefined) updatedTask.due = updates.due;
+      
+      // 期限の更新を明示的に処理
+      if (updates.due !== undefined) {
+        console.log(`Explicitly updating due date from ${currentTask.due} to ${updates.due}`);
+        updatedTask.due = updates.due;
+      }
+      
       if (updates.status !== undefined) updatedTask.status = updates.status;
       if (updates.completed !== undefined) updatedTask.completed = updates.completed;
       

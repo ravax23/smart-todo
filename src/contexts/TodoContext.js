@@ -622,6 +622,8 @@ export const TodoProvider = ({ children }) => {
       // 期限値を正規化（null, undefined, 空文字列をnullに統一）
       const normalizedDue = taskData.due || null;
       
+      console.log(`Updating task ${taskId} with due date: ${normalizedDue}, original due: ${taskToUpdate.due}`);
+      
       // メモリ内のタスクを更新
       const updatedTodos = todos.map(task => 
         task.id === taskId ? { 
@@ -638,11 +640,15 @@ export const TodoProvider = ({ children }) => {
       
       // 更新後のタスク
       const updatedTask = updatedTodos.find(task => task.id === taskId);
+      console.log('Updated task in memory:', updatedTask);
       
       // 状態を更新
       setTodos(updatedTodos);
       
-      console.log(`Updating task ${taskId} with data:`, taskData);
+      console.log(`Updating task ${taskId} with data:`, {
+        ...taskData,
+        due: normalizedDue
+      });
       
       // 同期キューに追加
       syncService.addToSyncQueue('task', 'update', {

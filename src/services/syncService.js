@@ -187,7 +187,13 @@ class SyncService {
         // 必要なフィールドのみを含める
         if (task.title !== undefined) updateData.title = task.title;
         if (task.notes !== undefined) updateData.notes = task.notes || '';
-        if (task.due !== undefined) updateData.due = task.due;
+        
+        // 期限の更新を明示的に処理
+        if (task.due !== undefined) {
+          console.log(`Explicitly setting due date in sync: ${task.due}`);
+          updateData.due = task.due;
+        }
+        
         if (task.starred !== undefined) updateData.starred = task.starred;
         if (task.status !== undefined) updateData.status = task.status;
         if (task.completed !== undefined) updateData.completed = task.completed;

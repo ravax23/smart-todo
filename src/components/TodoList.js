@@ -299,6 +299,9 @@ const TodoList = ({ isMobile }) => {
         // 時間を0:00:00に設定して、日付のみを考慮
         dueDate.setHours(0, 0, 0, 0);
         dueDate = dueDate.toISOString();
+        console.log(`Setting due date to: ${dueDate}`);
+      } else {
+        console.log('No due date provided, setting to null');
       }
       
       const taskData = {
