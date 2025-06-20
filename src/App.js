@@ -79,23 +79,48 @@ const AppContent = () => {
       try {
         const accessToken = hash.match(/access_token=([^&]*)/)[1];
         if (accessToken) {
-          console.log('Got access token from URL hash');
-          localStorage.setItem('google_access_token', accessToken);
+          console.log('Got access token from URL hash in App.js');
+          
+          // モバイル環境を検出
+          const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+          console.log('Device detection in App.js:', isMobile ? 'Mobile' : 'Desktop');
+          
+          try {
+            localStorage.setItem('google_access_token', accessToken);
+            console.log('Access token saved to localStorage in App.js');
+            
+            // セッションストレージにもバックアップ（iOSのプライベートブラウジングモード対策）
+            sessionStorage.setItem('google_access_token', accessToken);
+            console.log('Access token saved to sessionStorage in App.js');
+          } catch (storageError) {
+            console.error('Error saving to storage in App.js:', storageError);
+          }
           
           // URLからハッシュを削除
-          window.history.replaceState({}, document.title, window.location.pathname);
+          try {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          } catch (historyError) {
+            console.error('Error updating history in App.js:', historyError);
+          }
           
           // 認証状態を更新
-          const event = new CustomEvent('googleAuthStateChanged', { 
-            detail: { isAuthenticated: true } 
-          });
-          window.dispatchEvent(event);
+          try {
+            const event = new CustomEvent('googleAuthStateChanged', { 
+              detail: { isAuthenticated: true } 
+            });
+            window.dispatchEvent(event);
+            console.log('Auth state change event dispatched from App.js');
+          } catch (eventError) {
+            console.error('Error dispatching event in App.js:', eventError);
+          }
           
           // ページをリロード
-          window.location.reload();
+          setTimeout(() => {
+            window.location.reload();
+          }, 500);
         }
       } catch (error) {
-        console.error('Error processing auth redirect:', error);
+        console.error('Error processing auth redirect in App.js:', error);
       }
     }
   }, []);

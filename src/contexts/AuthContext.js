@@ -28,30 +28,55 @@ export function AuthProvider({ children }) {
       try {
         await initGoogleAuth();
         
+        // モバイル環境を検出
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        console.log('Device detection in AuthContext:', isMobile ? 'Mobile' : 'Desktop');
+        
         // URLからアクセストークンを確認（OAuth 2.0リダイレクト後）
         const hash = window.location.hash;
         if (hash && hash.includes('access_token=')) {
-          const accessToken = hash.match(/access_token=([^&]*)/)[1];
-          if (accessToken) {
-            console.log('Got access token from URL hash during init');
-            localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-            
-            // URLからハッシュを削除
-            window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-            
-            setIsAuthenticated(true);
-            // ユーザー情報は後で取得する必要があるかもしれない
-            setLoading(false);
-            return;
+          try {
+            const accessToken = hash.match(/access_token=([^&]*)/)[1];
+            if (accessToken) {
+              console.log('Got access token from URL hash during init');
+              
+              try {
+                localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+                console.log('Access token saved to localStorage in AuthContext');
+                
+                // セッションストレージにもバックアップ（iOSのプライベートブラウジングモード対策）
+                sessionStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+                console.log('Access token saved to sessionStorage in AuthContext');
+              } catch (storageError) {
+                console.error('Error saving to storage in AuthContext:', storageError);
+              }
+              
+              // URLからハッシュを削除
+              try {
+                window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+              } catch (historyError) {
+                console.error('Error updating history in AuthContext:', historyError);
+              }
+              
+              setIsAuthenticated(true);
+              // ユーザー情報は後で取得する必要があるかもしれない
+              setLoading(false);
+              return;
+            }
+          } catch (parseError) {
+            console.error('Error parsing access token in AuthContext:', parseError);
           }
         }
         
         // 認証状態を確認
         const authenticated = checkAuth();
+        console.log('Authentication check result:', authenticated);
         setIsAuthenticated(authenticated);
         
         if (authenticated) {
-          setUser(getUserInfo());
+          const userInfo = getUserInfo();
+          console.log('User info retrieved:', userInfo ? 'success' : 'null');
+          setUser(userInfo);
         }
         
         setLoading(false);

@@ -100,28 +100,50 @@ const handleCredentialResponse = (response) => {
   if (response.credential) {
     try {
       const userObject = jwtDecode(response.credential);
-      localStorage.setItem(TOKEN_KEY, response.credential);
-      localStorage.setItem(USER_KEY, JSON.stringify(userObject));
+      
+      try {
+        localStorage.setItem(TOKEN_KEY, response.credential);
+        localStorage.setItem(USER_KEY, JSON.stringify(userObject));
+        
+        // セッションストレージにもバックアップ（iOSのプライベートブラウジングモード対策）
+        sessionStorage.setItem(TOKEN_KEY, response.credential);
+        sessionStorage.setItem(USER_KEY, JSON.stringify(userObject));
+      } catch (storageError) {
+        console.error('Error saving credentials to storage:', storageError);
+      }
       
       // GAPIクライアントを使用してアクセストークンを取得
       getGapiAccessToken().then(accessToken => {
         if (accessToken) {
-          localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-          console.log('Access token stored successfully');
+          try {
+            localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+            sessionStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+            console.log('Access token stored successfully');
+          } catch (storageError) {
+            console.error('Error saving access token to storage:', storageError);
+          }
         }
         
         // 認証状態変更イベントを発行
-        const event = new CustomEvent('googleAuthStateChanged', { 
-          detail: { isAuthenticated: true } 
-        });
-        window.dispatchEvent(event);
+        try {
+          const event = new CustomEvent('googleAuthStateChanged', { 
+            detail: { isAuthenticated: true } 
+          });
+          window.dispatchEvent(event);
+        } catch (eventError) {
+          console.error('Error dispatching auth event:', eventError);
+        }
       }).catch(error => {
         console.error('Failed to get access token:', error);
         // IDトークンだけでも認証状態は変更する
-        const event = new CustomEvent('googleAuthStateChanged', { 
-          detail: { isAuthenticated: true } 
-        });
-        window.dispatchEvent(event);
+        try {
+          const event = new CustomEvent('googleAuthStateChanged', { 
+            detail: { isAuthenticated: true } 
+          });
+          window.dispatchEvent(event);
+        } catch (eventError) {
+          console.error('Error dispatching auth event:', eventError);
+        }
       });
       
       return userObject;
@@ -187,8 +209,13 @@ export const signIn = () => {
   }
 
   try {
+    // モバイル環境を検出
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    console.log('Device detection:', isMobile ? 'Mobile' : 'Desktop');
+    
     // 明示的にリダイレクトベースの認証を使用
-    const redirectUri = window.location.origin + window.location.pathname;
+    // モバイルの場合は完全なURLを使用
+    const redirectUri = window.location.origin + (isMobile ? window.location.pathname : '');
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(SCOPES)}&prompt=consent`;
     
     console.log('Redirecting to auth URL:', authUrl);
@@ -232,9 +259,18 @@ export const requestTasksScope = async () => {
 
 // サインアウト処理
 export const signOut = () => {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
+  try {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    
+    // セッションストレージからも削除
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+    sessionStorage.removeItem(USER_KEY);
+  } catch (storageError) {
+    console.error('Error clearing storage:', storageError);
+  }
   
   // GAPIのサインアウト
   if (window.gapi && window.gapi.auth2) {
@@ -248,43 +284,97 @@ export const signOut = () => {
     }
   }
   
-  const event = new CustomEvent('googleAuthStateChanged', { detail: { isAuthenticated: false } });
-  window.dispatchEvent(event);
+  try {
+    const event = new CustomEvent('googleAuthStateChanged', { detail: { isAuthenticated: false } });
+    window.dispatchEvent(event);
+  } catch (eventError) {
+    console.error('Error dispatching event:', eventError);
+  }
+  
   return true;
 };
 
 // 認証状態の確認
 export const isAuthenticated = () => {
-  const token = localStorage.getItem(TOKEN_KEY);
-  if (!token) return false;
-  
   try {
-    const decoded = jwtDecode(token);
-    const currentTime = Date.now() / 1000;
+    // ローカルストレージからトークンを取得
+    let token = localStorage.getItem(TOKEN_KEY);
     
-    if (decoded.exp < currentTime) {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(ACCESS_TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
+    // ローカルストレージにない場合はセッションストレージを確認
+    if (!token) {
+      token = sessionStorage.getItem(TOKEN_KEY);
+    }
+    
+    // アクセストークンの確認
+    const accessToken = getAccessToken();
+    
+    // アクセストークンがあれば認証済みとみなす（iOSのプライベートブラウジングモード対策）
+    if (accessToken) {
+      return true;
+    }
+    
+    if (!token) return false;
+    
+    try {
+      const decoded = jwtDecode(token);
+      const currentTime = Date.now() / 1000;
+      
+      if (decoded.exp < currentTime) {
+        // トークンの有効期限切れ
+        try {
+          localStorage.removeItem(TOKEN_KEY);
+          localStorage.removeItem(ACCESS_TOKEN_KEY);
+          localStorage.removeItem(USER_KEY);
+          sessionStorage.removeItem(TOKEN_KEY);
+          sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+          sessionStorage.removeItem(USER_KEY);
+        } catch (storageError) {
+          console.error('Error clearing expired tokens:', storageError);
+        }
+        return false;
+      }
+      return true;
+    } catch (jwtError) {
+      console.error('Error decoding JWT:', jwtError);
+      try {
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
+        sessionStorage.removeItem(TOKEN_KEY);
+        sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+        sessionStorage.removeItem(USER_KEY);
+      } catch (storageError) {
+        console.error('Error clearing invalid tokens:', storageError);
+      }
       return false;
     }
-    return true;
   } catch (error) {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(ACCESS_TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+    console.error('Error checking authentication status:', error);
     return false;
   }
 };
 
 // ユーザー情報の取得
 export const getUserInfo = () => {
-  const userInfo = localStorage.getItem(USER_KEY);
-  if (!userInfo) return null;
-  
   try {
-    return JSON.parse(userInfo);
+    // ローカルストレージからユーザー情報を取得
+    let userInfo = localStorage.getItem(USER_KEY);
+    
+    // ローカルストレージにない場合はセッションストレージを確認
+    if (!userInfo) {
+      userInfo = sessionStorage.getItem(USER_KEY);
+    }
+    
+    if (!userInfo) return null;
+    
+    try {
+      return JSON.parse(userInfo);
+    } catch (parseError) {
+      console.error('Error parsing user info:', parseError);
+      return null;
+    }
   } catch (error) {
+    console.error('Error getting user info:', error);
     return null;
   }
 };
@@ -298,16 +388,40 @@ export const getAccessToken = () => {
       const accessToken = hash.match(/access_token=([^&]*)/)[1];
       if (accessToken) {
         console.log('Got access token from URL hash');
-        localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+        
+        // モバイル環境を検出
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        console.log('Device detection in getAccessToken:', isMobile ? 'Mobile' : 'Desktop');
+        
+        // ローカルストレージにトークンを保存
+        try {
+          localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+          console.log('Access token saved to localStorage');
+          
+          // セッションストレージにもバックアップ（iOSのプライベートブラウジングモード対策）
+          sessionStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+          console.log('Access token saved to sessionStorage');
+        } catch (storageError) {
+          console.error('Error saving to storage:', storageError);
+        }
         
         // URLからハッシュを削除
-        window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+        try {
+          window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+        } catch (historyError) {
+          console.error('Error updating history:', historyError);
+        }
         
         // 認証状態変更イベントを発行
-        const event = new CustomEvent('googleAuthStateChanged', { 
-          detail: { isAuthenticated: true } 
-        });
-        window.dispatchEvent(event);
+        try {
+          const event = new CustomEvent('googleAuthStateChanged', { 
+            detail: { isAuthenticated: true } 
+          });
+          window.dispatchEvent(event);
+          console.log('Auth state change event dispatched');
+        } catch (eventError) {
+          console.error('Error dispatching event:', eventError);
+        }
         
         return accessToken;
       }
@@ -315,7 +429,12 @@ export const getAccessToken = () => {
     
     // ローカルストレージからアクセストークンを取得
     const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
-    return accessToken;
+    if (accessToken) {
+      return accessToken;
+    }
+    
+    // セッションストレージからアクセストークンを取得（バックアップ）
+    return sessionStorage.getItem(ACCESS_TOKEN_KEY);
   } catch (error) {
     console.error('Error getting access token:', error);
     return null;
