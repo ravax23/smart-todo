@@ -3,7 +3,7 @@ import { useAuth } from './AuthContext';
 import TasksService from '../services/tasksService';
 import syncService from '../services/syncService';
 import { extractStarredStatus } from '../services/tasksUtils';
-import { requestTasksScope } from '../services/authService';
+import { requestTasksScope, getAccessToken } from '../services/authService';
 import { isToday, isTomorrow, addDays, isBefore, parseISO, startOfDay, isThisWeek } from 'date-fns';
 
 const TodoContext = createContext();
@@ -142,6 +142,27 @@ export const TodoProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
+      
+      // iOS Safariを検出
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      const isIOSSafari = isIOS && isSafari;
+      
+      console.log('Browser detection in initialSync:', { 
+        isIOS, 
+        isSafari, 
+        isIOSSafari, 
+        userAgent: navigator.userAgent 
+      });
+      
+      // アクセストークンの確認
+      const token = getAccessToken();
+      console.log('Access token available in initialSync:', !!token);
+      
+      if (!token) {
+        console.error('Access token not found in initialSync');
+        throw new Error('アクセストークンがありません。再度ログインしてください。');
+      }
       
       // タスクリストを取得
       const lists = await TasksService.getTaskLists();

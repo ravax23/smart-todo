@@ -15,8 +15,29 @@ class TasksService {
       
       // アクセストークンの確認
       const token = getAccessToken();
+      console.log('Access token available:', !!token);
+      
       if (!token) {
+        console.error('Access token not found');
         throw new Error('アクセストークンがありません。再度ログインしてください。');
+      }
+      
+      // iOS Safariを検出
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      const isIOSSafari = isIOS && isSafari;
+      
+      console.log('Browser detection in getTaskLists:', { 
+        isIOS, 
+        isSafari, 
+        isIOSSafari, 
+        userAgent: navigator.userAgent 
+      });
+      
+      // iOS Safariの場合は直接fetchを使用
+      if (isIOSSafari) {
+        console.log('Using fetch for iOS Safari');
+        return await this.getTaskListsWithFetch(token);
       }
       
       // GAPIクライアントが初期化されているか確認

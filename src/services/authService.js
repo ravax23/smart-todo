@@ -382,6 +382,18 @@ export const getUserInfo = () => {
 // アクセストークンの取得
 export const getAccessToken = () => {
   try {
+    // iOS Safariを検出
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isIOSSafari = isIOS && isSafari;
+    
+    console.log('Browser detection:', { 
+      isIOS, 
+      isSafari, 
+      isIOSSafari, 
+      userAgent: navigator.userAgent 
+    });
+    
     // URLからアクセストークンを取得（OAuth 2.0リダイレクト後）
     const hash = window.location.hash;
     if (hash && hash.includes('access_token=')) {
@@ -401,6 +413,12 @@ export const getAccessToken = () => {
           // セッションストレージにもバックアップ（iOSのプライベートブラウジングモード対策）
           sessionStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
           console.log('Access token saved to sessionStorage');
+          
+          // iOS Safariの場合はCookieにも保存（バックアップ）
+          if (isIOSSafari) {
+            document.cookie = `${ACCESS_TOKEN_KEY}=${accessToken};path=/;max-age=3600`;
+            console.log('Access token saved to cookie for iOS Safari');
+          }
         } catch (storageError) {
           console.error('Error saving to storage:', storageError);
         }
@@ -434,7 +452,25 @@ export const getAccessToken = () => {
     }
     
     // セッションストレージからアクセストークンを取得（バックアップ）
-    return sessionStorage.getItem(ACCESS_TOKEN_KEY);
+    const sessionToken = sessionStorage.getItem(ACCESS_TOKEN_KEY);
+    if (sessionToken) {
+      return sessionToken;
+    }
+    
+    // iOS Safariの場合はCookieからも取得（バックアップ）
+    if (isIOSSafari) {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.startsWith(`${ACCESS_TOKEN_KEY}=`)) {
+          const cookieToken = cookie.substring(`${ACCESS_TOKEN_KEY}=`.length, cookie.length);
+          console.log('Access token retrieved from cookie for iOS Safari');
+          return cookieToken;
+        }
+      }
+    }
+    
+    return null;
   } catch (error) {
     console.error('Error getting access token:', error);
     return null;
