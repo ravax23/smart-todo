@@ -1,0 +1,112 @@
+{
+  "TaskLists": {
+    "TableName": "SmartTodo-TaskLists",
+    "KeySchema": [
+      {
+        "AttributeName": "userId",
+        "KeyType": "HASH"
+      },
+      {
+        "AttributeName": "listId",
+        "KeyType": "RANGE"
+      }
+    ],
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "userId",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "listId",
+        "AttributeType": "S"
+      }
+    ],
+    "BillingMode": "PAY_PER_REQUEST"
+  },
+  "Tasks": {
+    "TableName": "SmartTodo-Tasks",
+    "KeySchema": [
+      {
+        "AttributeName": "userId",
+        "KeyType": "HASH"
+      },
+      {
+        "AttributeName": "taskId",
+        "KeyType": "RANGE"
+      }
+    ],
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "userId",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "taskId",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "due",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "userListId",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "starredDue",
+        "AttributeType": "S"
+      }
+    ],
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexName": "UserListIndex",
+        "KeySchema": [
+          {
+            "AttributeName": "userListId",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "due",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        }
+      },
+      {
+        "IndexName": "StarredTasksIndex",
+        "KeySchema": [
+          {
+            "AttributeName": "userId",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "starredDue",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        }
+      },
+      {
+        "IndexName": "DueDateIndex",
+        "KeySchema": [
+          {
+            "AttributeName": "userId",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "due",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        }
+      }
+    ],
+    "BillingMode": "PAY_PER_REQUEST"
+  }
+}
