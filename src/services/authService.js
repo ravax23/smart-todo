@@ -188,7 +188,7 @@ export const signIn = () => {
 
   try {
     // 明示的にリダイレクトベースの認証を使用
-    const redirectUri = window.location.origin;
+    const redirectUri = window.location.origin + window.location.pathname;
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(SCOPES)}&prompt=consent`;
     
     console.log('Redirecting to auth URL:', authUrl);
@@ -302,6 +302,12 @@ export const getAccessToken = () => {
         
         // URLからハッシュを削除
         window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+        
+        // 認証状態変更イベントを発行
+        const event = new CustomEvent('googleAuthStateChanged', { 
+          detail: { isAuthenticated: true } 
+        });
+        window.dispatchEvent(event);
         
         return accessToken;
       }

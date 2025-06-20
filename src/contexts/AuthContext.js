@@ -6,10 +6,12 @@ import {
   signIn as googleSignIn,
   signOut as googleSignOut,
   addAuthStateListener,
-  removeAuthStateListener
+  removeAuthStateListener,
+  getAccessToken
 } from '../services/authService';
 
 const AuthContext = createContext();
+const ACCESS_TOKEN_KEY = 'google_access_token';
 
 export function useAuth() {
   return useContext(AuthContext);
@@ -25,6 +27,24 @@ export function AuthProvider({ children }) {
     const initAuth = async () => {
       try {
         await initGoogleAuth();
+        
+        // URLからアクセストークンを確認（OAuth 2.0リダイレクト後）
+        const hash = window.location.hash;
+        if (hash && hash.includes('access_token=')) {
+          const accessToken = hash.match(/access_token=([^&]*)/)[1];
+          if (accessToken) {
+            console.log('Got access token from URL hash during init');
+            localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+            
+            // URLからハッシュを削除
+            window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+            
+            setIsAuthenticated(true);
+            // ユーザー情報は後で取得する必要があるかもしれない
+            setLoading(false);
+            return;
+          }
+        }
         
         // 認証状態を確認
         const authenticated = checkAuth();
