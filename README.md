@@ -4,7 +4,9 @@
 
 ## 🌐 ライブデモ
 
-**本番環境**: https://d1yqrgdl6vrr4q.cloudfront.net
+**本番環境**: 
+- CloudFront: https://d1yqrgdl6vrr4q.cloudfront.net
+- AWS Amplify: https://main.d1d4qgmdk8rbkr.amplifyapp.com
 
 ## 機能
 
