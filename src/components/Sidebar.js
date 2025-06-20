@@ -99,6 +99,7 @@ const Sidebar = ({ closeSidebar, isMobile }) => {
         // 週の終わり（土曜日）
         const endOfWeek = new Date(startOfWeek);
         endOfWeek.setDate(startOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999); // 時間を23:59:59.999に設定
         
         // タスクの日付が今週の範囲内かチェック
         return date >= startOfWeek && date <= endOfWeek;
