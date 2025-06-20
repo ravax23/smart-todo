@@ -209,16 +209,6 @@ export const signIn = () => {
   }
 
   try {
-    // Google Identity Servicesが利用可能かチェック
-    if (window.google?.accounts?.id) {
-      console.log('Using Google Identity Services for sign in');
-      window.google.accounts.id.prompt();
-      return true;
-    }
-    
-    // フォールバック: リダイレクトベースの認証を使用
-    console.log('Falling back to redirect-based authentication');
-    
     // モバイル環境を検出
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     console.log('Device detection:', isMobile ? 'Mobile' : 'Desktop');

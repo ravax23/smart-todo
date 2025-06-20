@@ -295,11 +295,19 @@ const TodoList = ({ isMobile }) => {
       // 期限の処理
       let dueDate = null;
       if (taskDetails.dueDate) {
-        dueDate = new Date(taskDetails.dueDate);
-        // 時間を0:00:00に設定して、日付のみを考慮
-        dueDate.setHours(0, 0, 0, 0);
-        dueDate = dueDate.toISOString();
-        console.log(`Setting due date to: ${dueDate}`);
+        try {
+          // 日付文字列をDateオブジェクトに変換
+          const dateObj = new Date(taskDetails.dueDate);
+          // 時間を23:59:59に設定して、その日の終わりを表す
+          dateObj.setHours(23, 59, 59, 999);
+          // ISO文字列に変換
+          dueDate = dateObj.toISOString();
+          console.log(`Setting due date to: ${dueDate} from input: ${taskDetails.dueDate}`);
+        } catch (dateError) {
+          console.error('Error formatting date:', dateError);
+          // エラーが発生した場合は元の文字列をそのまま使用
+          dueDate = taskDetails.dueDate;
+        }
       } else {
         console.log('No due date provided, setting to null');
       }
@@ -313,14 +321,15 @@ const TodoList = ({ isMobile }) => {
         starred: isStarred
       };
 
-      console.log('Task data to be saved:', taskData);
+      console.log('Task data to be saved:', JSON.stringify(taskData, null, 2));
 
       if (editMode) {
         // 既存タスクの更新
-        console.log(`Updating task ${taskDetails.taskId} with data:`, taskData);
+        console.log(`Updating task ${taskDetails.taskId} with data:`, JSON.stringify(taskData, null, 2));
         
         // 現在のタスクを取得
         const currentTask = todos.find(task => task.id === taskDetails.taskId);
+        console.log('Current task before update:', currentTask);
         
         // マイリストが変更されたかチェック
         if (currentTask && taskDetails.categoryId && currentTask.listId !== taskDetails.categoryId) {
@@ -335,7 +344,7 @@ const TodoList = ({ isMobile }) => {
         // 新規タスクの作成
         // taskDetails.categoryIdが設定されている場合はそれを使用、そうでなければselectedTaskListを使用
         const listId = taskDetails.categoryId || selectedTaskList;
-        console.log(`Creating new task in list ${listId} with data:`, taskData);
+        console.log(`Creating new task in list ${listId} with data:`, JSON.stringify(taskData, null, 2));
         await createTask(taskData, listId);
       }
       

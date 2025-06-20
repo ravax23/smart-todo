@@ -662,7 +662,7 @@ class TasksService {
     try {
       // 現在のタスクを取得
       const currentTask = await this.getTask(taskListId, taskId);
-      console.log('Current task before update:', currentTask);
+      console.log('Current task before update:', JSON.stringify(currentTask, null, 2));
       
       // 更新データをマージ
       const updatedTask = { ...currentTask };
@@ -675,6 +675,24 @@ class TasksService {
       if (updates.due !== undefined) {
         console.log(`Explicitly updating due date from ${currentTask.due} to ${updates.due}`);
         updatedTask.due = updates.due;
+        
+        // Google Tasks APIの仕様に合わせて、dueプロパティを設定
+        // RFC 3339形式の日付文字列である必要がある
+        if (updates.due) {
+          try {
+            // 日付が有効かチェック
+            const dueDate = new Date(updates.due);
+            if (!isNaN(dueDate.getTime())) {
+              // 有効な日付の場合、RFC 3339形式に変換
+              updatedTask.due = dueDate.toISOString();
+            }
+          } catch (dateError) {
+            console.error('Error formatting due date:', dateError);
+          }
+        } else {
+          // nullの場合は明示的にnullを設定
+          updatedTask.due = null;
+        }
       }
       
       if (updates.status !== undefined) updatedTask.status = updates.status;
@@ -720,7 +738,7 @@ class TasksService {
     try {
       // 現在のタスクを取得
       const currentTask = await this.getTask(taskListId, taskId);
-      console.log('Current task before update:', currentTask);
+      console.log('Current task before update:', JSON.stringify(currentTask, null, 2));
       
       // 更新データをマージ
       const updatedTask = { ...currentTask };
@@ -732,7 +750,29 @@ class TasksService {
       // 期限の更新を明示的に処理
       if (updates.due !== undefined) {
         console.log(`Explicitly updating due date from ${currentTask.due} to ${updates.due}`);
-        updatedTask.due = updates.due;
+        
+        // Google Tasks APIの仕様に合わせて、dueプロパティを設定
+        // RFC 3339形式の日付文字列である必要がある
+        if (updates.due) {
+          try {
+            // 日付が有効かチェック
+            const dueDate = new Date(updates.due);
+            if (!isNaN(dueDate.getTime())) {
+              // 有効な日付の場合、RFC 3339形式に変換
+              updatedTask.due = dueDate.toISOString();
+            } else {
+              // 無効な日付の場合はそのまま使用
+              updatedTask.due = updates.due;
+            }
+          } catch (dateError) {
+            console.error('Error formatting due date:', dateError);
+            // エラーが発生した場合はそのまま使用
+            updatedTask.due = updates.due;
+          }
+        } else {
+          // nullの場合は明示的にnullを設定
+          updatedTask.due = null;
+        }
       }
       
       if (updates.status !== undefined) updatedTask.status = updates.status;

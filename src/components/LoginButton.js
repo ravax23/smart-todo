@@ -1,14 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Box, Alert, Button } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 
 function LoginButton() {
-  const googleButtonRef = useRef(null);
   const [error, setError] = useState(null);
-  const [useCustomButton, setUseCustomButton] = useState(false);
   const { signIn } = useAuth();
 
-  // カスタムボタンのクリックハンドラー
+  // Googleログインボタンのクリックハンドラー
   const handleGoogleLogin = () => {
     try {
       signIn();
@@ -18,88 +16,51 @@ function LoginButton() {
     }
   };
 
-  useEffect(() => {
-    const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
-    
-    if (!clientId) {
-      setError('Google Client IDが設定されていません。管理者に連絡してください。');
-      return;
-    }
-
-    // Google Identity Servicesが利用可能かチェック
-    if (window.google?.accounts?.id) {
-      try {
-        // Google標準のログインボタンをレンダリング
-        window.google.accounts.id.renderButton(
-          googleButtonRef.current,
-          { 
-            type: 'standard',
-            theme: 'outline',
-            size: 'large',
-            text: 'signin_with',
-            shape: 'rectangular',
-            locale: 'ja',
-            width: 240
-          }
-        );
-      } catch (err) {
-        console.error('Failed to render login button:', err);
-        setUseCustomButton(true);
-      }
-    } else {
-      console.warn('Google Identity Services not available, using fallback button');
-      setUseCustomButton(true);
-    }
-  }, []);
-
   return (
     <Box>
       {error ? (
         <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
-      ) : useCustomButton ? (
-        // フォールバック用のカスタムボタン
-        <Button
-          variant="outlined"
-          onClick={handleGoogleLogin}
-          sx={{
-            backgroundColor: '#ffffff',
-            color: '#757575',
-            border: '1px solid #dadce0',
-            borderRadius: '4px',
-            padding: '10px 24px',
-            fontSize: '14px',
-            fontWeight: '500',
-            fontFamily: 'Roboto, sans-serif',
-            textTransform: 'none',
-            boxShadow: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '240px',
-            height: '40px',
-            '&:hover': {
-              backgroundColor: '#f8f9fa',
-              boxShadow: '0 1px 2px rgba(60,64,67,0.3)',
-            }
-          }}
-        >
-          {/* Google アイコン */}
-          <Box component="span" sx={{ 
-            display: 'inline-block', 
-            width: '18px', 
-            height: '18px', 
-            marginRight: '10px',
-            backgroundImage: 'url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJNMTcuNiA5LjJsLS4xLTEuOEg5djMuNGg0LjhDMTMuNiAxMiAxMyAxMyAxMiAxMy42djIuMmgzYTguOCA4LjggMCAwIDAgMi42LTYuNnoiIGZpbGw9IiM0Mjg1RjQiIGZpbGwtcnVsZT0ibm9uemVybyIvPjxwYXRoIGQ9Ik05IDE4YzIuNCAwIDQuNS0uOCA2LTIuMmwtMy0yLjJhNS40IDUuNCAwIDAgMS04LTIuOUgxVjEzYTkgOSAwIDAgMCA4IDV6IiBmaWxsPSIjMzRBODUzIiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48cGF0aCBkPSJNNCAxMC43YTUuNCA1LjQgMCAwIDEgMC0zLjRWNUgxYTkgOSAwIDAgMCAwIDhsMy0yLjN6IiBmaWxsPSIjRkJCQzA1IiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48cGF0aCBkPSJNOSAzLjZjMS4zIDAgMi41LjQgMy40IDEuM0wxNSAyLjNBOSA5IDAgMCAwIDEgNWwzIDIuNGE1LjQgNS40IDAgMCAxIDUtMy43eiIgZmlsbD0iI0VBNDMzNSIgZmlsbC1ydWxlPSJub256ZXJvIi8+PHBhdGggZD0iTTAgMGgxOHYxOEgweiIvPjwvZz48L3N2Zz4=)',
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center',
-            backgroundSize: 'contain'
-          }} />
-          Googleでログイン
-        </Button>
-      ) : (
-        // Google標準のログインボタン
-        <div ref={googleButtonRef}></div>
-      )}
+      ) : null}
+      
+      {/* カスタムGoogleログインボタン */}
+      <Button
+        variant="outlined"
+        onClick={handleGoogleLogin}
+        sx={{
+          backgroundColor: '#ffffff',
+          color: '#757575',
+          border: '1px solid #dadce0',
+          borderRadius: '4px',
+          padding: '10px 24px',
+          fontSize: '14px',
+          fontWeight: '500',
+          fontFamily: 'Roboto, sans-serif',
+          textTransform: 'none',
+          boxShadow: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '240px',
+          height: '40px',
+          '&:hover': {
+            backgroundColor: '#f8f9fa',
+            boxShadow: '0 1px 2px rgba(60,64,67,0.3)',
+          }
+        }}
+      >
+        {/* Google アイコン */}
+        <Box component="span" sx={{ 
+          display: 'inline-block', 
+          width: '18px', 
+          height: '18px', 
+          marginRight: '10px',
+          backgroundImage: 'url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJNMTcuNiA5LjJsLS4xLTEuOEg5djMuNGg0LjhDMTMuNiAxMiAxMyAxMyAxMiAxMy42djIuMmgzYTguOCA4LjggMCAwIDAgMi42LTYuNnoiIGZpbGw9IiM0Mjg1RjQiIGZpbGwtcnVsZT0ibm9uemVybyIvPjxwYXRoIGQ9Ik05IDE4YzIuNCAwIDQuNS0uOCA2LTIuMmwtMy0yLjJhNS40IDUuNCAwIDAgMS04LTIuOUgxVjEzYTkgOSAwIDAgMCA4IDV6IiBmaWxsPSIjMzRBODUzIiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48cGF0aCBkPSJNNCAxMC43YTUuNCA1LjQgMCAwIDEgMC0zLjRWNUgxYTkgOSAwIDAgMCAwIDhsMy0yLjN6IiBmaWxsPSIjRkJCQzA1IiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48cGF0aCBkPSJNOSAzLjZjMS4zIDAgMi41LjQgMy40IDEuM0wxNSAyLjNBOSA5IDAgMCAwIDEgNWwzIDIuNGE1LjQgNS40IDAgMCAxIDUtMy43eiIgZmlsbD0iI0VBNDMzNSIgZmlsbC1ydWxlPSJub256ZXJvIi8+PHBhdGggZD0iTTAgMGgxOHYxOEgweiIvPjwvZz48L3N2Zz4=)',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center',
+          backgroundSize: 'contain'
+        }} />
+        Googleでログイン
+      </Button>
     </Box>
   );
 }
