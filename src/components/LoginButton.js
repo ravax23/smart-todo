@@ -17,9 +17,14 @@ function LoginButton() {
   };
 
   return (
-    <Box>
+    <Box sx={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      alignItems: 'center', 
+      width: '100%' 
+    }}>
       {error ? (
-        <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
+        <Alert severity="error" sx={{ mb: 2, width: '100%' }}>{error}</Alert>
       ) : null}
       
       {/* カスタムGoogleログインボタン */}
@@ -42,6 +47,7 @@ function LoginButton() {
           justifyContent: 'center',
           width: '240px',
           height: '40px',
+          mx: 'auto', // 左右のマージンを自動に設定して中央揃え
           '&:hover': {
             backgroundColor: '#f8f9fa',
             boxShadow: '0 1px 2px rgba(60,64,67,0.3)',
