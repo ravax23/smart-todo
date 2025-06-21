@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>アクセストークン取得</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .token-box {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+      word-break: break-all;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Google Tasks APIアクセストークン取得</h1>
+    
+    <p>このページでは、ローカルストレージに保存されているGoogle Tasks APIのアクセストークンを取得します。</p>
+    
+    <button onclick="getToken()">アクセストークンを取得</button>
+    
+    <div id="token-container" style="display: none;">
+      <h2>アクセストークン:</h2>
+      <div id="token" class="token-box"></div>
+      
+      <h2>データ移行コマンド:</h2>
+      <div class="token-box">
+        <code id="command"></code>
+      </div>
+      
+      <p><strong>注意:</strong> アクセストークンは機密情報です。安全に取り扱ってください。</p>
+    </div>
+    
+    <div id="error-container" style="display: none; color: red;">
+      <h2>エラー:</h2>
+      <div id="error"></div>
+    </div>
+  </div>
+
+  <script>
+    function getToken() {
+      try {
+        // ローカルストレージからトークンを取得
+        const token = localStorage.getItem('google_access_token');
+        
+        if (token) {
+          // トークンを表示
+          document.getElementById('token').textContent = token;
+          
+          // コマンドを表示
+          const command = `node migrate-data.js "${token}" "your-email@example.com"`;
+          document.getElementById('command').textContent = command;
+          
+          // トークン表示エリアを表示
+          document.getElementById('token-container').style.display = 'block';
+          document.getElementById('error-container').style.display = 'none';
+        } else {
+          // エラーメッセージを表示
+          document.getElementById('error').textContent = 'アクセストークンがローカルストレージに見つかりませんでした。SmartTodoアプリにログインしてから再試行してください。';
+          document.getElementById('token-container').style.display = 'none';
+          document.getElementById('error-container').style.display = 'block';
+        }
+      } catch (error) {
+        // エラーメッセージを表示
+        document.getElementById('error').textContent = `エラーが発生しました: ${error.message}`;
+        document.getElementById('token-container').style.display = 'none';
+        document.getElementById('error-container').style.display = 'block';
+      }
+    }
+  </script>
+</body>
+</html>
