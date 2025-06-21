@@ -451,7 +451,13 @@ const TodoList = ({ isMobile }) => {
   };
 
   return (
-    <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ 
+      width: '100%', 
+      display: 'flex', 
+      flexDirection: 'column',
+      height: '100%',
+      overflow: 'auto'
+    }}>
       <Box 
         className={isMobile ? 'header-mobile' : ''}
         sx={{ 
@@ -822,8 +828,9 @@ const TodoList = ({ isMobile }) => {
         <Box sx={{ 
           border: '1px solid #e0e0e0',
           borderRadius: '4px',
-          overflow: 'hidden',
-          mx: isMobile ? 1 : 2
+          overflow: 'auto',
+          mx: isMobile ? 1 : 2,
+          flex: 1
         }}>
           <List sx={{ p: 0 }}>
             {todos.map((task, index) => (

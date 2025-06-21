@@ -191,7 +191,7 @@ const AppContent = () => {
                   flexDirection: 'column',
                   overflow: 'auto',
                   width: '100%',
-                  height: isMobile ? '100vh' : 'auto'
+                  height: '100vh'
                 }}
               >
                 <TodoList isMobile={isMobile} />
