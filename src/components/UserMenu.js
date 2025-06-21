@@ -28,17 +28,15 @@ const UserMenu = () => {
     signOut();
   };
 
-  // ユーザー情報がない場合は何も表示しない
-  if (!user) return null;
-
-  // ユーザー名の頭文字を取得（デフォルトは'U'）
+  // ユーザー名の頭文字を取得（デフォルトは'G'）
   const getInitial = () => {
     if (user && user.name) {
       return user.name.charAt(0).toUpperCase();
     }
-    return 'U';
+    return 'G';
   };
 
+  // ユーザー情報がない場合でもアイコンを表示する
   return (
     <>
       <IconButton
@@ -54,14 +52,14 @@ const UserMenu = () => {
         aria-haspopup="true"
         aria-expanded={open ? 'true' : undefined}
       >
-        {user.picture ? (
+        {user && user.picture ? (
           <Avatar 
             src={user.picture} 
-            alt={user.name}
+            alt={user.name || 'User'}
             sx={{ width: 32, height: 32 }}
           />
         ) : (
-          <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
+          <Avatar sx={{ width: 32, height: 32, bgcolor: '#4285F4' }}>
             {getInitial()}
           </Avatar>
         )}
@@ -90,33 +88,41 @@ const UserMenu = () => {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
-        <Box sx={{ px: 2, py: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-            {user.picture ? (
-              <Avatar 
-                src={user.picture} 
-                alt={user.name}
-                sx={{ width: 40, height: 40, mr: 1 }}
-              />
-            ) : (
-              <Avatar sx={{ width: 40, height: 40, mr: 1, bgcolor: 'primary.main' }}>
-                {getInitial()}
-              </Avatar>
-            )}
-            <Box>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                {user.name}
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
-                {user.email}
-              </Typography>
+        {user ? (
+          <>
+            <Box sx={{ px: 2, py: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                {user.picture ? (
+                  <Avatar 
+                    src={user.picture} 
+                    alt={user.name}
+                    sx={{ width: 40, height: 40, mr: 1 }}
+                  />
+                ) : (
+                  <Avatar sx={{ width: 40, height: 40, mr: 1, bgcolor: '#4285F4' }}>
+                    {getInitial()}
+                  </Avatar>
+                )}
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                    {user.name || 'ユーザー'}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
+                    {user.email || ''}
+                  </Typography>
+                </Box>
+              </Box>
             </Box>
-          </Box>
-        </Box>
-        <Divider />
-        <MenuItem onClick={handleLogout} sx={{ mt: 1 }}>
-          ログアウト
-        </MenuItem>
+            <Divider />
+            <MenuItem onClick={handleLogout} sx={{ mt: 1 }}>
+              ログアウト
+            </MenuItem>
+          </>
+        ) : (
+          <MenuItem onClick={handleLogout}>
+            ログイン
+          </MenuItem>
+        )}
       </Menu>
     </>
   );

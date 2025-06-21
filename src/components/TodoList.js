@@ -605,8 +605,10 @@ const TodoList = ({ isMobile }) => {
                 <Box component="span" sx={{ fontSize: '1.2rem', display: 'block' }} className="emoji-icon">⚙️</Box>
               </IconButton>
               
-              {/* ユーザーメニュー（歯車アイコンの右側に配置） */}
-              <UserMenu />
+              {/* ユーザーメニュー（Googleログインアイコン） */}
+              <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                <UserMenu />
+              </Box>
             </Box>
           </>
         )}
