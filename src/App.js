@@ -145,7 +145,7 @@ const AppContent = () => {
       {isAuthenticated ? (
         <TodoProvider>
           <CategoryProvider>
-            <Box sx={{ display: 'flex', minHeight: '100vh', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}>
+            <Box sx={{ display: 'flex', minHeight: '100%' }}>
               {/* モバイルメニューボタン */}
               {isMobile && (
                 <IconButton
@@ -189,9 +189,7 @@ const AppContent = () => {
                   bgcolor: 'background.default', 
                   display: 'flex', 
                   flexDirection: 'column',
-                  overflow: 'auto',
-                  width: '100%',
-                  height: '100vh'
+                  width: '100%'
                 }}
               >
                 <TodoList isMobile={isMobile} />
