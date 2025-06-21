@@ -30,7 +30,6 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { format, parseISO, isValid, isToday, isBefore, startOfDay } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useTodo } from '../contexts/TodoContext';
-import UserMenu from './UserMenu';
 import SettingsDialog from './SettingsDialog';
 
 // フィルターリストの定義（Sidebarと同じ定義を持つ）

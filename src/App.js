@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { AuthProvider } from './contexts/AuthContext';
 import { TodoProvider } from './contexts/TodoContext';
 import { CategoryProvider } from './contexts/CategoryContext';
-import UserMenu from './components/UserMenu';
 import LoginButton from './components/LoginButton';
 import TodoList from './components/TodoList';
 import Sidebar from './components/Sidebar';
