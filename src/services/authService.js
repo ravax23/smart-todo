@@ -257,3 +257,32 @@ export const getAccessToken = () => {
     return null;
   }
 };
+// 明示的なスコープ承認を要求
+export const requestTasksScope = async () => {
+  try {
+    console.log('Requesting tasks scope explicitly');
+    
+    // 現在のアクセストークンを取得
+    const currentToken = getAccessToken();
+    if (!currentToken) {
+      console.error('No access token available');
+      return false;
+    }
+    
+    // 強制的に再認証を行う
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(TOKEN_KEY);
+    
+    // Google OAuth 2.0認証ページにリダイレクト
+    const redirectUri = window.location.origin;
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(SCOPES)}&prompt=consent`;
+    
+    console.log('Redirecting to auth URL:', authUrl);
+    window.location.href = authUrl;
+    
+    return true;
+  } catch (error) {
+    console.error('Failed to request tasks scope:', error);
+    return false;
+  }
+};
