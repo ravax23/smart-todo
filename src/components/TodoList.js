@@ -782,9 +782,35 @@ const TodoList = ({ isMobile }) => {
               <Button 
                 color="inherit" 
                 size="small"
-                onClick={() => window.location.reload()}
+                onClick={() => {
+                  // エラーメッセージに401や認証エラーが含まれている場合、ログイン画面にリダイレクト
+                  if (error.includes('401') || error.includes('認証情報が無効') || error.includes('invalid authentication credentials')) {
+                    // ローカルストレージとセッションストレージからトークンを削除
+                    localStorage.removeItem('google_access_token');
+                    localStorage.removeItem('google_auth_token');
+                    localStorage.removeItem('google_user_info');
+                    sessionStorage.removeItem('google_access_token');
+                    sessionStorage.removeItem('google_auth_token');
+                    sessionStorage.removeItem('google_user_info');
+                    
+                    // 認証状態変更イベントを発行
+                    const authEvent = new CustomEvent('googleAuthStateChanged', { 
+                      detail: { isAuthenticated: false } 
+                    });
+                    window.dispatchEvent(authEvent);
+                    
+                    // ページをリロード（ログイン画面に遷移）
+                    window.location.reload();
+                  } else {
+                    // その他のエラーの場合は単に再読み込み
+                    window.location.reload();
+                  }
+                }}
               >
-                再読み込み
+                {error.includes('401') || error.includes('認証情報が無効') || error.includes('invalid authentication credentials') 
+                  ? 'ログイン画面へ' 
+                  : '再読み込み'
+                }
               </Button>
             }
           >

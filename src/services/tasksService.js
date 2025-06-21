@@ -114,6 +114,32 @@ class TasksService {
       console.log('API Response Status:', response.status);
 
       if (!response.ok) {
+        if (response.status === 401) {
+          // 401認証エラーの場合、ログイン状態をリセットして自動的にログアウト
+          console.error('Authentication error (401) detected - Redirecting to login page');
+          
+          // ローカルストレージとセッションストレージからトークンを削除
+          localStorage.removeItem('google_access_token');
+          localStorage.removeItem('google_auth_token');
+          localStorage.removeItem('google_user_info');
+          sessionStorage.removeItem('google_access_token');
+          sessionStorage.removeItem('google_auth_token');
+          sessionStorage.removeItem('google_user_info');
+          
+          // 認証状態変更イベントを発行
+          const authEvent = new CustomEvent('googleAuthStateChanged', { 
+            detail: { isAuthenticated: false } 
+          });
+          window.dispatchEvent(authEvent);
+          
+          // 1秒後にページをリロード（ログイン画面に遷移）
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+          
+          throw new Error('認証情報が無効です。再度ログインしてください。');
+        }
+        
         const errorData = await response.json();
         console.error('API Error Response:', errorData);
         throw new Error(`API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);

@@ -214,6 +214,31 @@ export const TodoProvider = ({ children }) => {
           console.error('Failed to request additional permissions:', authErr);
           setError('タスクへのアクセス権限が不足しています。再ログインして権限を許可してください。');
         }
+      } else if (err.message && (err.message.includes('401') || err.message.includes('invalid authentication credentials'))) {
+        // 401認証エラーの場合、ログイン状態をリセットして自動的にログアウト
+        console.error('Authentication error (401) detected - Redirecting to login page');
+        
+        // ローカルストレージとセッションストレージからトークンを削除
+        localStorage.removeItem('google_access_token');
+        localStorage.removeItem('google_auth_token');
+        localStorage.removeItem('google_user_info');
+        sessionStorage.removeItem('google_access_token');
+        sessionStorage.removeItem('google_auth_token');
+        sessionStorage.removeItem('google_user_info');
+        
+        // 認証状態変更イベントを発行
+        const authEvent = new CustomEvent('googleAuthStateChanged', { 
+          detail: { isAuthenticated: false } 
+        });
+        window.dispatchEvent(authEvent);
+        
+        // エラーメッセージを設定
+        setError('認証情報が無効です。再度ログインしてください。');
+        
+        // 1秒後にページをリロード（ログイン画面に遷移）
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
         setError(`初期同期に失敗しました。${err.message}`);
       }
