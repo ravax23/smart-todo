@@ -61,6 +61,25 @@
     min-width: 240px !important;
   }
   
+  /* Google標準ボタンのスタイル調整 */
+  #googleButtonContainer {
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
+  }
+  
+  #googleButtonContainer > div {
+    margin: 0 auto !important;
+  }
+  
+  /* Google標準ボタンのiframeスタイル修正 */
+  #googleButtonContainer iframe {
+    display: block !important;
+    margin: 0 auto !important;
+    min-height: 44px !important;
+    min-width: 240px !important;
+  }
+  
   /* モバイルでのヘッダータイトル */
   .header-title-mobile {
     margin-left: 40px !important; /* ハンバーガーメニューの幅分ずらす */

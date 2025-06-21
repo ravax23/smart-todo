@@ -1,12 +1,52 @@
-import React, { useState } from 'react';
-import { Box, Alert, Button } from '@mui/material';
+import React, { useEffect, useRef, useState } from 'react';
+import { Box, Alert } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 
 function LoginButton() {
   const [error, setError] = useState(null);
   const { signIn } = useAuth();
+  const googleButtonRef = useRef(null);
 
-  // Googleログインボタンのクリックハンドラー
+  useEffect(() => {
+    // Google Identity Servicesのスクリプトが読み込まれているか確認
+    if (window.google && window.google.accounts && window.google.accounts.id) {
+      // すでに読み込まれている場合は直接ボタンをレンダリング
+      renderGoogleButton();
+    } else {
+      // スクリプトがまだ読み込まれていない場合はイベントリスナーを設定
+      const handleGoogleScriptLoad = () => {
+        if (window.google && window.google.accounts && window.google.accounts.id) {
+          renderGoogleButton();
+        }
+      };
+      
+      window.addEventListener('google-loaded', handleGoogleScriptLoad);
+      
+      return () => {
+        window.removeEventListener('google-loaded', handleGoogleScriptLoad);
+      };
+    }
+  }, []);
+
+  const renderGoogleButton = () => {
+    if (googleButtonRef.current && window.google && window.google.accounts && window.google.accounts.id) {
+      // 既存のボタンをクリア
+      googleButtonRef.current.innerHTML = '';
+      
+      // Google標準ボタンをレンダリング
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        type: 'standard',
+        theme: 'outline',
+        size: 'large',
+        text: 'signin_with',
+        shape: 'rectangular',
+        logo_alignment: 'center',
+        width: 240
+      });
+    }
+  };
+
+  // Googleログインボタンのクリックハンドラー（カスタムボタン用）
   const handleGoogleLogin = () => {
     try {
       signIn();
@@ -27,47 +67,19 @@ function LoginButton() {
         <Alert severity="error" sx={{ mb: 2, width: '100%' }}>{error}</Alert>
       ) : null}
       
-      {/* カスタムGoogleログインボタン */}
-      <Button
-        variant="outlined"
+      {/* Google標準ボタン用のコンテナ */}
+      <Box 
+        ref={googleButtonRef}
         onClick={handleGoogleLogin}
-        sx={{
-          backgroundColor: '#ffffff',
-          color: '#757575',
-          border: '1px solid #dadce0',
-          borderRadius: '4px',
-          padding: '10px 24px',
-          fontSize: '14px',
-          fontWeight: '500',
-          fontFamily: 'Roboto, sans-serif',
-          textTransform: 'none',
-          boxShadow: 'none',
+        sx={{ 
           display: 'flex',
-          alignItems: 'center',
           justifyContent: 'center',
-          width: '240px', // すべての画面サイズで同じ幅に統一
-          height: '40px',  // すべての画面サイズで同じ高さに統一
-          mx: 'auto', // 左右のマージンを自動に設定して中央揃え
-          position: 'relative', // 位置を相対指定に
-          '&:hover': {
-            backgroundColor: '#f8f9fa',
-            boxShadow: '0 1px 2px rgba(60,64,67,0.3)',
+          width: '100%',
+          '& > div': {
+            margin: '0 auto'
           }
         }}
-      >
-        {/* Google アイコン */}
-        <Box component="span" sx={{ 
-          display: 'inline-block', 
-          width: '18px', 
-          height: '18px', 
-          marginRight: '10px',
-          backgroundImage: 'url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJNMTcuNiA5LjJsLS4xLTEuOEg5djMuNGg0LjhDMTMuNiAxMiAxMyAxMyAxMiAxMy42djIuMmgzYTguOCA4LjggMCAwIDAgMi42LTYuNnoiIGZpbGw9IiM0Mjg1RjQiIGZpbGwtcnVsZT0ibm9uemVybyIvPjxwYXRoIGQ9Ik05IDE4YzIuNCAwIDQuNS0uOCA2LTIuMmwtMy0yLjJhNS40IDUuNCAwIDAgMS04LTIuOUgxVjEzYTkgOSAwIDAgMCA4IDV6IiBmaWxsPSIjMzRBODUzIiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48cGF0aCBkPSJNNCAxMC43YTUuNCA1LjQgMCAwIDEgMC0zLjRWNUgxYTkgOSAwIDAgMCAwIDhsMy0yLjN6IiBmaWxsPSIjRkJCQzA1IiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48cGF0aCBkPSJNOSAzLjZjMS4zIDAgMi41LjQgMy40IDEuM0wxNSAyLjNBOSA5IDAgMCAwIDEgNWwzIDIuNGE1LjQgNS40IDAgMCAxIDUtMy43eiIgZmlsbD0iI0VBNDMzNSIgZmlsbC1ydWxlPSJub256ZXJvIi8+PHBhdGggZD0iTTAgMGgxOHYxOEgweiIvPjwvZz48L3N2Zz4=)',
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'center',
-          backgroundSize: 'contain'
-        }} />
-        Googleでログイン
-      </Button>
+      />
     </Box>
   );
 }
