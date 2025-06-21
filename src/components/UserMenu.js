@@ -31,12 +31,25 @@ const UserMenu = () => {
   // ユーザー情報がない場合は何も表示しない
   if (!user) return null;
 
+  // ユーザー名の頭文字を取得（デフォルトは'U'）
+  const getInitial = () => {
+    if (user && user.name) {
+      return user.name.charAt(0).toUpperCase();
+    }
+    return 'U';
+  };
+
   return (
     <>
       <IconButton
         onClick={handleClick}
         size="small"
-        sx={{ ml: 2 }}
+        sx={{ 
+          ml: 1,
+          border: '1px solid #e0e0e0',
+          bgcolor: 'background.paper',
+          '&:hover': { bgcolor: 'background.default' }
+        }}
         aria-controls={open ? 'user-menu' : undefined}
         aria-haspopup="true"
         aria-expanded={open ? 'true' : undefined}
@@ -49,7 +62,7 @@ const UserMenu = () => {
           />
         ) : (
           <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
-            {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+            {getInitial()}
           </Avatar>
         )}
       </IconButton>
@@ -60,7 +73,7 @@ const UserMenu = () => {
         onClose={handleClose}
         onClick={handleClose}
         PaperProps={{
-          elevation: 0,
+          elevation: 2,
           sx: {
             overflow: 'visible',
             filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.1))',
@@ -87,7 +100,7 @@ const UserMenu = () => {
               />
             ) : (
               <Avatar sx={{ width: 40, height: 40, mr: 1, bgcolor: 'primary.main' }}>
-                {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                {getInitial()}
               </Avatar>
             )}
             <Box>
