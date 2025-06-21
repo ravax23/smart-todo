@@ -229,7 +229,10 @@ const AppContent = () => {
             maxWidth: 400,
             width: '100%',
             textAlign: 'center',
-            mx: isMobile ? 2 : 0
+            mx: 'auto', // 中央揃えを確実にするため
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
           }}>
             <Typography variant="h5" component="h1" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
               SmartTodo

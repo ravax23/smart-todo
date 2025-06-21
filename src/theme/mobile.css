@@ -54,6 +54,13 @@
     align-items: center !important;
   }
   
+  /* ログインボタンのスタイル調整 */
+  button[class*="MuiButton-root"] {
+    margin: 0 auto !important;
+    display: block !important;
+    min-width: 240px !important;
+  }
+  
   /* モバイルでのヘッダータイトル */
   .header-title-mobile {
     margin-left: 40px !important; /* ハンバーガーメニューの幅分ずらす */

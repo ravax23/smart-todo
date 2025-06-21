@@ -45,9 +45,10 @@ function LoginButton() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          width: '240px',
-          height: '40px',
+          width: '240px', // すべての画面サイズで同じ幅に統一
+          height: '40px',  // すべての画面サイズで同じ高さに統一
           mx: 'auto', // 左右のマージンを自動に設定して中央揃え
+          position: 'relative', // 位置を相対指定に
           '&:hover': {
             backgroundColor: '#f8f9fa',
             boxShadow: '0 1px 2px rgba(60,64,67,0.3)',
