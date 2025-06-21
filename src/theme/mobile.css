@@ -72,23 +72,22 @@
     justify-content: center !important;
   }
   
-  /* モバイルでのタスクアイテムのレイアウト - シンプル化 */
+  /* モバイルでのタスクアイテムのレイアウト - 詳細情報を表示 */
   .task-item-mobile {
     padding: 12px 16px !important;
     display: flex !important;
-    align-items: center !important;
+    flex-direction: column !important;
     border-bottom: 1px solid #f0f0f0 !important;
     cursor: pointer !important;
   }
   
   /* モバイルでのタスクタイトル */
   .task-title-mobile {
-    margin-left: 12px !important;
-    flex: 1 !important;
+    margin-bottom: 4px !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-    max-width: calc(100% - 40px) !important;
+    max-width: 100% !important;
   }
   
   /* マイリスト名の省略表示 */
@@ -99,9 +98,12 @@
     max-width: 200px !important;
   }
   
-  /* モバイルでのタスク詳細情報（非表示） */
+  /* モバイルでのタスク詳細情報 */
   .task-details-mobile {
-    display: none !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    font-size: 0.7rem !important;
+    margin-top: 4px !important;
   }
   
   /* モバイルでのタスクアクションボタン（非表示） */
@@ -130,3 +132,11 @@
     font-size: 1.25rem !important;
   }
 }
+  /* モバイルでのタスクメタ情報アイテム */
+  .task-meta-item-mobile {
+    margin-right: 8px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 120px !important;
+  }

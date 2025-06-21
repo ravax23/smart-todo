@@ -854,105 +854,171 @@ const TodoList = ({ isMobile }) => {
                     }
                   }}
                 >
-                  <Checkbox 
-                    checked={task.status === 'completed'} 
-                    onChange={(e) => {
-                      e.stopPropagation(); // イベントの伝播を停止
-                      toggleTaskCompletion(task.id, task.status);
-                    }}
-                    sx={{ 
-                      mr: 1,
-                      width: 22,
-                      height: 22,
-                      borderRadius: '50%',
-                      '&.Mui-checked': {
-                        color: getThemeColor('primary'),
-                      }
-                    }}
-                  />
-                  <Box sx={{ flex: 1 }}>
-                    <Typography 
-                      variant="body1" 
-                      className={isMobile ? 'task-title-mobile' : ''}
-                      sx={{
-                        textDecoration: task.status === 'completed' ? 'line-through' : 'none',
-                        color: task.status === 'completed' ? 'text.secondary' : 'text.primary',
-                        mb: 0.5,
-                        fontWeight: 500,
-                        fontSize: '0.9375rem'
-                      }}
-                    >
-                      {task.title}
-                    </Typography>
-                    <Box 
-                      className={isMobile ? 'task-details-mobile' : ''}
-                      sx={{ display: 'flex', alignItems: 'center', fontSize: '0.75rem', color: 'text.secondary' }}
-                    >
+                  {isMobile ? (
+                    // モバイル表示のレイアウト
+                    <>
+                      <Box sx={{ display: 'flex', width: '100%', alignItems: 'flex-start' }}>
+                        <Checkbox 
+                          checked={task.status === 'completed'} 
+                          onChange={(e) => {
+                            e.stopPropagation(); // イベントの伝播を停止
+                            toggleTaskCompletion(task.id, task.status);
+                          }}
+                          sx={{ 
+                            mr: 1,
+                            width: 22,
+                            height: 22,
+                            borderRadius: '50%',
+                            '&.Mui-checked': {
+                              color: getThemeColor('primary'),
+                            }
+                          }}
+                        />
+                        <Box sx={{ flex: 1 }}>
+                          <Typography 
+                            variant="body1" 
+                            className="task-title-mobile"
+                            sx={{
+                              textDecoration: task.status === 'completed' ? 'line-through' : 'none',
+                              color: task.status === 'completed' ? 'text.secondary' : 'text.primary',
+                              mb: 0.5,
+                              fontWeight: 500,
+                              fontSize: '0.9375rem'
+                            }}
+                          >
+                            {task.title}
+                          </Typography>
+                          <Box 
+                            className="task-details-mobile"
+                            sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', fontSize: '0.75rem', color: 'text.secondary' }}
+                          >
+                            <Box sx={{ display: 'flex', alignItems: 'center', mr: 2, mb: 0.5 }}>
+                              <span className="emoji-icon" style={{ marginRight: '4px' }}>📅</span>
+                              {task.startDate ? format(parseISO(task.startDate), 'yyyy年MM月dd日', { locale: ja }) : '期限なし'}
+                            </Box>
+                            {task.starred && (
+                              <Box 
+                                className="task-meta-item-mobile"
+                                sx={{ display: 'flex', alignItems: 'center', mr: 2, mb: 0.5 }}
+                              >
+                                <span className="emoji-icon" style={{ marginRight: '4px' }}>⭐</span>
+                                スター付き
+                              </Box>
+                            )}
+                            {/* マイリスト名を表示 */}
+                            {task.listId && (
+                              <Box 
+                                className="task-meta-item-mobile"
+                                sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}
+                              >
+                                <span className="emoji-icon" style={{ marginRight: '4px' }}>📁</span>
+                                {getTaskListName(task)}
+                              </Box>
+                            )}
+                          </Box>
+                        </Box>
+                      </Box>
+                    </>
+                  ) : (
+                    // デスクトップ表示のレイアウト
+                    <>
+                      <Checkbox 
+                        checked={task.status === 'completed'} 
+                        onChange={(e) => {
+                          e.stopPropagation(); // イベントの伝播を停止
+                          toggleTaskCompletion(task.id, task.status);
+                        }}
+                        sx={{ 
+                          mr: 1,
+                          width: 22,
+                          height: 22,
+                          borderRadius: '50%',
+                          '&.Mui-checked': {
+                            color: getThemeColor('primary'),
+                          }
+                        }}
+                      />
+                      <Box sx={{ flex: 1 }}>
+                        <Typography 
+                          variant="body1" 
+                          sx={{
+                            textDecoration: task.status === 'completed' ? 'line-through' : 'none',
+                            color: task.status === 'completed' ? 'text.secondary' : 'text.primary',
+                            mb: 0.5,
+                            fontWeight: 500,
+                            fontSize: '0.9375rem'
+                          }}
+                        >
+                          {task.title}
+                        </Typography>
+                        <Box 
+                          sx={{ display: 'flex', alignItems: 'center', fontSize: '0.75rem', color: 'text.secondary' }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <span className="emoji-icon" style={{ marginRight: '4px' }}>📅</span>
+                            {task.startDate ? format(parseISO(task.startDate), 'yyyy年MM月dd日', { locale: ja }) : '期限なし'}
+                          </Box>
+                          {task.starred && (
+                            <Box 
+                              sx={{ display: 'flex', alignItems: 'center', ml: 2 }}
+                            >
+                              <span className="emoji-icon" style={{ marginRight: '4px' }}>⭐</span>
+                              スター付き
+                            </Box>
+                          )}
+                          {/* マイリスト名を表示 */}
+                          {task.listId && (
+                            <Box 
+                              sx={{ display: 'flex', alignItems: 'center', ml: 2 }}
+                            >
+                              <span className="emoji-icon" style={{ marginRight: '4px' }}>📁</span>
+                              {getTaskListName(task)}
+                            </Box>
+                          )}
+                        </Box>
+                      </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <span className="emoji-icon" style={{ marginRight: '4px' }}>📅</span>
-                        {task.startDate ? format(parseISO(task.startDate), 'yyyy年MM月dd日', { locale: ja }) : '期限なし'}
-                      </Box>
-                      {task.starred && (
-                        <Box 
-                          className={isMobile ? 'task-meta-item-mobile' : ''}
-                          sx={{ display: 'flex', alignItems: 'center', ml: 2 }}
+                        <IconButton 
+                          size="small" 
+                          sx={{ 
+                            color: 'text.secondary',
+                            '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' }
+                          }}
+                          onClick={() => handleEditTask(task)}
                         >
-                          <span className="emoji-icon" style={{ marginRight: '4px' }}>⭐</span>
-                          スター付き
-                        </Box>
-                      )}
-                      {/* マイリスト名を表示 */}
-                      {task.listId && (
-                        <Box 
-                          className={isMobile ? 'task-meta-item-mobile' : ''}
-                          sx={{ display: 'flex', alignItems: 'center', ml: 2 }}
+                          <Box 
+                            component="span" 
+                            sx={{ 
+                              fontSize: '1rem',
+                              display: 'inline-block'
+                            }}
+                            className="emoji-icon"
+                          >
+                            ✏️
+                          </Box>
+                        </IconButton>
+                        <IconButton 
+                          size="small" 
+                          sx={{ 
+                            color: 'text.secondary',
+                            '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' }
+                          }}
+                          onClick={() => handleDeleteTask(task.id)}
                         >
-                          <span className="emoji-icon" style={{ marginRight: '4px' }}>📁</span>
-                          {getTaskListName(task)}
-                        </Box>
-                      )}
-                    </Box>
-                  </Box>
-                  <Box sx={{ display: isMobile ? 'none' : 'flex', alignItems: 'center' }}>
-                    <IconButton 
-                      size="small" 
-                      sx={{ 
-                        color: 'text.secondary',
-                        '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' }
-                      }}
-                      onClick={() => handleEditTask(task)}
-                    >
-                      <Box 
-                        component="span" 
-                        sx={{ 
-                          fontSize: '1rem',
-                          display: 'inline-block'
-                        }}
-                        className="emoji-icon"
-                      >
-                        ✏️
+                          <Box 
+                            component="span" 
+                            sx={{ 
+                              fontSize: '1rem',
+                              display: 'inline-block'
+                            }}
+                            className="emoji-icon"
+                          >
+                            🗑️
+                          </Box>
+                        </IconButton>
                       </Box>
-                    </IconButton>
-                    <IconButton 
-                      size="small" 
-                      sx={{ 
-                        color: 'text.secondary',
-                        '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' }
-                      }}
-                      onClick={() => handleDeleteTask(task.id)}
-                    >
-                      <Box 
-                        component="span" 
-                        sx={{ 
-                          fontSize: '1rem',
-                          display: 'inline-block'
-                        }}
-                        className="emoji-icon"
-                      >
-                        🗑️
-                      </Box>
-                    </IconButton>
-                  </Box>
+                    </>
+                  )}
                 </ListItem>
                 {index < todos.length - 1 && <Divider />}
               </React.Fragment>
