@@ -185,11 +185,22 @@ export const getUserInfo = () => {
 // サインイン
 export const signIn = () => {
   try {
+    console.log('Starting OAuth2 sign in flow');
+    
     // リダイレクトURI（現在のページのURL）
     const redirectUri = window.location.origin;
+    console.log('Redirect URI:', redirectUri);
+    
+    // クライアントIDの確認
+    if (!CLIENT_ID) {
+      console.error('Google Client ID is not configured');
+      throw new Error('Google Client ID is not configured');
+    }
+    console.log('Client ID available:', !!CLIENT_ID);
     
     // OAuth 2.0認証URLを構築
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(SCOPES)}&prompt=consent`;
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(SCOPES)}&prompt=consent&include_granted_scopes=true`;
+    console.log('Auth URL:', authUrl);
     
     // 認証ページにリダイレクト
     window.location.href = authUrl;
@@ -245,24 +256,35 @@ export const removeAuthStateListener = (callback) => {
 // アクセストークンの取得
 export const getAccessToken = () => {
   try {
+    console.log('Getting access token');
+    
     // URLハッシュからアクセストークンを取得
     const hash = window.location.hash;
     if (hash && hash.includes('access_token=')) {
-      const accessToken = hash.match(/access_token=([^&]*)/)[1];
-      if (accessToken) {
-        // アクセストークンをローカルストレージに保存
-        localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-        console.log('Access token saved from URL hash');
-        
-        // URLハッシュをクリア
-        window.history.replaceState(null, null, window.location.pathname);
-        
-        return accessToken;
+      try {
+        const accessToken = hash.match(/access_token=([^&]*)/)[1];
+        if (accessToken) {
+          console.log('Access token found in URL hash');
+          
+          // アクセストークンをローカルストレージに保存
+          localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+          sessionStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+          console.log('Access token saved from URL hash');
+          
+          // URLハッシュをクリア
+          window.history.replaceState(null, null, window.location.pathname);
+          
+          return accessToken;
+        }
+      } catch (e) {
+        console.error('Error extracting access token from hash:', e);
       }
     }
     
     // ローカルストレージからアクセストークンを取得
     const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY) || sessionStorage.getItem(ACCESS_TOKEN_KEY);
+    console.log('Access token from storage:', !!accessToken);
+    
     return accessToken;
   } catch (e) {
     console.error('Error getting access token:', e);

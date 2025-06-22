@@ -20,11 +20,14 @@ class TasksService {
       if (!token) {
         console.error('Access token not found');
         
-        // 5秒待機してもう一度トークンを確認（非同期認証の完了を待つ）
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        // 10秒待機してもう一度トークンを確認（非同期認証の完了を待つ）
+        console.log('Waiting 10 seconds for token...');
+        await new Promise(resolve => setTimeout(resolve, 10000));
         const retryToken = getAccessToken();
+        console.log('Retry token available:', !!retryToken);
         
         if (!retryToken) {
+          console.error('Access token still not found after retry');
           throw new Error('アクセストークンがありません。再度ログインしてください。');
         } else {
           console.log('Access token found after retry');

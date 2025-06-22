@@ -48,23 +48,13 @@ function LoginButton() {
 
   // Googleログインボタンのクリックハンドラー（カスタムボタン用）
   const handleGoogleLogin = (e) => {
-    // イベントの伝播を停止して、Google標準ボタンのデフォルト動作のみを実行
+    // イベントの伝播を停止
     e.stopPropagation();
     
     try {
-      // Google標準ボタンのクリックイベントは自動的にポップアップを開くため、
-      // ここでは何もしない（signInを呼び出さない）
-      
-      // ただし、ログインに失敗した場合のフォールバックとして、
-      // 5秒後にアクセストークンがない場合は従来のOAuth2フローを使用
-      setTimeout(() => {
-        const token = localStorage.getItem('google_access_token') || 
-                      sessionStorage.getItem('google_access_token');
-        if (!token) {
-          console.log('No access token after 5 seconds, trying OAuth2 flow');
-          signIn();
-        }
-      }, 5000);
+      // 直接OAuth 2.0フローを使用（GISのポップアップは使用しない）
+      console.log('Using direct OAuth2 flow for login');
+      signIn();
     } catch (error) {
       console.error('Google login error:', error);
       setError('ログインに失敗しました。もう一度お試しください。');
