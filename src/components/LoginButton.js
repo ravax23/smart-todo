@@ -47,13 +47,12 @@ function LoginButton() {
   };
 
   // Googleログインボタンのクリックハンドラー（カスタムボタン用）
-  const handleGoogleLogin = () => {
-    try {
-      signIn();
-    } catch (error) {
-      console.error('Google login error:', error);
-      setError('ログインに失敗しました。もう一度お試しください。');
-    }
+  const handleGoogleLogin = (e) => {
+    // イベントの伝播を停止して、Google標準ボタンのデフォルト動作のみを実行
+    e.stopPropagation();
+    
+    // Google標準ボタンのクリックイベントは自動的にポップアップを開くため、
+    // ここでは何もしない（signInを呼び出さない）
   };
 
   return (
