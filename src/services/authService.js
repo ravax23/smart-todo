@@ -206,8 +206,8 @@ export const signIn = () => {
     console.log('Device detection in signIn:', isMobile ? 'Mobile' : 'Desktop');
     
     // OAuth 2.0認証URLを構築
-    // モバイルデバイスの場合は追加パラメータを設定
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(SCOPES)}&prompt=consent&include_granted_scopes=true&access_type=offline${isMobile ? '&mobile=true' : ''}`;
+    // モバイルデバイスの場合でも同じパラメータを使用（mobile=trueは削除）
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(SCOPES)}&prompt=select_account&include_granted_scopes=true`;
     console.log('Auth URL:', authUrl);
     
     // 認証前に現在のタイムスタンプをセッションストレージに保存（デバッグ用）
@@ -393,7 +393,7 @@ export const requestTasksScope = async () => {
     
     // Google OAuth 2.0認証ページにリダイレクト
     const redirectUri = window.location.origin;
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(SCOPES)}&prompt=consent`;
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(SCOPES)}&prompt=select_account&include_granted_scopes=true`;
     
     console.log('Redirecting to auth URL:', authUrl);
     window.location.href = authUrl;

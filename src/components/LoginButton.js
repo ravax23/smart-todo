@@ -7,24 +7,14 @@ function LoginButton() {
   const [error, setError] = useState(null);
   const { signIn } = useAuth();
   const googleButtonRef = useRef(null);
-  const [useCustomButton, setUseCustomButton] = useState(false);
+  const [useCustomButton, setUseCustomButton] = useState(true); // 常にカスタムボタンを使用するように変更
 
   useEffect(() => {
-    // モバイルデバイスかどうかを検出
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    
-    // モバイルデバイスの場合はカスタムボタンを使用
-    if (isMobile) {
-      console.log('Mobile device detected, using custom button');
-      setUseCustomButton(true);
-      return;
-    }
-    
     // Google Identity Servicesのスクリプトが読み込まれているか確認
-    if (window.google && window.google.accounts && window.google.accounts.id) {
+    if (!useCustomButton && window.google && window.google.accounts && window.google.accounts.id) {
       // すでに読み込まれている場合は直接ボタンをレンダリング
       renderGoogleButton();
-    } else {
+    } else if (!useCustomButton) {
       // スクリプトがまだ読み込まれていない場合はイベントリスナーを設定
       const handleGoogleScriptLoad = () => {
         if (window.google && window.google.accounts && window.google.accounts.id) {
@@ -38,7 +28,7 @@ function LoginButton() {
         window.removeEventListener('google-loaded', handleGoogleScriptLoad);
       };
     }
-  }, []);
+  }, [useCustomButton]);
 
   const renderGoogleButton = () => {
     if (googleButtonRef.current && window.google && window.google.accounts && window.google.accounts.id) {
@@ -61,7 +51,7 @@ function LoginButton() {
   // Googleログインボタンのクリックハンドラー
   const handleGoogleLogin = (e) => {
     // イベントの伝播を停止
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     
     try {
       // 直接OAuth 2.0フローを使用
@@ -85,7 +75,7 @@ function LoginButton() {
       ) : null}
       
       {useCustomButton ? (
-        // モバイル用のカスタムボタン
+        // カスタムボタン（すべてのデバイスで使用）
         <Button
           variant="outlined"
           startIcon={<GoogleIcon />}
@@ -107,7 +97,7 @@ function LoginButton() {
           Googleでログイン
         </Button>
       ) : (
-        // デスクトップ用のGoogle標準ボタン
+        // Google標準ボタン（使用しない）
         <Box 
           id="googleButtonContainer"
           ref={googleButtonRef}
@@ -125,5 +115,7 @@ function LoginButton() {
     </Box>
   );
 }
+
+export default LoginButton;
 
 export default LoginButton;
