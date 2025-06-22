@@ -118,21 +118,27 @@ function LoginButton() {
             display: 'flex', 
             alignItems: 'center', 
             width: '100%',
-            height: '100%'
+            height: '100%',
+            position: 'relative',
+            paddingLeft: '8px'
           }}>
             <Box sx={{ 
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              marginRight: '10px',
-              marginLeft: '1px'
+              marginRight: '24px',
+              width: '18px',
+              height: '18px'
             }}>
-              <GoogleColorfulIcon sx={{ fontSize: '18px' }} />
+              <GoogleColorfulIcon sx={{ 
+                fontSize: '18px',
+                position: 'absolute',
+                left: '12px'
+              }} />
             </Box>
             <Box sx={{ 
               flex: 1,
-              textAlign: 'center',
-              paddingRight: '10px'
+              textAlign: 'center'
             }}>
               Googleでログイン
             </Box>
