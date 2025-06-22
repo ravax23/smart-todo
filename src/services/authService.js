@@ -120,6 +120,11 @@ const handleCredentialResponse = (response) => {
         picture: decodedToken.picture
       }));
       
+      // アクセストークンとしてもJWTを保存（Tasks APIで使用するため）
+      localStorage.setItem(ACCESS_TOKEN_KEY, response.credential);
+      sessionStorage.setItem(ACCESS_TOKEN_KEY, response.credential);
+      console.log('JWT token saved as access token');
+      
       // 認証状態変更イベントを発火
       const event = new CustomEvent('googleAuthStateChanged', { 
         detail: { isAuthenticated: true } 

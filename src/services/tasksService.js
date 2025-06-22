@@ -19,7 +19,17 @@ class TasksService {
       
       if (!token) {
         console.error('Access token not found');
-        throw new Error('アクセストークンがありません。再度ログインしてください。');
+        
+        // 5秒待機してもう一度トークンを確認（非同期認証の完了を待つ）
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        const retryToken = getAccessToken();
+        
+        if (!retryToken) {
+          throw new Error('アクセストークンがありません。再度ログインしてください。');
+        } else {
+          console.log('Access token found after retry');
+          return this.getTaskLists(); // 再帰的に呼び出し
+        }
       }
       
       // iOS Safariを検出
