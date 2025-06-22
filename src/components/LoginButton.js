@@ -78,26 +78,57 @@ function LoginButton() {
       ) : null}
       
       {useCustomButton ? (
-        // カスタムボタン（すべてのデバイスで使用）
+        // Googleブランドガイドラインに沿ったカスタムボタン
         <Button
-          variant="outlined"
-          startIcon={<GoogleIcon />}
+          variant="contained"
           onClick={handleGoogleLogin}
           sx={{
-            padding: '10px 20px',
+            padding: '0',
             borderRadius: '4px',
             textTransform: 'none',
-            fontSize: '16px',
+            boxShadow: '0 2px 4px 0 rgba(0,0,0,.25)',
+            height: '40px',
+            backgroundColor: '#4285F4',
+            color: '#ffffff',
+            fontFamily: 'Roboto, sans-serif',
             fontWeight: 500,
-            color: '#757575',
-            borderColor: '#dadce0',
+            fontSize: '14px',
+            letterSpacing: '0.2px',
+            border: 'none',
+            transition: 'box-shadow .3s',
             '&:hover': {
-              borderColor: '#d2e3fc',
-              backgroundColor: 'rgba(66, 133, 244, 0.04)',
+              boxShadow: '0 0 3px 3px rgba(66,133,244,.3)',
+              backgroundColor: '#4285F4'
             }
           }}
         >
-          Googleでログイン
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            width: '100%',
+            height: '100%'
+          }}>
+            <Box sx={{ 
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: '#fff',
+              borderRadius: '2px',
+              padding: '8px',
+              marginRight: '8px',
+              height: '100%',
+              boxSizing: 'border-box'
+            }}>
+              <GoogleIcon sx={{ color: '#4285F4', fontSize: '18px' }} />
+            </Box>
+            <Box sx={{ 
+              flex: 1, 
+              textAlign: 'center',
+              paddingRight: '8px'
+            }}>
+              Googleでログイン
+            </Box>
+          </Box>
         </Button>
       ) : (
         // Google標準ボタン（使用しない）
