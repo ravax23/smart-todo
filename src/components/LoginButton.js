@@ -138,7 +138,9 @@ function LoginButton() {
             </Box>
             <Box sx={{ 
               flex: 1,
-              textAlign: 'center'
+              textAlign: 'center',
+              paddingRight: '24px', // 右側にパディングを追加して中央寄せを調整
+              marginLeft: '-12px' // 左側のマージンを調整して中央寄せを微調整
             }}>
               Googleでログイン
             </Box>
