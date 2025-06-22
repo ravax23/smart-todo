@@ -175,7 +175,9 @@ const AppContent = () => {
                   bgcolor: 'background.paper',
                   borderRight: '1px solid #e0e0e0',
                   display: 'flex',
-                  flexDirection: 'column'
+                  flexDirection: 'column',
+                  height: isMobile ? '100vh' : '100%', // モバイル時は画面の高さいっぱいに
+                  overflow: 'auto' // スクロール可能に
                 }}
               >
                 <Sidebar closeSidebar={closeSidebar} isMobile={isMobile} />

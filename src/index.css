@@ -43,6 +43,21 @@ code {
   filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.2)) !important;
 }
 
+/* モバイルサイドバーのスタイル */
+.sidebar-mobile {
+  position: fixed;
+  top: 0;
+  left: -320px;
+  height: 100vh !important; /* 画面の高さいっぱいに表示 */
+  z-index: 1200;
+  transition: left 0.3s ease;
+  overflow-y: auto;
+}
+
+.sidebar-mobile.open {
+  left: 0;
+}
+
 /* 絵文字のスタイルリセット */
 .emoji-icon {
   font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';

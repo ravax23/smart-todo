@@ -272,7 +272,7 @@ const Sidebar = ({ closeSidebar, isMobile }) => {
       display: 'flex',
       flexDirection: 'column',
       p: 2,
-      height: '100%',
+      height: isMobile ? '100vh' : '100%', // モバイル時は画面の高さいっぱいに
       overflowY: 'auto',
       overflowX: 'hidden' // 横スクロール禁止
     }}>
