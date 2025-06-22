@@ -32,6 +32,18 @@ export function AuthProvider({ children }) {
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         console.log('Device detection in AuthContext:', isMobile ? 'Mobile' : 'Desktop');
         
+        // デバイス情報をログに記録
+        const deviceInfo = {
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          language: navigator.language,
+          cookieEnabled: navigator.cookieEnabled,
+          windowWidth: window.innerWidth,
+          windowHeight: window.innerHeight,
+          pixelRatio: window.devicePixelRatio || 1
+        };
+        console.log('Device info in AuthContext:', deviceInfo);
+        
         // URLからアクセストークンを確認（OAuth 2.0リダイレクト後）
         const hash = window.location.hash;
         if (hash && hash.includes('access_token=')) {
@@ -43,17 +55,30 @@ export function AuthProvider({ children }) {
               try {
                 localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
                 console.log('Access token saved to localStorage in AuthContext');
-                
+              } catch (storageError) {
+                console.error('Error saving to localStorage in AuthContext:', storageError);
+              }
+              
+              try {
                 // セッションストレージにもバックアップ（iOSのプライベートブラウジングモード対策）
                 sessionStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
                 console.log('Access token saved to sessionStorage in AuthContext');
               } catch (storageError) {
-                console.error('Error saving to storage in AuthContext:', storageError);
+                console.error('Error saving to sessionStorage in AuthContext:', storageError);
+              }
+              
+              try {
+                // Cookieにも保存（サードパーティCookie制限の回避策）
+                document.cookie = `${ACCESS_TOKEN_KEY}=${accessToken}; path=/; max-age=3600; SameSite=Strict`;
+                console.log('Access token saved to cookie in AuthContext');
+              } catch (cookieError) {
+                console.error('Error saving to cookie in AuthContext:', cookieError);
               }
               
               // URLからハッシュを削除
               try {
                 window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+                console.log('URL hash cleared in AuthContext');
               } catch (historyError) {
                 console.error('Error updating history in AuthContext:', historyError);
               }

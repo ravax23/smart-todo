@@ -13,6 +13,19 @@ class TasksService {
     try {
       console.log('Fetching task lists');
       
+      // デバイス情報を記録
+      const deviceInfo = {
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+        isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream,
+        isSafari: /^((?!chrome|android).)*safari/i.test(navigator.userAgent),
+        windowWidth: window.innerWidth,
+        windowHeight: window.innerHeight,
+        pixelRatio: window.devicePixelRatio || 1
+      };
+      console.log('Device info:', deviceInfo);
+      
       // アクセストークンの確認
       const token = getAccessToken();
       console.log('Access token available:', !!token);
@@ -20,14 +33,38 @@ class TasksService {
       if (!token) {
         console.error('Access token not found');
         
-        // 10秒待機してもう一度トークンを確認（非同期認証の完了を待つ）
-        console.log('Waiting 10 seconds for token...');
-        await new Promise(resolve => setTimeout(resolve, 10000));
+        // モバイルデバイスの場合は待機時間を長くする
+        const waitTime = deviceInfo.isMobile ? 15000 : 10000;
+        console.log(`Waiting ${waitTime/1000} seconds for token...`);
+        
+        await new Promise(resolve => setTimeout(resolve, waitTime));
         const retryToken = getAccessToken();
         console.log('Retry token available:', !!retryToken);
         
         if (!retryToken) {
           console.error('Access token still not found after retry');
+          
+          // モバイルデバイスの場合は自動的に再認証を試みる
+          if (deviceInfo.isMobile) {
+            console.log('Mobile device detected, attempting re-authentication');
+            // 認証状態をリセット
+            localStorage.removeItem('google_access_token');
+            localStorage.removeItem('google_auth_token');
+            sessionStorage.removeItem('google_access_token');
+            sessionStorage.removeItem('google_auth_token');
+            
+            // 認証ページにリダイレクト
+            const redirectUri = window.location.origin;
+            const CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+            const SCOPES = 'https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/tasks.readonly';
+            
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(SCOPES)}&prompt=consent&include_granted_scopes=true&mobile=true&access_type=offline`;
+            
+            console.log('Redirecting to auth URL for mobile device');
+            window.location.href = authUrl;
+            return [];
+          }
+          
           throw new Error('アクセストークンがありません。再度ログインしてください。');
         } else {
           console.log('Access token found after retry');

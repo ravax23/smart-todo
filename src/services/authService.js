@@ -57,6 +57,9 @@ const initializeGoogleAuth = (resolve, reject) => {
       callback: handleCredentialResponse,
       auto_select: false,
       cancel_on_tap_outside: true,
+      prompt_parent_id: 'googleButtonContainer', // ボタンの親要素のID
+      state_cookie_domain: window.location.hostname, // 現在のドメインに制限
+      ux_mode: 'popup', // ポップアップモードを明示的に指定
     });
     
     // GAPI（Google API Client）の初期化
@@ -198,9 +201,17 @@ export const signIn = () => {
     }
     console.log('Client ID available:', !!CLIENT_ID);
     
+    // モバイルデバイスかどうかを検出
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    console.log('Device detection in signIn:', isMobile ? 'Mobile' : 'Desktop');
+    
     // OAuth 2.0認証URLを構築
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(SCOPES)}&prompt=consent&include_granted_scopes=true`;
+    // モバイルデバイスの場合は追加パラメータを設定
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(SCOPES)}&prompt=consent&include_granted_scopes=true&access_type=offline${isMobile ? '&mobile=true' : ''}`;
     console.log('Auth URL:', authUrl);
+    
+    // 認証前に現在のタイムスタンプをセッションストレージに保存（デバッグ用）
+    sessionStorage.setItem('auth_request_time', Date.now().toString());
     
     // 認証ページにリダイレクト
     window.location.href = authUrl;
@@ -258,6 +269,18 @@ export const getAccessToken = () => {
   try {
     console.log('Getting access token');
     
+    // デバッグ情報を記録
+    const debugInfo = {
+      url: window.location.href,
+      hash: window.location.hash,
+      hasLocalStorage: typeof localStorage !== 'undefined',
+      hasSessionStorage: typeof sessionStorage !== 'undefined',
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+    };
+    console.log('Access token debug info:', debugInfo);
+    
     // URLハッシュからアクセストークンを取得
     const hash = window.location.hash;
     if (hash && hash.includes('access_token=')) {
@@ -266,13 +289,37 @@ export const getAccessToken = () => {
         if (accessToken) {
           console.log('Access token found in URL hash');
           
-          // アクセストークンをローカルストレージに保存
-          localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-          sessionStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-          console.log('Access token saved from URL hash');
+          try {
+            // アクセストークンをローカルストレージに保存
+            localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+            console.log('Access token saved to localStorage');
+          } catch (storageError) {
+            console.error('Error saving to localStorage:', storageError);
+          }
+          
+          try {
+            // セッションストレージにも保存
+            sessionStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+            console.log('Access token saved to sessionStorage');
+          } catch (sessionError) {
+            console.error('Error saving to sessionStorage:', sessionError);
+          }
+          
+          // Cookieにも保存（サードパーティCookie制限の回避策）
+          try {
+            document.cookie = `${ACCESS_TOKEN_KEY}=${accessToken}; path=/; max-age=3600; SameSite=Strict`;
+            console.log('Access token saved to cookie');
+          } catch (cookieError) {
+            console.error('Error saving to cookie:', cookieError);
+          }
           
           // URLハッシュをクリア
-          window.history.replaceState(null, null, window.location.pathname);
+          try {
+            window.history.replaceState(null, null, window.location.pathname);
+            console.log('URL hash cleared');
+          } catch (historyError) {
+            console.error('Error clearing URL hash:', historyError);
+          }
           
           return accessToken;
         }
@@ -281,11 +328,48 @@ export const getAccessToken = () => {
       }
     }
     
-    // ローカルストレージからアクセストークンを取得
-    const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY) || sessionStorage.getItem(ACCESS_TOKEN_KEY);
-    console.log('Access token from storage:', !!accessToken);
+    // 各種ストレージからアクセストークンを取得
+    let accessToken = null;
     
-    return accessToken;
+    // ローカルストレージから取得
+    try {
+      accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+      if (accessToken) {
+        console.log('Access token found in localStorage');
+        return accessToken;
+      }
+    } catch (e) {
+      console.error('Error reading from localStorage:', e);
+    }
+    
+    // セッションストレージから取得
+    try {
+      accessToken = sessionStorage.getItem(ACCESS_TOKEN_KEY);
+      if (accessToken) {
+        console.log('Access token found in sessionStorage');
+        return accessToken;
+      }
+    } catch (e) {
+      console.error('Error reading from sessionStorage:', e);
+    }
+    
+    // Cookieから取得
+    try {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.startsWith(ACCESS_TOKEN_KEY + '=')) {
+          accessToken = cookie.substring(ACCESS_TOKEN_KEY.length + 1);
+          console.log('Access token found in cookie');
+          return accessToken;
+        }
+      }
+    } catch (e) {
+      console.error('Error reading from cookie:', e);
+    }
+    
+    console.log('No access token found in any storage');
+    return null;
   } catch (e) {
     console.error('Error getting access token:', e);
     return null;
