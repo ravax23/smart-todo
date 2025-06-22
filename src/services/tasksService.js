@@ -58,10 +58,27 @@ class TasksService {
             const CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
             const SCOPES = 'https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/tasks.readonly';
             
+            // ポップアップウィンドウのサイズと位置を計算
+            const width = 500;
+            const height = 600;
+            const left = window.screenX + (window.outerWidth - width) / 2;
+            const top = window.screenY + (window.outerHeight - height) / 2.5;
+            
             const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(SCOPES)}&prompt=select_account&include_granted_scopes=true`;
             
-            console.log('Redirecting to auth URL for mobile device');
-            window.location.href = authUrl;
+            console.log('Opening auth URL in popup window for mobile device');
+            
+            // ポップアップウィンドウを開く
+            const popup = window.open(
+              authUrl,
+              'googleAuthPopup',
+              `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`
+            );
+            
+            if (!popup) {
+              console.error('Failed to open popup window');
+              throw new Error('ポップアップウィンドウを開けませんでした。ポップアップブロッカーを無効にしてください。');
+            }
             return [];
           }
           

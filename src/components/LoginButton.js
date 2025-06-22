@@ -51,12 +51,15 @@ function LoginButton() {
   // Googleログインボタンのクリックハンドラー
   const handleGoogleLogin = (e) => {
     // イベントの伝播を停止
-    if (e) e.stopPropagation();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     
     try {
-      // 直接OAuth 2.0フローを使用
-      console.log('Using direct OAuth2 flow for login');
-      signIn();
+      // ポップアップウィンドウでOAuth 2.0フローを使用
+      console.log('Using OAuth2 flow with popup window');
+      signIn({ usePopup: true });
     } catch (error) {
       console.error('Google login error:', error);
       setError('ログインに失敗しました。もう一度お試しください。');
@@ -98,6 +101,25 @@ function LoginButton() {
         </Button>
       ) : (
         // Google標準ボタン（使用しない）
+        <Box 
+          id="googleButtonContainer"
+          ref={googleButtonRef}
+          onClick={handleGoogleLogin}
+          sx={{ 
+            display: 'flex',
+            justifyContent: 'center',
+            width: '100%',
+            '& > div': {
+              margin: '0 auto'
+            }
+          }}
+        />
+      )}
+    </Box>
+  );
+}
+
+export default LoginButton;
         <Box 
           id="googleButtonContainer"
           ref={googleButtonRef}

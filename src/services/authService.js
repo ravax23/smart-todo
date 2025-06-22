@@ -186,7 +186,7 @@ export const getUserInfo = () => {
 };
 
 // サインイン
-export const signIn = () => {
+export const signIn = (options = {}) => {
   try {
     console.log('Starting OAuth2 sign in flow');
     
@@ -206,15 +206,60 @@ export const signIn = () => {
     console.log('Device detection in signIn:', isMobile ? 'Mobile' : 'Desktop');
     
     // OAuth 2.0認証URLを構築
-    // モバイルデバイスの場合でも同じパラメータを使用（mobile=trueは削除）
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(SCOPES)}&prompt=select_account&include_granted_scopes=true`;
     console.log('Auth URL:', authUrl);
     
     // 認証前に現在のタイムスタンプをセッションストレージに保存（デバッグ用）
     sessionStorage.setItem('auth_request_time', Date.now().toString());
     
-    // 認証ページにリダイレクト
-    window.location.href = authUrl;
+    // ポップアップウィンドウで開くかどうか
+    if (options.usePopup) {
+      console.log('Opening auth URL in popup window');
+      
+      // ポップアップウィンドウのサイズと位置を計算
+      const width = 500;
+      const height = 600;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2.5;
+      
+      // ポップアップウィンドウを開く
+      const popup = window.open(
+        authUrl,
+        'googleAuthPopup',
+        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`
+      );
+      
+      // ポップアップウィンドウが閉じられたかどうかを監視
+      if (popup) {
+        const checkPopupClosed = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(checkPopupClosed);
+            console.log('Auth popup closed');
+            
+            // アクセストークンを確認
+            const token = getAccessToken();
+            if (token) {
+              console.log('Access token found after popup closed');
+              // 認証状態変更イベントを発火
+              const event = new CustomEvent('googleAuthStateChanged', { 
+                detail: { isAuthenticated: true } 
+              });
+              window.dispatchEvent(event);
+              
+              // ページをリロード
+              window.location.reload();
+            }
+          }
+        }, 1000);
+      } else {
+        console.error('Failed to open popup window');
+        throw new Error('ポップアップウィンドウを開けませんでした。ポップアップブロッカーを無効にしてください。');
+      }
+    } else {
+      // 通常のリダイレクト
+      console.log('Redirecting to auth URL');
+      window.location.href = authUrl;
+    }
   } catch (error) {
     console.error('Error during sign in:', error);
     throw error;
