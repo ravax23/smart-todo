@@ -120,24 +120,3 @@ function LoginButton() {
 }
 
 export default LoginButton;
-        <Box 
-          id="googleButtonContainer"
-          ref={googleButtonRef}
-          onClick={handleGoogleLogin}
-          sx={{ 
-            display: 'flex',
-            justifyContent: 'center',
-            width: '100%',
-            '& > div': {
-              margin: '0 auto'
-            }
-          }}
-        />
-      )}
-    </Box>
-  );
-}
-
-export default LoginButton;
-
-export default LoginButton;
