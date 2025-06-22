@@ -245,6 +245,13 @@ export const getAccessToken = () => {
     if (hash && hash.includes('access_token=')) {
       const accessToken = hash.match(/access_token=([^&]*)/)[1];
       if (accessToken) {
+        // アクセストークンをローカルストレージに保存
+        localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+        console.log('Access token saved from URL hash');
+        
+        // URLハッシュをクリア
+        window.history.replaceState(null, null, window.location.pathname);
+        
         return accessToken;
       }
     }

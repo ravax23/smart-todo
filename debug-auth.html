@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>認証デバッグツール</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .token { word-break: break-all; background: #f5f5f5; padding: 10px; }
+        button { margin: 5px; padding: 10px 15px; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>SmartTodo 認証デバッグツール</h1>
+    
+    <div class="section">
+        <h2>現在の認証状態</h2>
+        <div id="auth-status"></div>
+    </div>
+    
+    <div class="section">
+        <h2>保存されているトークン</h2>
+        <div id="tokens"></div>
+    </div>
+    
+    <div class="section">
+        <h2>操作</h2>
+        <button onclick="clearAllTokens()">すべてのトークンをクリア</button>
+        <button onclick="testGoogleAPI()">Google Tasks API テスト</button>
+        <button onclick="forceReauth()">強制再認証</button>
+    </div>
+    
+    <div class="section">
+        <h2>ログ</h2>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        const CLIENT_ID = '80481776832-el596plhopp9d3tstgg095msmh19h7he.apps.googleusercontent.com';
+        const SCOPES = 'https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/tasks.readonly';
+        
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : '';
+            logDiv.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function checkAuthStatus() {
+            const authToken = localStorage.getItem('google_auth_token') || sessionStorage.getItem('google_auth_token');
+            const accessToken = localStorage.getItem('google_access_token') || sessionStorage.getItem('google_access_token');
+            
+            const statusDiv = document.getElementById('auth-status');
+            const tokensDiv = document.getElementById('tokens');
+            
+            let status = '';
+            if (authToken || accessToken) {
+                status = '<span class="success">認証済み</span>';
+            } else {
+                status = '<span class="error">未認証</span>';
+            }
+            
+            statusDiv.innerHTML = status;
+            
+            let tokensHtml = '';
+            if (authToken) {
+                tokensHtml += `<h3>認証トークン (localStorage)</h3><div class="token">${authToken}</div>`;
+            }
+            if (accessToken) {
+                tokensHtml += `<h3>アクセストークン (localStorage)</h3><div class="token">${accessToken}</div>`;
+            }
+            
+            const sessionAuthToken = sessionStorage.getItem('google_auth_token');
+            const sessionAccessToken = sessionStorage.getItem('google_access_token');
+            
+            if (sessionAuthToken) {
+                tokensHtml += `<h3>認証トークン (sessionStorage)</h3><div class="token">${sessionAuthToken}</div>`;
+            }
+            if (sessionAccessToken) {
+                tokensHtml += `<h3>アクセストークン (sessionStorage)</h3><div class="token">${sessionAccessToken}</div>`;
+            }
+            
+            if (!tokensHtml) {
+                tokensHtml = '<p class="error">保存されているトークンがありません</p>';
+            }
+            
+            tokensDiv.innerHTML = tokensHtml;
+        }
+        
+        function clearAllTokens() {
+            localStorage.removeItem('google_auth_token');
+            localStorage.removeItem('google_access_token');
+            localStorage.removeItem('google_user_info');
+            sessionStorage.removeItem('google_auth_token');
+            sessionStorage.removeItem('google_access_token');
+            sessionStorage.removeItem('google_user_info');
+            
+            log('すべてのトークンをクリアしました', 'success');
+            checkAuthStatus();
+        }
+        
+        async function testGoogleAPI() {
+            const accessToken = localStorage.getItem('google_access_token') || sessionStorage.getItem('google_access_token');
+            
+            if (!accessToken) {
+                log('アクセストークンがありません', 'error');
+                return;
+            }
+            
+            try {
+                log('Google Tasks API をテスト中...');
+                const response = await fetch('https://tasks.googleapis.com/tasks/v1/users/@me/lists', {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`API テスト成功: ${data.items?.length || 0} 個のタスクリストが見つかりました`, 'success');
+                } else {
+                    const errorText = await response.text();
+                    log(`API テスト失敗: ${response.status} - ${errorText}`, 'error');
+                }
+            } catch (error) {
+                log(`API テストエラー: ${error.message}`, 'error');
+            }
+        }
+        
+        function forceReauth() {
+            const redirectUri = window.location.origin;
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(SCOPES)}&prompt=consent`;
+            
+            log('強制再認証を開始します...');
+            window.location.href = authUrl;
+        }
+        
+        // URLハッシュからアクセストークンを取得
+        function handleAuthRedirect() {
+            const hash = window.location.hash;
+            if (hash && hash.includes('access_token=')) {
+                try {
+                    const accessToken = hash.match(/access_token=([^&]*)/)[1];
+                    if (accessToken) {
+                        localStorage.setItem('google_access_token', accessToken);
+                        sessionStorage.setItem('google_access_token', accessToken);
+                        
+                        // URLハッシュをクリア
+                        window.history.replaceState(null, null, window.location.pathname);
+                        
+                        log('認証成功: アクセストークンを保存しました', 'success');
+                        checkAuthStatus();
+                    }
+                } catch (error) {
+                    log(`認証処理エラー: ${error.message}`, 'error');
+                }
+            }
+        }
+        
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            handleAuthRedirect();
+            checkAuthStatus();
+            log('デバッグツールを初期化しました');
+        });
+    </script>
+</body>
+</html>
