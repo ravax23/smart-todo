@@ -29,6 +29,9 @@ import {
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { format, parseISO, isValid, isToday, isBefore, startOfDay } from 'date-fns';
 import { ja } from 'date-fns/locale';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useTodo } from '../contexts/TodoContext';
 import SettingsDialog from './SettingsDialog';
 
@@ -719,19 +722,71 @@ const TodoList = ({ isMobile }) => {
               onChange={handleTaskDetailChange('description')}
             />
             
-            <TextField
-              label="期限"
-              type="date"
-              fullWidth
-              value={taskDetails.dueDate || ''}
-              onChange={handleTaskDetailChange('dueDate')}
-              InputLabelProps={{
-                shrink: true,
-              }}
-              inputProps={{
-                style: { height: '24px', paddingTop: '8px', paddingBottom: '8px' }
-              }}
-            />
+            
+            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ja}>
+              <DatePicker
+                label="期限"
+                value={taskDetails.dueDate ? new Date(taskDetails.dueDate) : null}
+                onChange={(newValue) => {
+                  if (newValue) {
+                    const formattedDate = format(newValue, 'yyyy-MM-dd');
+                    setTaskDetails({
+                      ...taskDetails,
+                      dueDate: formattedDate
+                    });
+                  } else {
+                    setTaskDetails({
+                      ...taskDetails,
+                      dueDate: ''
+                    });
+                  }
+                }}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    inputProps: {
+                      style: { height: '24px', paddingTop: '8px', paddingBottom: '8px' }
+                    }
+                  },
+                  day: {
+                    sx: {
+                      '&.Mui-selected': {
+                        backgroundColor: '#2c3e50',
+                        '&:hover': {
+                          backgroundColor: '#3498db',
+                        }
+                      }
+                    }
+                  },
+                  calendarHeader: {
+                    sx: {
+                      '& .MuiPickersCalendarHeader-label': {
+                        color: '#2c3e50',
+                      }
+                    }
+                  },
+                  actionBar: {
+                    sx: {
+                      '& .MuiButton-root': {
+                        color: '#3498db',
+                      }
+                    }
+                  }
+                }}
+                sx={{
+                  '& .MuiPickersDay-today': {
+                    border: '1px solid #3498db',
+                    color: '#3498db',
+                  },
+                  '& .MuiPickersYear-yearButton.Mui-selected': {
+                    backgroundColor: '#2c3e50',
+                  },
+                  '& .MuiPickersMonth-monthButton.Mui-selected': {
+                    backgroundColor: '#2c3e50',
+                  }
+                }}
+              />
+            </LocalizationProvider>
             
             <Box>
               <Typography variant="subtitle2" gutterBottom>優先度</Typography>
