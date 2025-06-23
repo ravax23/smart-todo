@@ -690,6 +690,13 @@ const TodoList = ({ isMobile }) => {
         fullWidth 
         maxWidth="sm"
         fullScreen={isMobile}
+        PaperProps={{
+          sx: {
+            maxHeight: isMobile ? '100%' : '90vh',
+            width: isMobile ? '100%' : undefined,
+            margin: isMobile ? 0 : undefined
+          }
+        }}
       >
         <DialogTitle>{editMode ? 'タスクの編集' : '新規タスクの作成'}</DialogTitle>
         <DialogContent>
@@ -720,6 +727,9 @@ const TodoList = ({ isMobile }) => {
               onChange={handleTaskDetailChange('dueDate')}
               InputLabelProps={{
                 shrink: true,
+              }}
+              inputProps={{
+                style: { height: '24px', paddingTop: '8px', paddingBottom: '8px' }
               }}
             />
             
@@ -753,7 +763,7 @@ const TodoList = ({ isMobile }) => {
             )}
           </Box>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ padding: isMobile ? '16px' : undefined }}>
           <Button onClick={handleCloseDialog}>キャンセル</Button>
           <Button 
             onClick={handleSaveTask} 

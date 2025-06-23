@@ -67,4 +67,5 @@ code {
   display: inline-block;
   text-decoration: none;
   vertical-align: middle;
+  color: inherit; /* 絵文字の色をくすまないようにする */
 }
