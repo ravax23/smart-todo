@@ -909,10 +909,11 @@ const TodoList = ({ isMobile }) => {
                             borderRadius: '50%',
                             '&.Mui-checked': {
                               color: getThemeColor('primary'),
-                            }
+                            },
+                            flexShrink: 0
                           }}
                         />
-                        <Box sx={{ flex: 1 }}>
+                        <Box sx={{ flex: 1, width: 'calc(100% - 30px)', maxWidth: 'calc(100% - 30px)' }}>
                           <Typography 
                             variant="body1" 
                             className="task-title-mobile"
@@ -922,11 +923,14 @@ const TodoList = ({ isMobile }) => {
                               mb: 0.5,
                               fontWeight: 500,
                               fontSize: '0.9375rem',
-                              wordBreak: 'break-word',
-                              whiteSpace: 'normal',
-                              overflow: 'visible',
-                              textOverflow: 'initial',
-                              hyphens: 'auto'
+                              wordBreak: 'break-word !important',
+                              whiteSpace: 'normal !important',
+                              overflow: 'visible !important',
+                              textOverflow: 'initial !important',
+                              hyphens: 'auto !important',
+                              maxWidth: '100% !important',
+                              width: '100% !important',
+                              display: 'block !important'
                             }}
                           >
                             {task.title}

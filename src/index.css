@@ -52,11 +52,12 @@ code {
   word-break: break-word !important;
   overflow-wrap: break-word !important;
   white-space: normal !important;
-  width: 100%;
-  display: block;
+  width: 100% !important;
+  display: block !important;
   text-overflow: initial !important;
   overflow: visible !important;
   hyphens: auto !important;
+  max-width: 100% !important;
 }
 
 .task-details-mobile {
