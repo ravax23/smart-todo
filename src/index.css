@@ -80,7 +80,6 @@ code {
     min-width: 80px !important;
   }
 }
-}
 
 /* カレンダー入力のカスタマイズ */
 .custom-date-input::-webkit-calendar-picker-indicator {
