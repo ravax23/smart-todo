@@ -72,12 +72,18 @@ code {
 @media (max-width: 600px) {
   .MuiDialogActions-root {
     padding: 16px !important;
+    display: flex !important;
+    justify-content: flex-end !important;
   }
   
   .MuiDialogActions-root .MuiButton-root {
     font-size: 0.875rem !important;
     padding: 6px 16px !important;
     min-width: 80px !important;
+  }
+  
+  .MuiDialogActions-root .MuiButton-root + .MuiButton-root {
+    margin-left: 16px !important;
   }
 }
 

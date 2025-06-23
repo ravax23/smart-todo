@@ -777,11 +777,7 @@ const TodoList = ({ isMobile }) => {
             )}
           </Box>
         </DialogContent>
-        <DialogActions sx={{ 
-          padding: '16px',
-          display: 'flex',
-          justifyContent: 'flex-end'
-        }}>
+        <DialogActions>
           <Button 
             onClick={handleCloseDialog}
             size="medium"
@@ -800,8 +796,7 @@ const TodoList = ({ isMobile }) => {
             size="medium"
             sx={{ 
               minWidth: '80px',
-              fontSize: '0.875rem',
-              marginLeft: '16px'
+              fontSize: '0.875rem'
             }}
           >
             {editMode ? '更新' : '作成'}
