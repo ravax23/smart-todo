@@ -75,6 +75,7 @@ code {
     padding: 16px !important;
     display: flex !important;
     justify-content: flex-end !important;
+    width: 100% !important;
   }
   
   .MuiDialogActions-root .MuiButton-root {

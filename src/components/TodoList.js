@@ -777,7 +777,7 @@ const TodoList = ({ isMobile }) => {
             )}
           </Box>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ justifyContent: 'flex-end' }}>
           <Button 
             onClick={handleCloseDialog}
             size="medium"
