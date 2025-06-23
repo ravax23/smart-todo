@@ -778,16 +778,16 @@ const TodoList = ({ isMobile }) => {
           </Box>
         </DialogContent>
         <DialogActions sx={{ 
-          padding: isMobile ? '16px' : undefined,
+          padding: isMobile ? '8px 16px' : undefined,
           display: 'flex',
           justifyContent: 'flex-end'
         }}>
           <Button 
             onClick={handleCloseDialog}
-            size={isMobile ? 'small' : 'medium'}
+            size="medium"
             sx={{ 
-              minWidth: isMobile ? '64px' : '80px',
-              fontSize: isMobile ? '0.8125rem' : undefined
+              minWidth: '80px',
+              padding: isMobile ? '6px 16px' : undefined
             }}
           >
             キャンセル
@@ -797,10 +797,10 @@ const TodoList = ({ isMobile }) => {
             variant="contained" 
             color="primary"
             disabled={!taskDetails.title}
-            size={isMobile ? 'small' : 'medium'}
+            size="medium"
             sx={{ 
-              minWidth: isMobile ? '64px' : '80px',
-              fontSize: isMobile ? '0.8125rem' : undefined
+              minWidth: '80px',
+              padding: isMobile ? '6px 16px' : undefined
             }}
           >
             {editMode ? '更新' : '作成'}

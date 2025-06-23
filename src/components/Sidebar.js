@@ -272,10 +272,11 @@ const Sidebar = ({ closeSidebar, isMobile }) => {
       display: 'flex',
       flexDirection: 'column',
       p: 2,
-      height: isMobile ? '100vh' : '100%', // モバイル時は画面の高さいっぱいに
+      height: '100vh', // 常に画面の高さいっぱいに
       overflowY: 'auto',
       overflowX: 'hidden', // 横スクロール禁止
-      maxWidth: '100%' // 横幅を制限
+      maxWidth: '100%', // 横幅を制限
+      minHeight: '100%' // 最小高さを設定
     }}>
       {/* アプリタイトル */}
       <Box sx={{ 

@@ -52,6 +52,8 @@ code {
   word-break: break-word;
   overflow-wrap: break-word;
   white-space: normal;
+  width: 100%;
+  display: block;
 }
 
 .task-details-mobile {
@@ -61,6 +63,14 @@ code {
 .task-meta-item-mobile {
   white-space: normal;
   word-break: break-word;
+}
+
+/* モバイル画面のダイアログボタン調整 */
+@media (max-width: 600px) {
+  .MuiDialogActions-root .MuiButton-root {
+    font-size: 14px !important;
+    padding: 6px 16px !important;
+  }
 }
 
 /* カレンダー入力のカスタマイズ */
