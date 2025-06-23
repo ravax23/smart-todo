@@ -784,10 +784,11 @@ const TodoList = ({ isMobile }) => {
         }}>
           <Button 
             onClick={handleCloseDialog}
-            size="medium"
+            size={isMobile ? "small" : "medium"}
             sx={{ 
-              minWidth: '80px',
-              padding: isMobile ? '6px 16px' : undefined
+              minWidth: isMobile ? '60px' : '80px',
+              padding: isMobile ? '4px 8px' : undefined,
+              fontSize: isMobile ? '0.75rem' : undefined
             }}
           >
             キャンセル
@@ -797,10 +798,12 @@ const TodoList = ({ isMobile }) => {
             variant="contained" 
             color="primary"
             disabled={!taskDetails.title}
-            size="medium"
+            size={isMobile ? "small" : "medium"}
             sx={{ 
-              minWidth: '80px',
-              padding: isMobile ? '6px 16px' : undefined
+              minWidth: isMobile ? '60px' : '80px',
+              padding: isMobile ? '4px 8px' : undefined,
+              fontSize: isMobile ? '0.75rem' : undefined,
+              marginLeft: '8px'
             }}
           >
             {editMode ? '更新' : '作成'}
@@ -926,7 +929,10 @@ const TodoList = ({ isMobile }) => {
                               mb: 0.5,
                               fontWeight: 500,
                               fontSize: '0.9375rem',
-                              wordBreak: 'break-word' // 長いテキストを改行
+                              wordBreak: 'break-word', // 長いテキストを改行
+                              whiteSpace: 'normal',
+                              overflow: 'visible',
+                              textOverflow: 'initial'
                             }}
                           >
                             {task.title}
