@@ -778,17 +778,16 @@ const TodoList = ({ isMobile }) => {
           </Box>
         </DialogContent>
         <DialogActions sx={{ 
-          padding: isMobile ? '8px 16px' : undefined,
+          padding: '16px',
           display: 'flex',
           justifyContent: 'flex-end'
         }}>
           <Button 
             onClick={handleCloseDialog}
-            size={isMobile ? "small" : "medium"}
+            size="medium"
             sx={{ 
-              minWidth: isMobile ? '60px' : '80px',
-              padding: isMobile ? '4px 8px' : undefined,
-              fontSize: isMobile ? '0.75rem' : undefined
+              minWidth: '80px',
+              fontSize: '0.875rem'
             }}
           >
             キャンセル
@@ -798,12 +797,11 @@ const TodoList = ({ isMobile }) => {
             variant="contained" 
             color="primary"
             disabled={!taskDetails.title}
-            size={isMobile ? "small" : "medium"}
+            size="medium"
             sx={{ 
-              minWidth: isMobile ? '60px' : '80px',
-              padding: isMobile ? '4px 8px' : undefined,
-              fontSize: isMobile ? '0.75rem' : undefined,
-              marginLeft: '8px'
+              minWidth: '80px',
+              fontSize: '0.875rem',
+              marginLeft: '16px'
             }}
           >
             {editMode ? '更新' : '作成'}
@@ -929,10 +927,11 @@ const TodoList = ({ isMobile }) => {
                               mb: 0.5,
                               fontWeight: 500,
                               fontSize: '0.9375rem',
-                              wordBreak: 'break-word', // 長いテキストを改行
+                              wordBreak: 'break-word',
                               whiteSpace: 'normal',
                               overflow: 'visible',
-                              textOverflow: 'initial'
+                              textOverflow: 'initial',
+                              hyphens: 'auto'
                             }}
                           >
                             {task.title}

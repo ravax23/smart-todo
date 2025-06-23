@@ -49,13 +49,14 @@ code {
 }
 
 .task-title-mobile {
-  word-break: break-word;
-  overflow-wrap: break-word;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
   white-space: normal !important;
   width: 100%;
   display: block;
   text-overflow: initial !important;
   overflow: visible !important;
+  hyphens: auto !important;
 }
 
 .task-details-mobile {
@@ -69,15 +70,16 @@ code {
 
 /* モバイル画面のダイアログボタン調整 */
 @media (max-width: 600px) {
-  .MuiDialogActions-root .MuiButton-root {
-    font-size: 12px !important;
-    padding: 4px 8px !important;
-    min-width: 60px !important;
+  .MuiDialogActions-root {
+    padding: 16px !important;
   }
   
-  .MuiDialogActions-root {
-    padding: 8px !important;
+  .MuiDialogActions-root .MuiButton-root {
+    font-size: 0.875rem !important;
+    padding: 6px 16px !important;
+    min-width: 80px !important;
   }
+}
 }
 
 /* カレンダー入力のカスタマイズ */
