@@ -43,38 +43,51 @@ code {
   filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.2)) !important;
 }
 
-/* カレンダーのカスタマイズ */
-.MuiPickersPopper-root .MuiPaper-root {
+/* カレンダー入力のカスタマイズ */
+.custom-date-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.5) sepia(1) saturate(5) hue-rotate(175deg);
+  cursor: pointer;
+  opacity: 0.8;
+  padding: 5px;
+  border-radius: 4px;
+}
+
+.custom-date-input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  background-color: rgba(52, 152, 219, 0.1);
+}
+
+.custom-date-input::-webkit-inner-spin-button {
+  display: none;
+}
+
+.custom-date-input::-webkit-clear-button {
+  display: none;
+}
+
+/* カレンダーの色合いをカスタマイズ（ブラウザによって効果が異なる場合があります） */
+.custom-date-input::-webkit-datetime-edit {
   color: #1f2937;
 }
 
-.MuiPickersPopper-root .MuiPickersDay-root:hover {
-  background-color: rgba(52, 152, 219, 0.1);
+.custom-date-input::-webkit-datetime-edit-fields-wrapper {
+  padding: 2px;
 }
 
-.MuiPickersPopper-root .MuiPickersDay-root.Mui-selected {
-  background-color: #2c3e50;
-  color: white;
-}
-
-.MuiPickersPopper-root .MuiPickersDay-root.Mui-selected:hover {
-  background-color: #3498db;
-}
-
-.MuiPickersPopper-root .MuiPickersDay-today {
-  border: 1px solid #3498db;
+.custom-date-input::-webkit-datetime-edit-text {
   color: #3498db;
 }
 
-.MuiPickersPopper-root .MuiPickersYear-yearButton.Mui-selected,
-.MuiPickersPopper-root .MuiPickersMonth-monthButton.Mui-selected {
-  background-color: #2c3e50;
-  color: white;
+.custom-date-input::-webkit-datetime-edit-month-field,
+.custom-date-input::-webkit-datetime-edit-day-field,
+.custom-date-input::-webkit-datetime-edit-year-field {
+  color: #2c3e50;
 }
 
-.MuiPickersPopper-root .MuiPickersYear-yearButton:hover,
-.MuiPickersPopper-root .MuiPickersMonth-monthButton:hover {
-  background-color: rgba(52, 152, 219, 0.1);
+.custom-date-input:focus {
+  color: #2c3e50;
+  border-color: #3498db;
+  outline: none;
 }
 
 /* モバイルサイドバーのスタイル */
