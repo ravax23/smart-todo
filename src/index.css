@@ -154,3 +154,11 @@ code {
   vertical-align: middle;
   color: inherit; /* 絵文字の色をくすまないようにする */
 }
+/* ヘッダータイトルのスタイル */
+.header-title-mobile {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: initial !important;
+  width: 100%;
+  display: block;
+}
