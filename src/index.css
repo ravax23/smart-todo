@@ -43,6 +43,26 @@ code {
   filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.2)) !important;
 }
 
+/* モバイル表示のタスクリスト関連スタイル */
+.task-item-mobile {
+  width: 100%;
+}
+
+.task-title-mobile {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+.task-details-mobile {
+  width: 100%;
+}
+
+.task-meta-item-mobile {
+  white-space: normal;
+  word-break: break-word;
+}
+
 /* カレンダー入力のカスタマイズ */
 .custom-date-input::-webkit-calendar-picker-indicator {
   filter: invert(0.5) sepia(1) saturate(5) hue-rotate(175deg);

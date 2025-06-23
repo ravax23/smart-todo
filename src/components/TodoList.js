@@ -777,13 +777,31 @@ const TodoList = ({ isMobile }) => {
             )}
           </Box>
         </DialogContent>
-        <DialogActions sx={{ padding: isMobile ? '16px' : undefined }}>
-          <Button onClick={handleCloseDialog}>キャンセル</Button>
+        <DialogActions sx={{ 
+          padding: isMobile ? '16px' : undefined,
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }}>
+          <Button 
+            onClick={handleCloseDialog}
+            size={isMobile ? 'small' : 'medium'}
+            sx={{ 
+              minWidth: isMobile ? '64px' : '80px',
+              fontSize: isMobile ? '0.8125rem' : undefined
+            }}
+          >
+            キャンセル
+          </Button>
           <Button 
             onClick={handleSaveTask} 
             variant="contained" 
             color="primary"
             disabled={!taskDetails.title}
+            size={isMobile ? 'small' : 'medium'}
+            sx={{ 
+              minWidth: isMobile ? '64px' : '80px',
+              fontSize: isMobile ? '0.8125rem' : undefined
+            }}
           >
             {editMode ? '更新' : '作成'}
           </Button>
@@ -907,7 +925,8 @@ const TodoList = ({ isMobile }) => {
                               color: task.status === 'completed' ? 'text.secondary' : 'text.primary',
                               mb: 0.5,
                               fontWeight: 500,
-                              fontSize: '0.9375rem'
+                              fontSize: '0.9375rem',
+                              wordBreak: 'break-word' // 長いテキストを改行
                             }}
                           >
                             {task.title}

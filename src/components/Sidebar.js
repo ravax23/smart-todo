@@ -274,7 +274,8 @@ const Sidebar = ({ closeSidebar, isMobile }) => {
       p: 2,
       height: isMobile ? '100vh' : '100%', // モバイル時は画面の高さいっぱいに
       overflowY: 'auto',
-      overflowX: 'hidden' // 横スクロール禁止
+      overflowX: 'hidden', // 横スクロール禁止
+      maxWidth: '100%' // 横幅を制限
     }}>
       {/* アプリタイトル */}
       <Box sx={{ 
