@@ -56,8 +56,8 @@ aws cloudfront create-invalidation --distribution-id E2E6NVYTYW4IE8 --paths "/*"
 1. リポジトリをクローン
 
 ```bash
-git clone https://github.com/ravax23/todo-app.git
-cd todo-app
+git clone https://github.com/ravax23/SmartTodo.git
+cd SmartTodo
 ```
 
 2. 依存パッケージをインストール
