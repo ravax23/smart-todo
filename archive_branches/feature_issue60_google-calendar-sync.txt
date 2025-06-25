@@ -1,0 +1,1 @@
+aab2c2dd1b48a36bb2f45800af7bfe42b2386ef5 Style: Googleログインボタンのテキストを完全に中央寄せに調整
