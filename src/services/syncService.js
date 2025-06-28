@@ -19,8 +19,7 @@ class SyncService {
       tasks: {
         created: [],
         updated: [],
-        deleted: [],
-        reordered: []
+        deleted: []
       }
     };
   }
@@ -58,8 +57,6 @@ class SyncService {
         this.pendingChanges.tasks.updated.push(data);
       } else if (action === 'delete') {
         this.pendingChanges.tasks.deleted.push(data);
-      } else if (action === 'reorder') {
-        this.pendingChanges.tasks.reordered.push(data);
       }
     }
     
@@ -104,8 +101,7 @@ class SyncService {
         tasks: {
           created: [],
           updated: [],
-          deleted: [],
-          reordered: []
+          deleted: []
         }
       };
     } catch (error) {
@@ -214,57 +210,74 @@ class SyncService {
         console.error('Error deleting task:', error);
       }
     }
-    
-    // 並び替えられたタスクの同期
-    for (const reorderData of this.pendingChanges.tasks.reordered) {
-      try {
-        console.log('Reordering tasks:', reorderData);
-        const { listId, tasks } = reorderData;
-        
-        // タスクの順序を更新
-        for (let i = 0; i < tasks.length; i++) {
-          const task = tasks[i];
-          const previousTask = i > 0 ? tasks[i - 1] : null;
-          
-          await TasksService.moveTask(
-            listId,
-            task.id,
-            previousTask ? previousTask.id : null
-          );
-        }
-      } catch (error) {
-        console.error('Error reordering tasks:', error);
-      }
-    }
   }
 
   /**
-   * 定期的な同期を開始
-   * @param {number} intervalMs - 同期間隔（ミリ秒）
+   * 定期的なデータ読み込みを開始（読み込み専用）
+   * @param {number} intervalMs - 読み込み間隔（ミリ秒）
    */
-  startPeriodicSync(intervalMs = 60000) { // デフォルトは1分間隔
+  startPeriodicDataFetch(intervalMs = 300000) { // デフォルトは5分間隔
     if (this.syncInterval) {
       clearInterval(this.syncInterval);
     }
     
-    this.syncInterval = setInterval(() => {
-      if (this.syncQueue.length > 0) {
-        console.log(`Periodic sync triggered with ${this.syncQueue.length} items in queue`);
-        this.startSync();
+    this.syncInterval = setInterval(async () => {
+      try {
+        console.log('Periodic data fetch triggered');
+        await this.fetchLatestData();
+      } catch (error) {
+        console.error('Periodic data fetch error:', error);
       }
     }, intervalMs);
     
-    console.log(`Periodic sync started with interval: ${intervalMs}ms`);
+    console.log(`Periodic data fetch started with interval: ${intervalMs}ms`);
   }
 
   /**
-   * 定期的な同期を停止
+   * 最新データの取得（読み込み専用）
    */
-  stopPeriodicSync() {
+  async fetchLatestData() {
+    try {
+      console.log('Fetching latest data from Google Tasks...');
+      
+      // タスクリストを取得
+      const taskLists = await TasksService.getTaskLists();
+      
+      // 各タスクリストのタスクを取得
+      const allTasks = [];
+      for (const list of taskLists) {
+        const tasks = await TasksService.getTasks(list.id);
+        const tasksWithListId = tasks.map(task => ({
+          ...task,
+          listId: list.id
+        }));
+        allTasks.push(...tasksWithListId);
+      }
+      
+      console.log('Latest data fetched successfully');
+      
+      // データ更新イベントを発行
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('dataUpdated', {
+          detail: { taskLists, tasks: allTasks }
+        }));
+      }
+      
+      return { taskLists, tasks: allTasks };
+    } catch (error) {
+      console.error('Error fetching latest data:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 定期的なデータ読み込みを停止
+   */
+  stopPeriodicDataFetch() {
     if (this.syncInterval) {
       clearInterval(this.syncInterval);
       this.syncInterval = null;
-      console.log('Periodic sync stopped');
+      console.log('Periodic data fetch stopped');
     }
   }
 
@@ -320,8 +333,7 @@ class SyncService {
         tasks: {
           created: this.pendingChanges.tasks.created.length,
           updated: this.pendingChanges.tasks.updated.length,
-          deleted: this.pendingChanges.tasks.deleted.length,
-          reordered: this.pendingChanges.tasks.reordered.length
+          deleted: this.pendingChanges.tasks.deleted.length
         }
       }
     };

@@ -40,7 +40,6 @@ const Sidebar = ({ closeSidebar, isMobile }) => {
     selectFilter,
     updateTaskListTitle, 
     moveTaskToList,
-    reorderTaskLists,
     createTaskList,
     searchTasks,
     allTodos, // 全てのタスク（フィルタリング前）
@@ -159,59 +158,6 @@ const Sidebar = ({ closeSidebar, isMobile }) => {
   const handleCancelEditing = () => {
     setEditingListId(null);
     setEditingTitle('');
-  };
-
-  // ドラッグ終了時の処理（リストの並び替え）
-  const handleDragEnd = (e) => {
-    // ドラッグ終了時の処理（HTML5 Drag and Drop API）
-    const fromIndex = parseInt(e.dataTransfer.getData('listIndex'));
-    const toIndex = parseInt(e.currentTarget.dataset.index);
-    
-    if (isNaN(fromIndex) || isNaN(toIndex) || fromIndex === toIndex) return;
-    
-    // リストの並び替え
-    const newTaskLists = Array.from(taskLists);
-    const [movedItem] = newTaskLists.splice(fromIndex, 1);
-    newTaskLists.splice(toIndex, 0, movedItem);
-    
-    // コンテキストの関数を呼び出して並び替えを保存
-    reorderTaskLists(newTaskLists);
-  };
-
-  // ドラッグ開始時の処理
-  const handleDragStart = (e, index) => {
-    e.dataTransfer.setData('listIndex', index);
-    e.currentTarget.style.opacity = '0.6';
-  };
-
-  // ドラッグオーバー時の処理
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.currentTarget.style.backgroundColor = '#f0f0f0';
-  };
-
-  // ドラッグリーブ時の処理
-  const handleDragLeave = (e) => {
-    e.currentTarget.style.backgroundColor = '';
-  };
-
-  // ドラッグ終了時の処理
-  const handleDragEndItem = (e) => {
-    e.currentTarget.style.opacity = '1';
-    e.currentTarget.style.backgroundColor = '';
-  };
-
-  // ドロップ時の処理（タスクをリストに移動）
-  const handleDrop = (e, listId) => {
-    e.preventDefault();
-    e.currentTarget.style.backgroundColor = '';
-    
-    const taskId = e.dataTransfer.getData('taskId');
-    if (taskId) {
-      moveTaskToList(taskId, listId);
-    } else {
-      handleDragEnd(e);
-    }
   };
 
   // 検索フィールドの変更を処理
@@ -426,13 +372,6 @@ const Sidebar = ({ closeSidebar, isMobile }) => {
           <ListItem
             key={list.id}
             button
-            draggable
-            data-index={index}
-            onDragStart={(e) => handleDragStart(e, index)}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDragEnd={handleDragEndItem}
-            onDrop={(e) => handleDrop(e, list.id)}
             selected={list.id === selectedTaskList}
             onClick={() => handleTaskListClick(list.id)}
             sx={{

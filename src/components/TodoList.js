@@ -61,7 +61,6 @@ const TodoList = ({ isMobile }) => {
     deleteTask,
     toggleTaskCompletion,
     updateTask,
-    reorderTasks,
     deleteTaskList
   } = useTodo();
   
@@ -218,31 +217,8 @@ const TodoList = ({ isMobile }) => {
     handleMenuClose();
   };
 
-  // タスクの順序変更
-  const moveTask = (fromIndex, toIndex) => {
-    if (fromIndex === toIndex) return;
-    
-    const updatedTasks = [...todos];
-    const [movedTask] = updatedTasks.splice(fromIndex, 1);
-    updatedTasks.splice(toIndex, 0, movedTask);
-    
-    // コンテキストの関数を呼び出して並び替えを保存
-    // メモリ内で並び替えを行い、同期キューに追加
-    reorderTasks(updatedTasks);
-  };
-
   // 並び順の状態
   const [sortOrder, setSortOrder] = useState('custom'); // 'custom' または 'dueDate'
-  
-  // ドラッグ終了時の処理（react-beautiful-dnd用）
-  const handleDragEndRbd = (result) => {
-    // ドロップ先がない場合や同じ位置の場合は何もしない
-    if (!result.destination) return;
-    if (result.destination.index === result.source.index) return;
-
-    // タスクの並び替え
-    moveTask(result.source.index, result.destination.index);
-  };
   
   // 検索フィールドの状態
   const [searchQuery, setSearchQuery] = useState('');
@@ -428,26 +404,6 @@ const TodoList = ({ isMobile }) => {
   // ドラッグオーバー時の処理
   const handleDragOver = (e) => {
     e.preventDefault();
-  };
-
-  // ドロップ時の処理
-  const handleDrop = (e, toIndex) => {
-    const fromIndex = e.dataTransfer.getData('text/plain');
-    moveTask(parseInt(fromIndex), toIndex);
-  };
-
-  // ドラッグ開始時の処理
-  const handleDragStart = (e, index, taskId) => {
-    e.dataTransfer.setData('text/plain', index);
-    e.dataTransfer.setData('taskId', taskId);
-    
-    // ドラッグ中のタスクのスタイルを設定
-    e.currentTarget.style.opacity = '0.6';
-  };
-
-  // ドラッグ終了時の処理
-  const handleDragEnd = (e) => {
-    e.currentTarget.style.opacity = '1';
   };
 
   return (
@@ -870,13 +826,6 @@ const TodoList = ({ isMobile }) => {
             {todos.map((task, index) => (
               <React.Fragment key={task.id}>
                 <ListItem 
-                  draggable={!isMobile}
-                  onDragStart={(e) => !isMobile && handleDragStart(e, index, task.id)}
-                  onDragEnd={handleDragEnd}
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => handleDrop(e, index)}
-                  onClick={() => isMobile ? handleEditTask(task) : null}
-                  onDoubleClick={() => !isMobile && handleEditTask(task)}
                   className={isMobile ? 'task-item-mobile' : ''}
                   sx={{ 
                     py: 1.5,

@@ -133,13 +133,38 @@ export const TodoProvider = ({ children }) => {
       console.log('User is authenticated, fetching task lists');
       // 初期同期を実行
       initialSync();
-      // 定期的な同期を開始（5分間隔）
-      syncService.startPeriodicSync(300000);
+      // 定期的なデータ読み込みを開始（5分間隔）
+      syncService.startPeriodicDataFetch(300000);
+      
+      // データ更新イベントのリスナーを追加
+      const handleDataUpdate = (event) => {
+        const { taskLists, tasks } = event.detail;
+        console.log('Received data update event');
+        
+        // スター状態を抽出し、期限値を正規化
+        const tasksWithStarred = tasks.map(task => ({
+          ...task,
+          starred: extractStarredStatus(task),
+          due: task.due || null,
+          startDate: task.due || null
+        }));
+        
+        setTaskLists(taskLists);
+        setTodos(tasksWithStarred);
+        applyFilterAndSort(tasksWithStarred);
+      };
+      
+      window.addEventListener('dataUpdated', handleDataUpdate);
+      
+      return () => {
+        syncService.stopPeriodicDataFetch();
+        window.removeEventListener('dataUpdated', handleDataUpdate);
+      };
     }
     
-    // コンポーネントのアンマウント時に定期同期を停止
+    // コンポーネントのアンマウント時に定期読み込みを停止
     return () => {
-      syncService.stopPeriodicSync();
+      syncService.stopPeriodicDataFetch();
     };
   }, [isAuthenticated]);
 
@@ -410,12 +435,15 @@ export const TodoProvider = ({ children }) => {
       const updatedTodos = [...todos, newTask];
       setTodos(updatedTodos);
       
-      // 同期キューに追加
+      // 同期キューに追加して即座に同期実行
       syncService.addToSyncQueue('task', 'create', {
         ...newTask,
         listId: listId,
         due: normalizedDue // 正規化された期限値を使用
       });
+      
+      // 即座に同期を実行
+      await syncService.startSync();
       
       // 同期状態を更新
       updateSyncStatus();
@@ -463,11 +491,14 @@ export const TodoProvider = ({ children }) => {
       );
       setTaskLists(updatedLists);
       
-      // 同期キューに追加
+      // 同期キューに追加して即座に同期実行
       syncService.addToSyncQueue('taskList', 'update', {
         id: taskListId,
         title: newTitle
       });
+      
+      // 即座に同期を実行
+      await syncService.startSync();
       
       // 同期状態を更新
       updateSyncStatus();
@@ -499,12 +530,15 @@ export const TodoProvider = ({ children }) => {
       );
       setTodos(updatedTodos);
       
-      // 同期キューに追加
+      // 同期キューに追加して即座に同期実行
       syncService.addToSyncQueue('task', 'update', {
         id: taskId,
         listId: sourceListId,
         newListId: targetListId
       });
+      
+      // 即座に同期を実行
+      await syncService.startSync();
       
       // 同期状態を更新
       updateSyncStatus();
@@ -541,11 +575,14 @@ export const TodoProvider = ({ children }) => {
       const updatedTodos = todos.filter(task => task.id !== taskId);
       setTodos(updatedTodos);
       
-      // 同期キューに追加
+      // 同期キューに追加して即座に同期実行
       syncService.addToSyncQueue('task', 'delete', {
         id: taskId,
         listId: listId
       });
+      
+      // 即座に同期を実行
+      await syncService.startSync();
       
       // 同期状態を更新
       updateSyncStatus();
@@ -589,13 +626,16 @@ export const TodoProvider = ({ children }) => {
       );
       setTodos(updatedTodos);
       
-      // 同期キューに追加
+      // 同期キューに追加して即座に同期実行
       syncService.addToSyncQueue('task', 'update', {
         id: taskId,
         listId: listId,
         status: newStatus,
         completed: newStatus === 'completed' ? new Date().toISOString() : null
       });
+      
+      // 即座に同期を実行
+      await syncService.startSync();
       
       // 同期状態を更新
       updateSyncStatus();
@@ -607,26 +647,6 @@ export const TodoProvider = ({ children }) => {
     } catch (err) {
       console.error('Failed to update task status:', err);
       setError(`タスクの状態更新に失敗しました。${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // タスクリストの並び替え
-  const reorderTaskLists = async (newTaskLists) => {
-    try {
-      setLoading(true);
-      
-      // メモリ内のタスクリストを更新
-      setTaskLists(newTaskLists);
-      
-      // フィルタリングとソートを再適用
-      applyFilterAndSort();
-      
-      console.log('Task lists reordered');
-    } catch (err) {
-      console.error('Failed to reorder task lists:', err);
-      setError(`タスクリストの並び替えに失敗しました。${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -681,7 +701,7 @@ export const TodoProvider = ({ children }) => {
         due: normalizedDue
       });
       
-      // 同期キューに追加
+      // 同期キューに追加して即座に同期実行
       syncService.addToSyncQueue('task', 'update', {
         id: taskId,
         listId: listId,
@@ -691,6 +711,9 @@ export const TodoProvider = ({ children }) => {
         starred: taskData.starred
         // positionは同期時にGoogle Tasks APIから取得される値を使用
       });
+      
+      // 即座に同期を実行
+      await syncService.startSync();
       
       // 同期状態を更新
       updateSyncStatus();
@@ -732,8 +755,11 @@ export const TodoProvider = ({ children }) => {
         }
       }
       
-      // 同期キューに追加
+      // 同期キューに追加して即座に同期実行
       syncService.addToSyncQueue('taskList', 'delete', listId);
+      
+      // 即座に同期を実行
+      await syncService.startSync();
       
       // 同期状態を更新
       updateSyncStatus();
@@ -749,40 +775,43 @@ export const TodoProvider = ({ children }) => {
       setLoading(false);
     }
   };
-
-  // タスクの並び替え
-  const reorderTasks = (updatedTodos) => {
+  
+  // 新しいタスクリストを作成
+  const createTaskList = async (title) => {
     try {
-      // 並び替えられたタスクの順序を保持
-      // positionの更新はGoogle Tasks APIとの同期時に行う
-      const todosWithPosition = updatedTodos.map((task, index) => ({
-        ...task,
-        // positionはGoogle Tasks APIから取得した値を保持
-        position: task.position
-      }));
+      setLoading(true);
+      setError(null);
       
-      // 状態を更新
-      setFilteredTodos(todosWithPosition);
+      // 新しいタスクリストのIDを生成（一時的なID）
+      const tempId = `temp-list-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
-      // 元のtodosも更新
-      setTodos(prevTodos => {
-        const newTodos = [...prevTodos];
-        todosWithPosition.forEach(updatedTask => {
-          const index = newTodos.findIndex(t => t.id === updatedTask.id);
-          if (index !== -1) {
-            newTodos[index] = { ...newTodos[index], position: updatedTask.position };
-          }
-        });
-        return newTodos;
-      });
+      // 新しいタスクリストオブジェクトを作成
+      const newTaskList = {
+        id: tempId,
+        title: title.trim()
+      };
       
-      // フィルタリングとソートを再適用
-      applyFilterAndSort(todosWithPosition);
+      // メモリ内のタスクリストに追加
+      const updatedLists = [...taskLists, newTaskList];
+      setTaskLists(updatedLists);
       
-      console.log('Tasks reordered successfully');
+      // 同期キューに追加して即座に同期実行
+      syncService.addToSyncQueue('taskList', 'create', newTaskList);
+      
+      // 即座に同期を実行
+      await syncService.startSync();
+      
+      // 同期状態を更新
+      updateSyncStatus();
+      
+      console.log(`Task list "${title}" created successfully`);
+      return newTaskList;
     } catch (err) {
-      console.error('Failed to reorder tasks:', err);
-      setError(`タスクの並び替えに失敗しました。${err.message}`);
+      console.error('Failed to create task list:', err);
+      setError(`タスクリストの作成に失敗しました。${err.message}`);
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -799,6 +828,7 @@ export const TodoProvider = ({ children }) => {
         error,
         syncStatus,
         createTask,
+        createTaskList,
         selectTaskList,
         selectFilter,
         toggleShowCompleted,
@@ -806,11 +836,9 @@ export const TodoProvider = ({ children }) => {
         moveTaskToList,
         deleteTask,
         toggleTaskCompletion,
-        reorderTaskLists,
         updateTask,
         deleteTaskList,
-        manualSync,
-        reorderTasks
+        manualSync
       }}
     >
       {children}
