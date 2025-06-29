@@ -312,11 +312,110 @@ class TasksService {
   }
   
   /**
+   * タスクリストを更新
+   */
+  static async updateTaskList(taskListId, updates) {
+    try {
+      console.log(`Updating task list ${taskListId}:`, updates);
+      
+      // アクセストークンの確認
+      const token = await AuthService.getAccessToken();
+      if (!token) {
+        throw new Error('Access token not available');
+      }
+      
+      // 方法1: GAPIクライアントを使用
+      if (window.gapi && window.gapi.client && window.gapi.client.tasks) {
+        try {
+          return await this.updateTaskListWithGapi(taskListId, updates);
+        } catch (gapiError) {
+          console.error('GAPI client error:', gapiError);
+          console.log('Falling back to fetch method');
+        }
+      }
+      
+      // 方法2: fetchを使用
+      console.log('Using fetch for API call');
+      return await this.updateTaskListWithFetch(taskListId, updates, token);
+    } catch (error) {
+      console.error('Tasks Service Error:', {
+        message: error.message,
+        stack: error.stack,
+        taskListId,
+        updates
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * GAPIクライアントを使用してタスクリストを更新
+   */
+  static async updateTaskListWithGapi(taskListId, updates) {
+    try {
+      console.log('Calling tasks.tasklists.update API with GAPI...');
+      const response = await window.gapi.client.tasks.tasklists.update({
+        tasklist: taskListId,
+        resource: updates
+      });
+      
+      console.log('GAPI Response:', response);
+      
+      if (response.result) {
+        return this.formatTaskList(response.result);
+      } else {
+        throw new Error('No result in GAPI response');
+      }
+    } catch (error) {
+      console.error('GAPI updateTaskList error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * fetchを使用してタスクリストを更新
+   */
+  static async updateTaskListWithFetch(taskListId, updates, token) {
+    try {
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+      
+      const url = `https://tasks.googleapis.com/tasks/v1/users/@me/lists/${taskListId}`;
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(updates)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Fetch Response:', data);
+      
+      return this.formatTaskList(data);
+    } catch (error) {
+      console.error('Fetch updateTaskList error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * タスクリストを削除
    */
   static async deleteTaskList(taskListId) {
     try {
       console.log(`Deleting task list ${taskListId}`);
+      
+      // タスクリストIDの検証
+      if (!taskListId || taskListId === 'undefined' || taskListId === 'null') {
+        console.error('Invalid task list ID:', taskListId);
+        throw new Error('無効なタスクリストIDです。');
+      }
       
       // アクセストークンの確認
       const token = getAccessToken();
@@ -327,16 +426,21 @@ class TasksService {
       // GAPIクライアントが初期化されているか確認
       if (window.gapi && window.gapi.client && window.gapi.client.tasks) {
         try {
-          return await this.deleteTaskListWithGapi(taskListId);
+          console.log('Attempting to delete task list with GAPI...');
+          const result = await this.deleteTaskListWithGapi(taskListId);
+          console.log('Task list deleted successfully with GAPI');
+          return result;
         } catch (gapiError) {
           console.error('GAPI client error:', gapiError);
-          // GAPIが失敗した場合は、fetchを使用する方法にフォールバック
+          console.log('Falling back to fetch method for deletion');
         }
       }
       
       // 方法2: fetchを使用
-      console.log('Using fetch for API call');
-      return await this.deleteTaskListWithFetch(taskListId, token);
+      console.log('Using fetch for API call to delete task list');
+      const result = await this.deleteTaskListWithFetch(taskListId, token);
+      console.log('Task list deleted successfully with fetch');
+      return result;
     } catch (error) {
       console.error('Tasks Service Error:', {
         message: error.message,
@@ -374,25 +478,42 @@ class TasksService {
    */
   static async deleteTaskListWithFetch(taskListId, token) {
     try {
+      // タスクリストIDの検証
+      if (!taskListId || taskListId === 'undefined' || taskListId === 'null') {
+        console.error('Invalid task list ID in deleteTaskListWithFetch:', taskListId);
+        throw new Error('無効なタスクリストIDです。');
+      }
+      
       const headers = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       };
       
       const url = `https://tasks.googleapis.com/tasks/v1/users/@me/lists/${taskListId}`;
+      console.log('Delete URL:', url);
+      
       const response = await fetch(url, {
         method: 'DELETE',
         headers
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Tasks API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+        let errorMessage = `Tasks API error: ${response.status} - `;
+        try {
+          const errorData = await response.json();
+          errorMessage += errorData.error?.message || 'Unknown error';
+        } catch (e) {
+          errorMessage += response.statusText || 'Unknown error';
+        }
+        console.error('Delete task list error response:', errorMessage);
+        throw new Error(errorMessage);
       }
       
+      console.log('Task list deleted successfully with fetch');
       return true;
     } catch (error) {
       console.error('Error deleting task list with fetch:', error);
+      throw error;
       throw error;
     }
   }

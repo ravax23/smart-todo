@@ -79,28 +79,55 @@ const initializeGoogleAuth = (resolve, reject) => {
 const initGapiClient = () => {
   return new Promise((resolve, reject) => {
     try {
+      // GAPIがすでに読み込まれているか確認
+      if (window.gapi && window.gapi.client) {
+        console.log('GAPI already loaded, initializing client');
+        gapi.client.init({
+          apiKey: API_KEY,
+          discoveryDocs: DISCOVERY_DOCS,
+        }).then(() => {
+          console.log('GAPI client initialized successfully');
+          resolve();
+        }).catch((error) => {
+          console.error('Error initializing GAPI client:', error);
+          reject(error);
+        });
+        return;
+      }
+
       // GAPIスクリプトの読み込み
+      console.log('Loading GAPI script');
       const gapiScript = document.createElement('script');
       gapiScript.src = 'https://apis.google.com/js/api.js';
       gapiScript.async = true;
       gapiScript.defer = true;
       gapiScript.onload = () => {
+        console.log('GAPI script loaded, loading client');
         gapi.load('client', async () => {
           try {
             await gapi.client.init({
               apiKey: API_KEY,
               discoveryDocs: DISCOVERY_DOCS,
             });
+            console.log('GAPI client initialized successfully');
             resolve();
           } catch (error) {
+            console.error('Error initializing GAPI client:', error);
             reject(error);
           }
         });
       };
-      gapiScript.onerror = () => {
+      gapiScript.onerror = (error) => {
+        console.error('GAPI script failed to load:', error);
         reject(new Error('GAPI script failed to load'));
       };
       document.body.appendChild(gapiScript);
+    } catch (error) {
+      console.error('Error in initGapiClient:', error);
+      reject(error);
+    }
+  });
+};
     } catch (error) {
       reject(error);
     }

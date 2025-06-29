@@ -135,7 +135,14 @@ class SyncService {
     for (const taskList of this.pendingChanges.taskLists.updated) {
       try {
         console.log('Updating task list:', taskList);
+        if (!taskList || !taskList.id) {
+          console.error('Invalid task list object:', taskList);
+          continue;
+        }
+        
+        // TasksServiceのupdateTaskListメソッドを直接呼び出す
         await TasksService.updateTaskList(taskList.id, { title: taskList.title });
+        console.log('Task list updated successfully:', taskList.id);
       } catch (error) {
         console.error('Error updating task list:', error);
       }
@@ -145,7 +152,12 @@ class SyncService {
     for (const taskListId of this.pendingChanges.taskLists.deleted) {
       try {
         console.log('Deleting task list:', taskListId);
+        if (!taskListId || taskListId === 'undefined' || taskListId === 'null') {
+          console.error('Invalid task list ID for deletion:', taskListId);
+          continue;
+        }
         await TasksService.deleteTaskList(taskListId);
+        console.log('Task list deleted successfully:', taskListId);
       } catch (error) {
         console.error('Error deleting task list:', error);
       }
