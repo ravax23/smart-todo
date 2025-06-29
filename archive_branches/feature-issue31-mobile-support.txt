@@ -1,0 +1,1 @@
+ffd63c3a65dc17411a80e2d46cd52f5adfddae5a Fix: Google Tasks API関連のエラーを修正（ビルドエラー解消）
