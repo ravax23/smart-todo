@@ -1,5 +1,5 @@
 import { getAccessToken } from './authService';
-import { setStarredStatus } from './tasksUtils';
+import { setStarredStatus, validateTaskListId } from './tasksUtils';
 import { tasksApi } from './apiService';
 
 /**
@@ -142,32 +142,43 @@ class TasksService {
       console.log(`Updating task list ${taskListId}:`, updates);
       console.log('Task list ID type:', typeof taskListId);
       console.log('Task list ID value:', taskListId);
-      console.log('Task list ID length:', taskListId ? taskListId.length : 0);
       
-      // タスクリストIDの検証
-      if (taskListId === undefined || taskListId === null || taskListId === '') {
-        console.error('Invalid task list ID:', taskListId);
-        throw new Error('Missing task list ID');
-      }
-      
-      // タスクリストIDをトリムして余分なスペースを削除
-      const trimmedId = String(taskListId).trim();
-      if (trimmedId === '') {
-        console.error('Task list ID is empty after trimming:', taskListId);
-        throw new Error('Missing task list ID');
-      }
-      
-      // 一時的なIDかどうかを確認
-      if (trimmedId.startsWith('temp-list-')) {
-        console.error('Cannot update task list with temporary ID:', trimmedId);
-        throw new Error('Cannot update task list with temporary ID');
-      }
+      // タスクリストIDの検証（共通関数を使用）
+      validateTaskListId(taskListId);
       
       // アクセストークンの確認
       const token = getAccessToken();
       if (!token) {
         throw new Error('Access token not available');
       }
+      
+      // 更新データの検証
+      if (!updates || typeof updates !== 'object') {
+        console.error('Invalid updates object:', updates);
+        throw new Error('Invalid updates object');
+      }
+      
+      // タイトルの検証（タイトルが更新される場合）
+      if (updates.title !== undefined && (!updates.title || typeof updates.title !== 'string')) {
+        console.error('Invalid title in updates:', updates.title);
+        throw new Error('Invalid title');
+      }
+      
+      // API Gateway経由でタスクリストを更新
+      const response = await tasksApi.updateTaskList(taskListId, updates);
+      console.log('Update task list response:', response);
+      
+      return this.formatTaskList(response);
+    } catch (error) {
+      console.error('Tasks Service Error:', {
+        message: error.message,
+        stack: error.stack,
+        taskListId,
+        updates
+      });
+      throw error;
+    }
+  }
       
       // 更新データの検証
       if (!updates || typeof updates !== 'object') {

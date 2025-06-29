@@ -2,6 +2,7 @@
  * API Gateway経由でGoogle Tasks APIを呼び出すためのサービス
  */
 import { getAccessToken } from './authService';
+import { validateTaskListId, encodeTaskListId } from './tasksUtils';
 
 // API GatewayのベースURL
 // 環境変数から取得
@@ -102,30 +103,40 @@ export const apiRequest = async (path, method = 'GET', data = null, params = {})
 export const tasksApi = {
   // タスクリスト関連
   getTaskLists: () => apiRequest('/tasks/v1/users/@me/lists'),
-  createTaskList: (title) => apiRequest('/tasks/v1/users/@me/lists', 'POST', { title }),
-  getTaskList: (taskListId) => apiRequest(`/tasks/v1/users/@me/lists/${taskListId}`),
+  createTaskList: (title) => apiRequest('/tasks/v1/users/@me/lists', 'POST', { title, kind: "tasks#taskList" }),
+  getTaskList: (taskListId) => {
+    const validId = validateTaskListId(taskListId);
+    const encodedId = encodeURIComponent(validId);
+    return apiRequest(`/tasks/v1/users/@me/lists/${encodedId}`);
+  },
   updateTaskList: (taskListId, updates) => {
     console.log('API Service - updateTaskList called with ID:', taskListId);
     console.log('API Service - taskListId type:', typeof taskListId);
     console.log('API Service - updates:', updates);
     
     // タスクリストIDの検証
-    if (taskListId === undefined || taskListId === null || taskListId === '') {
-      console.error('API Service - taskListId is invalid:', taskListId);
-      throw new Error('Missing task list ID');
-    }
+    const validId = validateTaskListId(taskListId);
+    const encodedId = encodeURIComponent(validId);
     
-    // タスクリストIDをトリムして余分なスペースを削除
-    const trimmedId = String(taskListId).trim();
-    if (trimmedId === '') {
-      console.error('API Service - taskListId is empty after trimming:', taskListId);
-      throw new Error('Missing task list ID');
-    }
+    // 必須フィールドを追加
+    const body = {
+      ...updates,
+      id: validId,
+      kind: "tasks#taskList"
+    };
     
-    console.log('API Service - making request with trimmed ID:', trimmedId);
-    return apiRequest(`/tasks/v1/users/@me/lists/${trimmedId}`, 'PUT', updates);
+    console.log('API Service - making request with:', {
+      encodedId,
+      body
+    });
+    
+    return apiRequest(`/tasks/v1/users/@me/lists/${encodedId}`, 'PUT', body);
   },
-  deleteTaskList: (taskListId) => apiRequest(`/tasks/v1/users/@me/lists/${taskListId}`, 'DELETE'),
+  deleteTaskList: (taskListId) => {
+    const validId = validateTaskListId(taskListId);
+    const encodedId = encodeURIComponent(validId);
+    return apiRequest(`/tasks/v1/users/@me/lists/${encodedId}`, 'DELETE');
+  },
 
   // タスク関連
   getTasks: (taskListId, params = {}) => apiRequest(`/tasks/v1/lists/${taskListId}/tasks`, 'GET', null, params),

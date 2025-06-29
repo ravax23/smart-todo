@@ -3,6 +3,7 @@
  * メモリ内のタスクとGoogle Tasksを非同期で同期する
  */
 import TasksService from './tasksService';
+import { validateTaskListId } from './tasksUtils';
 
 class SyncService {
   constructor() {
@@ -215,15 +216,15 @@ class SyncService {
         
         console.log('Calling updateTaskList with ID:', taskList.id, 'and title:', taskList.title);
         
-        // タスクリストIDの検証
-        if (!taskList.id || typeof taskList.id !== 'string' || taskList.id.trim() === '') {
-          console.error('Invalid task list ID:', taskList.id);
-          continue;
-        }
-        
         try {
+          // タスクリストIDの検証（共通関数を使用）
+          validateTaskListId(taskList.id);
+          
           // TasksServiceのupdateTaskListメソッドを直接呼び出す
-          await TasksService.updateTaskList(taskList.id, { title: taskList.title });
+          await TasksService.updateTaskList(taskList.id, { 
+            title: taskList.title,
+            kind: "tasks#taskList" // 必須フィールドを追加
+          });
           console.log('Task list updated successfully:', taskList.id);
         } catch (updateError) {
           console.error('Error updating task list:', updateError);

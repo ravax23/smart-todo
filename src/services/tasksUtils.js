@@ -46,3 +46,45 @@ export function setStarredStatus(taskData, isStarred) {
   
   return updatedTask;
 }
+
+/**
+ * タスクリストIDを検証する
+ * @param {string} id - 検証するタスクリストID
+ * @returns {string} 検証済みのタスクリストID
+ * @throws {Error} IDが無効な場合
+ */
+export function validateTaskListId(id) {
+  // IDの型チェック
+  if (id === undefined || id === null) {
+    console.error('Task list ID is undefined or null:', id);
+    throw new Error('Missing task list ID');
+  }
+  
+  // 文字列に変換
+  const strId = String(id);
+  
+  // 空文字チェック
+  if (!strId.trim()) {
+    console.error('Task list ID is empty after trimming:', id);
+    throw new Error('Missing task list ID');
+  }
+  
+  // 一時的なIDかどうかをチェック
+  if (strId.trim().startsWith('temp-list-')) {
+    console.error('Cannot use temporary task list ID:', id);
+    throw new Error('Cannot update task list with temporary ID');
+  }
+  
+  // 空白を除去して返す
+  return strId.trim();
+}
+
+/**
+ * タスクリストIDをURLエンコードする
+ * @param {string} id - エンコードするタスクリストID
+ * @returns {string} エンコードされたタスクリストID
+ */
+export function encodeTaskListId(id) {
+  const validId = validateTaskListId(id);
+  return encodeURIComponent(validId);
+}
