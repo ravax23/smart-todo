@@ -495,10 +495,6 @@ class TasksService {
       // その他必要なプロパティがあれば追加
     };
   }
-      updated: taskList.updated || new Date().toISOString(),
-      // その他必要なプロパティがあれば追加
-    };
-  }
 
   /**
    * タスクリストを削除
