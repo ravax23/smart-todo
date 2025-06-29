@@ -140,6 +140,9 @@ class TasksService {
   static async updateTaskList(taskListId, updates) {
     try {
       console.log(`Updating task list ${taskListId}:`, updates);
+      console.log('Task list ID type:', typeof taskListId);
+      console.log('Task list ID value:', taskListId);
+      console.log('Task list ID length:', taskListId ? taskListId.length : 0);
       
       // タスクリストIDの検証
       if (!taskListId || taskListId === 'undefined' || taskListId === 'null') {
@@ -148,7 +151,7 @@ class TasksService {
       }
       
       // 一時的なIDかどうかを確認
-      if (taskListId.startsWith('temp-list-')) {
+      if (taskListId && taskListId.startsWith && taskListId.startsWith('temp-list-')) {
         console.error('Cannot update task list with temporary ID:', taskListId);
         throw new Error('Cannot update task list with temporary ID');
       }

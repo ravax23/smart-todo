@@ -17,6 +17,9 @@ const API_BASE_URL = `${process.env.REACT_APP_API_GATEWAY_URL || ''}/api/tasks`;
  */
 export const apiRequest = async (path, method = 'GET', data = null, params = {}) => {
   try {
+    console.log('API Request - path:', path);
+    console.log('API Request - method:', method);
+    
     // アクセストークンの取得
     const token = getAccessToken();
     if (!token) {
@@ -101,7 +104,17 @@ export const tasksApi = {
   getTaskLists: () => apiRequest('/tasks/v1/users/@me/lists'),
   createTaskList: (title) => apiRequest('/tasks/v1/users/@me/lists', 'POST', { title }),
   getTaskList: (taskListId) => apiRequest(`/tasks/v1/users/@me/lists/${taskListId}`),
-  updateTaskList: (taskListId, updates) => apiRequest(`/tasks/v1/users/@me/lists/${taskListId}`, 'PUT', updates),
+  updateTaskList: (taskListId, updates) => {
+    console.log('API Service - updateTaskList called with ID:', taskListId);
+    console.log('API Service - taskListId type:', typeof taskListId);
+    
+    if (!taskListId) {
+      console.error('API Service - taskListId is falsy:', taskListId);
+      throw new Error('Missing task list ID');
+    }
+    
+    return apiRequest(`/tasks/v1/users/@me/lists/${taskListId}`, 'PUT', updates);
+  },
   deleteTaskList: (taskListId) => apiRequest(`/tasks/v1/users/@me/lists/${taskListId}`, 'DELETE'),
 
   // タスク関連
