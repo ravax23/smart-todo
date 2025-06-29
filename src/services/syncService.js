@@ -215,11 +215,21 @@ class SyncService {
         
         console.log('Calling updateTaskList with ID:', taskList.id, 'and title:', taskList.title);
         
-        // TasksServiceのupdateTaskListメソッドを直接呼び出す
-        await TasksService.updateTaskList(taskList.id, { title: taskList.title });
-        console.log('Task list updated successfully:', taskList.id);
+        try {
+          // TasksServiceのupdateTaskListメソッドを直接呼び出す
+          await TasksService.updateTaskList(taskList.id, { title: taskList.title });
+          console.log('Task list updated successfully:', taskList.id);
+        } catch (updateError) {
+          console.error('Error updating task list:', updateError);
+          
+          // 一時的なIDの場合は、作成キューに移動
+          if (updateError.message && updateError.message.includes('Cannot update task list with temporary ID')) {
+            console.log('Moving task list to creation queue:', taskList);
+            this.pendingChanges.taskLists.created.push(taskList);
+          }
+        }
       } catch (error) {
-        console.error('Error updating task list:', error);
+        console.error('Error processing task list update:', error);
       }
     }
     

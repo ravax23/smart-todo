@@ -334,6 +334,12 @@ class TasksService {
         throw new Error('Missing task list ID');
       }
       
+      // 一時的なIDかどうかを確認
+      if (taskListId.startsWith('temp-list-')) {
+        console.error('Cannot update task list with temporary ID:', taskListId);
+        throw new Error('Cannot update task list with temporary ID');
+      }
+      
       // アクセストークンの確認
       const token = getAccessToken();
       if (!token) {
@@ -389,19 +395,17 @@ class TasksService {
         throw new Error('Missing task list ID');
       }
       
-      // タスクリストIDの処理
-      // Base64エンコードされたIDに含まれる可能性のある特殊文字を処理
-      let processedTaskListId = taskListId;
+      // 一時的なIDかどうかを確認
+      if (taskListId.startsWith('temp-list-')) {
+        console.error('Cannot update task list with temporary ID:', taskListId);
+        throw new Error('Cannot update task list with temporary ID');
+      }
       
-      // Google Tasks APIのドキュメントによると、タスクリストIDはURLセーフなBase64エンコードされた文字列
-      // URLセーフでない文字（+, /, =）を置換
-      processedTaskListId = processedTaskListId.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-      
-      console.log('Original taskListId for GAPI:', taskListId);
-      console.log('Processed taskListId for GAPI:', processedTaskListId);
+      // タスクリストIDをそのまま使用
+      console.log('Using taskListId for GAPI:', taskListId);
       
       const response = await window.gapi.client.tasks.tasklists.update({
-        tasklist: processedTaskListId,
+        tasklist: taskListId,
         resource: updates
       });
       
@@ -429,29 +433,25 @@ class TasksService {
         throw new Error('Missing task list ID');
       }
       
-      // タスクリストIDの処理
-      // Base64エンコードされたIDに含まれる可能性のある特殊文字を処理
-      let processedTaskListId = taskListId;
+      // 一時的なIDかどうかを確認
+      if (taskListId.startsWith('temp-list-')) {
+        console.error('Cannot update task list with temporary ID:', taskListId);
+        throw new Error('Cannot update task list with temporary ID');
+      }
       
-      // Google Tasks APIのドキュメントによると、タスクリストIDはURLセーフなBase64エンコードされた文字列
-      // URLセーフでない文字（+, /, =）を置換
-      processedTaskListId = processedTaskListId.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+      // Google Tasks APIのドキュメントによると、タスクリストIDはURLパスパラメータとして使用される
+      // APIエンドポイント: https://tasks.googleapis.com/tasks/v1/users/@me/lists/{tasklist}
       
+      // タスクリストIDをそのまま使用（エンコードなし）
       console.log('Original taskListId:', taskListId);
-      console.log('Processed taskListId:', processedTaskListId);
-      
-      // 処理後のIDをエンコード
-      const encodedTaskListId = encodeURIComponent(processedTaskListId);
-      console.log('Encoded taskListId:', encodedTaskListId);
       
       const headers = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       };
       
-      // Google Tasks APIのドキュメントに従ってURLを構築
-      // https://developers.google.com/tasks/reference/rest/v1/tasklists/update
-      const url = `https://tasks.googleapis.com/tasks/v1/users/@me/lists/${encodedTaskListId}`;
+      // URLを構築（IDをそのまま使用）
+      const url = `https://tasks.googleapis.com/tasks/v1/users/@me/lists/${taskListId}`;
       console.log('Update URL:', url);
       console.log('Update payload:', JSON.stringify(updates));
       
@@ -504,10 +504,8 @@ class TasksService {
     
     console.log('Formatting task list:', taskList);
     
-    // IDを正規化
-    // Google Tasks APIのドキュメントによると、タスクリストIDはURLセーフなBase64エンコードされた文字列
-    // URLセーフでない文字（+, /, =）を置換
-    const normalizedId = taskList.id.trim().replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    // IDをそのまま使用（変換なし）
+    const normalizedId = taskList.id.trim();
     
     console.log('Original ID:', taskList.id);
     console.log('Normalized ID:', normalizedId);
@@ -580,19 +578,17 @@ class TasksService {
         throw new Error('Missing task list ID');
       }
       
-      // タスクリストIDの処理
-      // Base64エンコードされたIDに含まれる可能性のある特殊文字を処理
-      let processedTaskListId = taskListId;
+      // 一時的なIDかどうかを確認
+      if (taskListId.startsWith('temp-list-')) {
+        console.error('Cannot delete task list with temporary ID:', taskListId);
+        throw new Error('Cannot delete task list with temporary ID');
+      }
       
-      // Google Tasks APIのドキュメントによると、タスクリストIDはURLセーフなBase64エンコードされた文字列
-      // URLセーフでない文字（+, /, =）を置換
-      processedTaskListId = processedTaskListId.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-      
-      console.log('Original taskListId for GAPI delete:', taskListId);
-      console.log('Processed taskListId for GAPI delete:', processedTaskListId);
+      // タスクリストIDをそのまま使用
+      console.log('Using taskListId for GAPI delete:', taskListId);
       
       const response = await window.gapi.client.tasks.tasklists.delete({
-        tasklist: processedTaskListId
+        tasklist: taskListId
       });
       
       console.log('GAPI Response:', response);
@@ -619,29 +615,22 @@ class TasksService {
         throw new Error('無効なタスクリストIDです。');
       }
       
-      // タスクリストIDの処理
-      // Base64エンコードされたIDに含まれる可能性のある特殊文字を処理
-      let processedTaskListId = taskListId;
+      // 一時的なIDかどうかを確認
+      if (taskListId.startsWith('temp-list-')) {
+        console.error('Cannot delete task list with temporary ID:', taskListId);
+        throw new Error('Cannot delete task list with temporary ID');
+      }
       
-      // Google Tasks APIのドキュメントによると、タスクリストIDはURLセーフなBase64エンコードされた文字列
-      // URLセーフでない文字（+, /, =）を置換
-      processedTaskListId = processedTaskListId.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-      
+      // タスクリストIDをそのまま使用（エンコードなし）
       console.log('Original taskListId for delete:', taskListId);
-      console.log('Processed taskListId for delete:', processedTaskListId);
-      
-      // 処理後のIDをエンコード
-      const encodedTaskListId = encodeURIComponent(processedTaskListId);
-      console.log('Encoded taskListId for delete:', encodedTaskListId);
       
       const headers = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       };
       
-      // Google Tasks APIのドキュメントに従ってURLを構築
-      // https://developers.google.com/tasks/reference/rest/v1/tasklists/delete
-      const url = `https://tasks.googleapis.com/tasks/v1/users/@me/lists/${encodedTaskListId}`;
+      // URLを構築（IDをそのまま使用）
+      const url = `https://tasks.googleapis.com/tasks/v1/users/@me/lists/${taskListId}`;
       console.log('Delete URL:', url);
       
       const response = await fetch(url, {
