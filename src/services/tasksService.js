@@ -404,8 +404,10 @@ class TasksService {
       // タスクリストIDをそのまま使用
       console.log('Using taskListId for GAPI:', taskListId);
       
+      // 正しいAPIエンドポイントを使用
+      // Google Tasks APIのドキュメントに従って、正しいパラメータ名を使用
       const response = await window.gapi.client.tasks.tasklists.update({
-        tasklist: taskListId,
+        id: taskListId,  // 'tasklist' ではなく 'id' を使用
         resource: updates
       });
       
@@ -444,14 +446,34 @@ class TasksService {
       
       // タスクリストIDをそのまま使用（エンコードなし）
       console.log('Original taskListId:', taskListId);
+      console.log('taskListId type:', typeof taskListId);
+      console.log('taskListId length:', taskListId.length);
+      console.log('taskListId characters:', [...taskListId].map(c => `${c}(${c.charCodeAt(0)})`).join(', '));
+      
+      // 既存のタスクリストを取得して、このIDが実際に存在するか確認
+      try {
+        const allLists = await this.getTaskLists();
+        console.log('All task lists:', allLists);
+        
+        const foundList = allLists.find(list => list.id === taskListId);
+        if (foundList) {
+          console.log('Task list found with this ID:', foundList);
+        } else {
+          console.error('No task list found with ID:', taskListId);
+          console.log('Available task list IDs:', allLists.map(list => list.id));
+        }
+      } catch (listError) {
+        console.error('Error checking task lists:', listError);
+      }
       
       const headers = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       };
       
-      // URLを構築（IDをそのまま使用）
-      const url = `https://tasks.googleapis.com/tasks/v1/users/@me/lists/${taskListId}`;
+      // URLを構築（正しいAPIエンドポイントを使用）
+      // Google Tasks APIのドキュメントに従って、正しいエンドポイントを使用
+      const url = `https://tasks.googleapis.com/tasks/v1/lists/${taskListId}`;
       console.log('Update URL:', url);
       console.log('Update payload:', JSON.stringify(updates));
       
@@ -587,8 +609,9 @@ class TasksService {
       // タスクリストIDをそのまま使用
       console.log('Using taskListId for GAPI delete:', taskListId);
       
+      // 正しいAPIパラメータを使用
       const response = await window.gapi.client.tasks.tasklists.delete({
-        tasklist: taskListId
+        id: taskListId  // 'tasklist' ではなく 'id' を使用
       });
       
       console.log('GAPI Response:', response);
@@ -629,8 +652,8 @@ class TasksService {
         'Content-Type': 'application/json',
       };
       
-      // URLを構築（IDをそのまま使用）
-      const url = `https://tasks.googleapis.com/tasks/v1/users/@me/lists/${taskListId}`;
+      // 正しいAPIエンドポイントを使用
+      const url = `https://tasks.googleapis.com/tasks/v1/lists/${taskListId}`;
       console.log('Delete URL:', url);
       
       const response = await fetch(url, {
@@ -649,6 +672,8 @@ class TasksService {
         console.error('Delete task list error response:', errorMessage);
         throw new Error(errorMessage);
       }
+      
+      console.log('Task list deleted successfully with fetch');
       
       console.log('Task list deleted successfully with fetch');
       return true;
