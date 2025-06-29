@@ -45,6 +45,13 @@ class SyncService {
         console.error('Missing task list ID for update:', data);
         return;
       }
+      
+      // IDの形式を検証
+      if (typeof data.id !== 'string' || data.id === 'undefined' || data.id === 'null') {
+        console.error('Invalid task list ID format:', data.id);
+        return;
+      }
+      
       if (!data.title && !data.color) {
         console.error('Missing update properties for task list:', data);
         return;

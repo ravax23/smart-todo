@@ -158,7 +158,10 @@ class TasksService {
         throw new Error(`Tasks API error: ${response.status} - ${response.statusText}`);
       }
       
-      return response.result.items || [];
+      const taskLists = response.result.items || [];
+      
+      // 各タスクリストを整形
+      return taskLists.map(list => this.formatTaskList(list));
     } catch (error) {
       console.error('Error fetching task lists with GAPI:', error);
       throw error;
@@ -214,7 +217,11 @@ class TasksService {
 
       const data = await response.json();
       console.log('API Response Data:', data);
-      return data.items || [];
+      
+      const taskLists = data.items || [];
+      
+      // 各タスクリストを整形
+      return taskLists.map(list => this.formatTaskList(list));
     } catch (error) {
       console.error('Error fetching task lists with fetch:', error);
       throw error;
@@ -330,6 +337,18 @@ class TasksService {
         throw new Error('Access token not available');
       }
       
+      // 更新データの検証
+      if (!updates || typeof updates !== 'object') {
+        console.error('Invalid updates object:', updates);
+        throw new Error('Invalid updates object');
+      }
+      
+      // タイトルの検証（タイトルが更新される場合）
+      if (updates.title !== undefined && (!updates.title || typeof updates.title !== 'string')) {
+        console.error('Invalid title in updates:', updates.title);
+        throw new Error('Invalid title');
+      }
+      
       // 方法1: GAPIクライアントを使用
       if (window.gapi && window.gapi.client && window.gapi.client.tasks) {
         try {
@@ -425,6 +444,33 @@ class TasksService {
       console.error('Fetch updateTaskList error:', error);
       throw error;
     }
+  }
+
+  /**
+   * タスクリストデータを整形する
+   * @param {Object} taskList - Google Tasks APIから返されたタスクリストデータ
+   * @returns {Object} 整形されたタスクリストデータ
+   */
+  static formatTaskList(taskList) {
+    if (!taskList) {
+      console.error('Invalid task list data:', taskList);
+      throw new Error('Invalid task list data');
+    }
+    
+    if (!taskList.id) {
+      console.error('Task list is missing ID:', taskList);
+      throw new Error('Task list is missing ID');
+    }
+    
+    console.log('Formatting task list:', taskList);
+    
+    // 必要なプロパティを抽出して返す
+    return {
+      id: taskList.id,
+      title: taskList.title || 'Untitled',
+      updated: taskList.updated || new Date().toISOString(),
+      // その他必要なプロパティがあれば追加
+    };
   }
 
   /**

@@ -500,6 +500,17 @@ export const TodoProvider = ({ children }) => {
       console.log(`Updating task list ${taskListId} title to: ${newTitle}`);
       setLoading(true);
       
+      // 対象のタスクリストが存在するか確認
+      const targetList = taskLists.find(list => list.id === taskListId);
+      if (!targetList) {
+        console.error(`Task list with ID ${taskListId} not found`);
+        setError(`ID: ${taskListId} のタスクリストが見つかりません。`);
+        setLoading(false);
+        return;
+      }
+      
+      console.log('Found task list to update:', targetList);
+      
       // メモリ内のタスクリストを更新
       const updatedLists = taskLists.map(list => 
         list.id === taskListId ? { ...list, title: newTitle } : list
