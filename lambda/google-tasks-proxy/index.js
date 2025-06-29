@@ -3,16 +3,17 @@ const axios = require('axios');
 exports.handler = async (event) => {
   console.log('Event received:', JSON.stringify(event));
   
-  // CORS headers
+  // CORS headers - すべてのレスポンスに適用
   const headers = {
-    'Access-Control-Allow-Origin': '*', // 本番環境では特定のドメインに制限すべき
+    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token, X-Requested-With',
     'Content-Type': 'application/json'
   };
   
   // OPTIONSリクエストの処理
   if (event.httpMethod === 'OPTIONS') {
+    console.log('Handling OPTIONS request');
     return {
       statusCode: 200,
       headers,
@@ -30,6 +31,7 @@ exports.handler = async (event) => {
     // 認証ヘッダーの取得
     const authHeader = event.headers.Authorization || event.headers.authorization;
     if (!authHeader) {
+      console.log('Missing Authorization header');
       return {
         statusCode: 401,
         headers,
