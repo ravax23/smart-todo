@@ -840,6 +840,8 @@ const TodoList = ({ isMobile }) => {
                       cursor: isMobile ? 'pointer' : 'grabbing'
                     }
                   }}
+                  onDoubleClick={() => handleEditTask(task)} // ダブルクリックでタスク編集画面を表示
+                  onClick={isMobile ? () => handleEditTask(task) : undefined} // モバイルではシングルクリックで編集画面を表示
                 >
                   {isMobile ? (
                     // モバイル表示のレイアウト
@@ -851,6 +853,7 @@ const TodoList = ({ isMobile }) => {
                             e.stopPropagation(); // イベントの伝播を停止
                             toggleTaskCompletion(task.id, task.status);
                           }}
+                          onClick={(e) => e.stopPropagation()} // クリックイベントの伝播も停止
                           sx={{ 
                             mr: 1,
                             width: 22,
@@ -905,10 +908,26 @@ const TodoList = ({ isMobile }) => {
                             {task.listId && (
                               <Box 
                                 className="task-meta-item-mobile"
-                                sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}
+                                sx={{ 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  mb: 0.5,
+                                  maxWidth: '100%',
+                                  overflow: 'visible',
+                                  wordBreak: 'break-word',
+                                  whiteSpace: 'normal'
+                                }}
                               >
-                                <span className="emoji-icon" style={{ marginRight: '4px' }}>📁</span>
-                                {getTaskListName(task)}
+                                <span className="emoji-icon" style={{ marginRight: '4px', flexShrink: 0 }}>📁</span>
+                                <span style={{ 
+                                  display: 'inline-block', 
+                                  maxWidth: 'calc(100% - 20px)',
+                                  overflow: 'visible',
+                                  wordBreak: 'break-word',
+                                  whiteSpace: 'normal'
+                                }}>
+                                  {getTaskListName(task)}
+                                </span>
                               </Box>
                             )}
                           </Box>
@@ -924,6 +943,7 @@ const TodoList = ({ isMobile }) => {
                           e.stopPropagation(); // イベントの伝播を停止
                           toggleTaskCompletion(task.id, task.status);
                         }}
+                        onClick={(e) => e.stopPropagation()} // クリックイベントの伝播も停止
                         sx={{ 
                           mr: 1,
                           width: 22,

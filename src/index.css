@@ -67,6 +67,11 @@ code {
 .task-meta-item-mobile {
   white-space: normal;
   word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  display: inline-block;
+  overflow: visible;
+  text-overflow: initial;
 }
 
 /* モバイル画面のダイアログボタン調整 */
