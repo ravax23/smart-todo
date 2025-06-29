@@ -318,6 +318,12 @@ class TasksService {
     try {
       console.log(`Updating task list ${taskListId}:`, updates);
       
+      // タスクリストIDの検証
+      if (!taskListId || taskListId === 'undefined' || taskListId === 'null') {
+        console.error('Invalid task list ID:', taskListId);
+        throw new Error('Missing task list ID');
+      }
+      
       // アクセストークンの確認
       const token = getAccessToken();
       if (!token) {
@@ -377,12 +383,21 @@ class TasksService {
    */
   static async updateTaskListWithFetch(taskListId, updates, token) {
     try {
+      // タスクリストIDの検証
+      if (!taskListId || taskListId === 'undefined' || taskListId === 'null') {
+        console.error('Invalid task list ID in updateTaskListWithFetch:', taskListId);
+        throw new Error('Missing task list ID');
+      }
+      
       const headers = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       };
       
       const url = `https://tasks.googleapis.com/tasks/v1/users/@me/lists/${taskListId}`;
+      console.log('Update URL:', url);
+      console.log('Update payload:', JSON.stringify(updates));
+      
       const response = await fetch(url, {
         method: 'PUT',
         headers,
@@ -390,8 +405,16 @@ class TasksService {
       });
       
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        let errorMessage = `HTTP ${response.status}: `;
+        try {
+          const errorData = await response.json();
+          console.error('Update task list error response:', errorData);
+          errorMessage += JSON.stringify(errorData);
+        } catch (e) {
+          const errorText = await response.text();
+          errorMessage += errorText || response.statusText;
+        }
+        throw new Error(errorMessage);
       }
       
       const data = await response.json();

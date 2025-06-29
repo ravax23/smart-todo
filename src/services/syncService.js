@@ -33,6 +33,24 @@ class SyncService {
   addToSyncQueue(type, action, data) {
     console.log(`Adding to sync queue: ${type} - ${action}`, data);
     
+    // データの検証
+    if (!data) {
+      console.error('Invalid data for sync queue:', { type, action, data });
+      return;
+    }
+    
+    // タスクリスト更新時のIDチェック
+    if (type === 'taskList' && action === 'update') {
+      if (!data.id) {
+        console.error('Missing task list ID for update:', data);
+        return;
+      }
+      if (!data.title && !data.color) {
+        console.error('Missing update properties for task list:', data);
+        return;
+      }
+    }
+    
     // 同期キューに追加
     this.syncQueue.push({
       type,
@@ -135,10 +153,26 @@ class SyncService {
     for (const taskList of this.pendingChanges.taskLists.updated) {
       try {
         console.log('Updating task list:', taskList);
-        if (!taskList || !taskList.id) {
-          console.error('Invalid task list object:', taskList);
+        
+        // タスクリストオブジェクトの検証
+        if (!taskList) {
+          console.error('Task list object is null or undefined');
           continue;
         }
+        
+        // タスクリストIDの検証
+        if (!taskList.id || taskList.id === 'undefined' || taskList.id === 'null') {
+          console.error('Invalid task list ID:', taskList);
+          continue;
+        }
+        
+        // タスクリストタイトルの検証
+        if (!taskList.title) {
+          console.error('Task list title is missing:', taskList);
+          continue;
+        }
+        
+        console.log('Calling updateTaskList with ID:', taskList.id, 'and title:', taskList.title);
         
         // TasksServiceのupdateTaskListメソッドを直接呼び出す
         await TasksService.updateTaskList(taskList.id, { title: taskList.title });

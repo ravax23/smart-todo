@@ -483,6 +483,21 @@ export const TodoProvider = ({ children }) => {
   // タスクリストのタイトル更新
   const updateTaskListTitle = async (taskListId, newTitle) => {
     try {
+      // タスクリストIDの検証
+      if (!taskListId) {
+        console.error('Invalid task list ID:', taskListId);
+        setError('タスクリストIDが無効です。');
+        return;
+      }
+      
+      // タイトルの検証
+      if (!newTitle || newTitle.trim() === '') {
+        console.error('Invalid task list title:', newTitle);
+        setError('タスクリストタイトルが無効です。');
+        return;
+      }
+      
+      console.log(`Updating task list ${taskListId} title to: ${newTitle}`);
       setLoading(true);
       
       // メモリ内のタスクリストを更新

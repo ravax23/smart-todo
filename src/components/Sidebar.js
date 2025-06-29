@@ -147,11 +147,20 @@ const Sidebar = ({ closeSidebar, isMobile }) => {
 
   // リスト名の編集を保存
   const handleSaveEditing = () => {
-    if (editingListId && editingTitle.trim()) {
-      updateTaskListTitle(editingListId, editingTitle.trim());
-      setEditingListId(null);
-      setEditingTitle('');
+    if (!editingListId) {
+      console.error('No list ID for editing');
+      return;
     }
+    
+    if (!editingTitle || !editingTitle.trim()) {
+      console.error('Empty list title');
+      return;
+    }
+    
+    console.log(`Saving list title: ID=${editingListId}, Title=${editingTitle.trim()}`);
+    updateTaskListTitle(editingListId, editingTitle.trim());
+    setEditingListId(null);
+    setEditingTitle('');
   };
 
   // リスト名の編集をキャンセル
