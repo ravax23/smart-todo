@@ -128,11 +128,6 @@ const initGapiClient = () => {
     }
   });
 };
-    } catch (error) {
-      reject(error);
-    }
-  });
-};
 
 // Google認証レスポンスのハンドラー
 const handleCredentialResponse = (response) => {
@@ -447,6 +442,7 @@ export const getAccessToken = () => {
     return null;
   }
 };
+
 // 明示的なスコープ承認を要求
 export const requestTasksScope = async () => {
   try {

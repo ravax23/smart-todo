@@ -319,7 +319,7 @@ class TasksService {
       console.log(`Updating task list ${taskListId}:`, updates);
       
       // アクセストークンの確認
-      const token = await AuthService.getAccessToken();
+      const token = getAccessToken();
       if (!token) {
         throw new Error('Access token not available');
       }
