@@ -6,6 +6,7 @@ frontend:
         - npm ci
         - echo "REACT_APP_GOOGLE_CLIENT_ID=80481776832-el596plhopp9d3tstgg095msmh19h7he.apps.googleusercontent.com" >> .env
         - echo "REACT_APP_GOOGLE_API_KEY=AIzaSyAPayLBJaE8MqlDD-HSx6HchR0Z2KTotP4" >> .env
+        - echo "REACT_APP_API_GATEWAY_URL=https://t3mexbcl3e.execute-api.us-east-1.amazonaws.com/prod" >> .env
         - cat .env
     build:
       commands:

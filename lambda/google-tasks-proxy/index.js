@@ -7,7 +7,8 @@ exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*', // 本番環境では特定のドメインに制限すべき
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With'
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    'Content-Type': 'application/json'
   };
   
   // OPTIONSリクエストの処理
@@ -47,19 +48,43 @@ exports.handler = async (event) => {
         'Content-Type': 'application/json'
       },
       params: queryParams,
-      data: body
+      data: body,
+      validateStatus: () => true // すべてのステータスコードを許可
     });
     
     console.log('Google Tasks API response status:', response.status);
     
+    // レスポンスデータの検証
+    let responseBody;
+    if (response.data) {
+      try {
+        // データがオブジェクトの場合はJSON文字列に変換
+        if (typeof response.data === 'object') {
+          responseBody = JSON.stringify(response.data);
+        } else if (typeof response.data === 'string') {
+          // 文字列の場合は有効なJSONかチェック
+          JSON.parse(response.data); // 検証のみ
+          responseBody = response.data;
+        } else {
+          // その他の型の場合は文字列に変換
+          responseBody = JSON.stringify({ data: String(response.data) });
+        }
+      } catch (jsonError) {
+        console.error('Error parsing response data:', jsonError);
+        responseBody = JSON.stringify({ 
+          data: typeof response.data === 'string' ? response.data : String(response.data),
+          warning: 'Response data could not be parsed as JSON'
+        });
+      }
+    } else {
+      responseBody = JSON.stringify({ data: null });
+    }
+    
     // レスポンスを返す
     return {
       statusCode: response.status,
-      headers: {
-        ...headers,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(response.data)
+      headers,
+      body: responseBody
     };
   } catch (error) {
     console.error('Error proxying request to Google Tasks API:', error);
