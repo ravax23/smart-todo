@@ -828,6 +828,32 @@ export const TodoProvider = ({ children }) => {
       const updatedLists = [...taskLists, newTaskList];
       setTaskLists(updatedLists);
       
+      // 一時的なIDと実際のIDのマッピングを処理するイベントリスナーを追加
+      const handleIdMapping = (event) => {
+        const { tempId: mappedTempId, realId } = event.detail;
+        
+        if (mappedTempId === tempId) {
+          console.log(`Mapping temporary ID ${mappedTempId} to real ID ${realId}`);
+          
+          // メモリ内のタスクリストを更新
+          setTaskLists(prevLists => 
+            prevLists.map(list => 
+              list.id === mappedTempId ? { ...list, id: realId } : list
+            )
+          );
+          
+          // このリストが選択されている場合は、選択も更新
+          if (selectedTaskList === mappedTempId) {
+            selectTaskList(realId);
+          }
+          
+          // イベントリスナーを削除
+          window.removeEventListener('taskListIdMapped', handleIdMapping);
+        }
+      };
+      
+      window.addEventListener('taskListIdMapped', handleIdMapping);
+      
       // 同期キューに追加して即座に同期実行
       syncService.addToSyncQueue('taskList', 'create', newTaskList);
       

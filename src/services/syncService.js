@@ -150,7 +150,29 @@ class SyncService {
     for (const taskList of this.pendingChanges.taskLists.created) {
       try {
         console.log('Creating task list:', taskList);
-        await TasksService.createTaskList(taskList.title);
+        
+        // 一時的なIDを持つタスクリストかどうかを確認
+        const isTempId = taskList.id && taskList.id.startsWith('temp-list-');
+        
+        if (isTempId) {
+          console.log('Creating task list with temporary ID:', taskList.id);
+        }
+        
+        // タスクリストを作成し、実際のIDを取得
+        const createdTaskList = await TasksService.createTaskList(taskList.title);
+        
+        if (isTempId) {
+          console.log(`Task list created with real ID: ${createdTaskList.id} (was temp ID: ${taskList.id})`);
+          
+          // 一時的なIDと実際のIDのマッピングをイベントとして発行
+          const mappingEvent = new CustomEvent('taskListIdMapped', {
+            detail: {
+              tempId: taskList.id,
+              realId: createdTaskList.id
+            }
+          });
+          window.dispatchEvent(mappingEvent);
+        }
       } catch (error) {
         console.error('Error creating task list:', error);
       }
@@ -176,6 +198,12 @@ class SyncService {
         // タスクリストIDの形式を検証
         if (typeof taskList.id !== 'string') {
           console.error('Task list ID is not a string:', taskList);
+          continue;
+        }
+        
+        // 一時的なIDかどうかを確認
+        if (taskList.id.startsWith('temp-list-')) {
+          console.error('Cannot update task list with temporary ID:', taskList.id);
           continue;
         }
         

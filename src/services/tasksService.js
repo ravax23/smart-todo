@@ -279,7 +279,8 @@ class TasksService {
         throw new Error(`Tasks API error: ${response.status} - ${response.statusText}`);
       }
       
-      return response.result;
+      // 作成されたタスクリストを整形して返す
+      return this.formatTaskList(response.result);
     } catch (error) {
       console.error('Error creating task list with GAPI:', error);
       throw error;
@@ -311,7 +312,9 @@ class TasksService {
 
       const data = await response.json();
       console.log('API Response Data:', data);
-      return data;
+      
+      // 作成されたタスクリストを整形して返す
+      return this.formatTaskList(data);
     } catch (error) {
       console.error('Error creating task list with fetch:', error);
       throw error;
