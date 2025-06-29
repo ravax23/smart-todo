@@ -379,8 +379,20 @@ class TasksService {
   static async updateTaskListWithGapi(taskListId, updates) {
     try {
       console.log('Calling tasks.tasklists.update API with GAPI...');
+      
+      // タスクリストIDの検証
+      if (!taskListId || taskListId === 'undefined' || taskListId === 'null') {
+        console.error('Invalid task list ID in updateTaskListWithGapi:', taskListId);
+        throw new Error('Missing task list ID');
+      }
+      
+      // タスクリストIDをデコード（Base64エンコードされている可能性がある場合）
+      let processedTaskListId = taskListId;
+      
+      console.log('Using taskListId for GAPI:', processedTaskListId);
+      
       const response = await window.gapi.client.tasks.tasklists.update({
-        tasklist: taskListId,
+        tasklist: processedTaskListId,
         resource: updates
       });
       
@@ -408,12 +420,20 @@ class TasksService {
         throw new Error('Missing task list ID');
       }
       
+      // タスクリストIDをデコード（Base64エンコードされている可能性がある場合）
+      let processedTaskListId = taskListId;
+      
+      // IDに特殊文字が含まれている場合に備えてエンコード
+      const encodedTaskListId = encodeURIComponent(processedTaskListId);
+      console.log('Original taskListId:', taskListId);
+      console.log('Encoded taskListId:', encodedTaskListId);
+      
       const headers = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       };
       
-      const url = `https://tasks.googleapis.com/tasks/v1/users/@me/lists/${taskListId}`;
+      const url = `https://tasks.googleapis.com/tasks/v1/users/@me/lists/${encodedTaskListId}`;
       console.log('Update URL:', url);
       console.log('Update payload:', JSON.stringify(updates));
       
@@ -464,10 +484,17 @@ class TasksService {
     
     console.log('Formatting task list:', taskList);
     
+    // IDを正規化（余分な空白や特殊文字を処理）
+    const normalizedId = taskList.id.trim();
+    
     // 必要なプロパティを抽出して返す
     return {
-      id: taskList.id,
+      id: normalizedId,
       title: taskList.title || 'Untitled',
+      updated: taskList.updated || new Date().toISOString(),
+      // その他必要なプロパティがあれば追加
+    };
+  }
       updated: taskList.updated || new Date().toISOString(),
       // その他必要なプロパティがあれば追加
     };
@@ -525,8 +552,20 @@ class TasksService {
   static async deleteTaskListWithGapi(taskListId) {
     try {
       console.log('Calling tasks.tasklists.delete API with GAPI...');
+      
+      // タスクリストIDの検証
+      if (!taskListId || taskListId === 'undefined' || taskListId === 'null') {
+        console.error('Invalid task list ID in deleteTaskListWithGapi:', taskListId);
+        throw new Error('Missing task list ID');
+      }
+      
+      // タスクリストIDをデコード（Base64エンコードされている可能性がある場合）
+      let processedTaskListId = taskListId;
+      
+      console.log('Using taskListId for GAPI delete:', processedTaskListId);
+      
       const response = await window.gapi.client.tasks.tasklists.delete({
-        tasklist: taskListId
+        tasklist: processedTaskListId
       });
       
       console.log('GAPI Response:', response);
@@ -553,12 +592,20 @@ class TasksService {
         throw new Error('無効なタスクリストIDです。');
       }
       
+      // タスクリストIDをデコード（Base64エンコードされている可能性がある場合）
+      let processedTaskListId = taskListId;
+      
+      // IDに特殊文字が含まれている場合に備えてエンコード
+      const encodedTaskListId = encodeURIComponent(processedTaskListId);
+      console.log('Original taskListId for delete:', taskListId);
+      console.log('Encoded taskListId for delete:', encodedTaskListId);
+      
       const headers = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       };
       
-      const url = `https://tasks.googleapis.com/tasks/v1/users/@me/lists/${taskListId}`;
+      const url = `https://tasks.googleapis.com/tasks/v1/users/@me/lists/${encodedTaskListId}`;
       console.log('Delete URL:', url);
       
       const response = await fetch(url, {

@@ -490,6 +490,13 @@ export const TodoProvider = ({ children }) => {
         return;
       }
       
+      // IDの形式を検証
+      if (typeof taskListId !== 'string') {
+        console.error('Task list ID is not a string:', taskListId);
+        setError('タスクリストIDの形式が無効です。');
+        return;
+      }
+      
       // タイトルの検証
       if (!newTitle || newTitle.trim() === '') {
         console.error('Invalid task list title:', newTitle);

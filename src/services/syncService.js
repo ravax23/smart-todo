@@ -173,6 +173,12 @@ class SyncService {
           continue;
         }
         
+        // タスクリストIDの形式を検証
+        if (typeof taskList.id !== 'string') {
+          console.error('Task list ID is not a string:', taskList);
+          continue;
+        }
+        
         // タスクリストタイトルの検証
         if (!taskList.title) {
           console.error('Task list title is missing:', taskList);
