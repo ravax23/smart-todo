@@ -107,13 +107,23 @@ export const tasksApi = {
   updateTaskList: (taskListId, updates) => {
     console.log('API Service - updateTaskList called with ID:', taskListId);
     console.log('API Service - taskListId type:', typeof taskListId);
+    console.log('API Service - updates:', updates);
     
-    if (!taskListId) {
-      console.error('API Service - taskListId is falsy:', taskListId);
+    // タスクリストIDの検証
+    if (taskListId === undefined || taskListId === null || taskListId === '') {
+      console.error('API Service - taskListId is invalid:', taskListId);
       throw new Error('Missing task list ID');
     }
     
-    return apiRequest(`/tasks/v1/users/@me/lists/${taskListId}`, 'PUT', updates);
+    // タスクリストIDをトリムして余分なスペースを削除
+    const trimmedId = String(taskListId).trim();
+    if (trimmedId === '') {
+      console.error('API Service - taskListId is empty after trimming:', taskListId);
+      throw new Error('Missing task list ID');
+    }
+    
+    console.log('API Service - making request with trimmed ID:', trimmedId);
+    return apiRequest(`/tasks/v1/users/@me/lists/${trimmedId}`, 'PUT', updates);
   },
   deleteTaskList: (taskListId) => apiRequest(`/tasks/v1/users/@me/lists/${taskListId}`, 'DELETE'),
 

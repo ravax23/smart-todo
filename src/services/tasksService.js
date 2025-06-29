@@ -145,14 +145,21 @@ class TasksService {
       console.log('Task list ID length:', taskListId ? taskListId.length : 0);
       
       // タスクリストIDの検証
-      if (!taskListId || taskListId === 'undefined' || taskListId === 'null') {
+      if (taskListId === undefined || taskListId === null || taskListId === '') {
         console.error('Invalid task list ID:', taskListId);
         throw new Error('Missing task list ID');
       }
       
+      // タスクリストIDをトリムして余分なスペースを削除
+      const trimmedId = String(taskListId).trim();
+      if (trimmedId === '') {
+        console.error('Task list ID is empty after trimming:', taskListId);
+        throw new Error('Missing task list ID');
+      }
+      
       // 一時的なIDかどうかを確認
-      if (taskListId && taskListId.startsWith && taskListId.startsWith('temp-list-')) {
-        console.error('Cannot update task list with temporary ID:', taskListId);
+      if (trimmedId.startsWith('temp-list-')) {
+        console.error('Cannot update task list with temporary ID:', trimmedId);
         throw new Error('Cannot update task list with temporary ID');
       }
       

@@ -215,6 +215,12 @@ class SyncService {
         
         console.log('Calling updateTaskList with ID:', taskList.id, 'and title:', taskList.title);
         
+        // タスクリストIDの検証
+        if (!taskList.id || typeof taskList.id !== 'string' || taskList.id.trim() === '') {
+          console.error('Invalid task list ID:', taskList.id);
+          continue;
+        }
+        
         try {
           // TasksServiceのupdateTaskListメソッドを直接呼び出す
           await TasksService.updateTaskList(taskList.id, { title: taskList.title });
