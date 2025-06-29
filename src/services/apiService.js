@@ -100,9 +100,9 @@ export const tasksApi = {
   // タスクリスト関連
   getTaskLists: () => apiRequest('/tasks/v1/users/@me/lists'),
   createTaskList: (title) => apiRequest('/tasks/v1/users/@me/lists', 'POST', { title }),
-  getTaskList: (taskListId) => apiRequest(`/tasks/v1/lists/${taskListId}`),
-  updateTaskList: (taskListId, updates) => apiRequest(`/tasks/v1/lists/${taskListId}`, 'PUT', updates),
-  deleteTaskList: (taskListId) => apiRequest(`/tasks/v1/lists/${taskListId}`, 'DELETE'),
+  getTaskList: (taskListId) => apiRequest(`/tasks/v1/users/@me/lists/${taskListId}`),
+  updateTaskList: (taskListId, updates) => apiRequest(`/tasks/v1/users/@me/lists/${taskListId}`, 'PUT', updates),
+  deleteTaskList: (taskListId) => apiRequest(`/tasks/v1/users/@me/lists/${taskListId}`, 'DELETE'),
 
   // タスク関連
   getTasks: (taskListId, params = {}) => apiRequest(`/tasks/v1/lists/${taskListId}/tasks`, 'GET', null, params),
