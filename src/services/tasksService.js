@@ -179,34 +179,6 @@ class TasksService {
       throw error;
     }
   }
-      
-      // 更新データの検証
-      if (!updates || typeof updates !== 'object') {
-        console.error('Invalid updates object:', updates);
-        throw new Error('Invalid updates object');
-      }
-      
-      // タイトルの検証（タイトルが更新される場合）
-      if (updates.title !== undefined && (!updates.title || typeof updates.title !== 'string')) {
-        console.error('Invalid title in updates:', updates.title);
-        throw new Error('Invalid title');
-      }
-      
-      // API Gateway経由でタスクリストを更新
-      const response = await tasksApi.updateTaskList(taskListId, updates);
-      console.log('Update task list response:', response);
-      
-      return this.formatTaskList(response);
-    } catch (error) {
-      console.error('Tasks Service Error:', {
-        message: error.message,
-        stack: error.stack,
-        taskListId,
-        updates
-      });
-      throw error;
-    }
-  }
 
   /**
    * タスクリストデータを整形する
