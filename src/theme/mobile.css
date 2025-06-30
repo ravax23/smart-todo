@@ -152,7 +152,7 @@
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-    max-width: 120px !important;
+    max-width: 100% !important;
   }
 }
 

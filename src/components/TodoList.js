@@ -913,18 +913,16 @@ const TodoList = ({ isMobile }) => {
                                   alignItems: 'center', 
                                   mb: 0.5,
                                   maxWidth: '100%',
-                                  overflow: 'visible',
-                                  wordBreak: 'break-word',
-                                  whiteSpace: 'normal'
+                                  overflow: 'hidden'
                                 }}
                               >
                                 <span className="emoji-icon" style={{ marginRight: '4px', flexShrink: 0 }}>📁</span>
                                 <span style={{ 
                                   display: 'inline-block', 
                                   maxWidth: 'calc(100% - 20px)',
-                                  overflow: 'visible',
-                                  wordBreak: 'break-word',
-                                  whiteSpace: 'normal'
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
                                 }}>
                                   {getTaskListName(task)}
                                 </span>
@@ -985,10 +983,24 @@ const TodoList = ({ isMobile }) => {
                           {/* マイリスト名を表示 */}
                           {task.listId && (
                             <Box 
-                              sx={{ display: 'flex', alignItems: 'center', ml: 2 }}
+                              sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                ml: 2,
+                                maxWidth: '200px',
+                                overflow: 'hidden'
+                              }}
                             >
-                              <span className="emoji-icon" style={{ marginRight: '4px' }}>📁</span>
-                              {getTaskListName(task)}
+                              <span className="emoji-icon" style={{ marginRight: '4px', flexShrink: 0 }}>📁</span>
+                              <span style={{ 
+                                display: 'inline-block',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                maxWidth: 'calc(100% - 20px)'
+                              }}>
+                                {getTaskListName(task)}
+                              </span>
                             </Box>
                           )}
                         </Box>
