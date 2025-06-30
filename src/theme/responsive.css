@@ -31,11 +31,17 @@
   .main-content {
     width: 100%;
     padding-left: 0;
+    height: 100vh; /* 画面の高さいっぱいに */
+    overflow-y: auto; /* 縦スクロール可能に */
   }
   
   /* タスクリストのスタイル */
   .task-list-container {
     padding: 0 8px;
+    flex: 1; /* 残りのスペースを埋める */
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Flexboxの子要素がスクロール可能になるために必要 */
   }
   
   /* タスクアイテムのスタイル */
@@ -94,6 +100,19 @@
     width: 100% !important;
     margin-right: 0 !important;
     margin-bottom: 8px !important;
+  }
+  
+  /* モバイルでのコンテンツエリア */
+  body, html, #root {
+    height: 100%;
+    overflow: hidden; /* 二重スクロールを防止 */
+  }
+  
+  /* アプリ全体のコンテナ */
+  .app-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
   }
 }
 

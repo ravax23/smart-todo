@@ -27,6 +27,10 @@
     padding-top: 0 !important; /* 上部のパディングを削除 */
     overflow-x: hidden !important; /* 横スクロール禁止 */
     width: 100% !important;
+    height: 100vh !important; /* 画面の高さいっぱいに */
+    overflow-y: auto !important; /* 縦スクロール可能に */
+    display: flex !important;
+    flex-direction: column !important;
   }
   
   /* モバイルメニューボタン */
@@ -141,6 +145,15 @@
   .search-field-mobile {
     display: none !important;
   }
+  
+  /* モバイルでのタスクメタ情報アイテム */
+  .task-meta-item-mobile {
+    margin-right: 8px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 120px !important;
+  }
 }
 
 /* iPhone 13 などのモバイルデバイス向けの特別なスタイル */
@@ -158,11 +171,3 @@
     font-size: 1.25rem !important;
   }
 }
-  /* モバイルでのタスクメタ情報アイテム */
-  .task-meta-item-mobile {
-    margin-right: 8px !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    max-width: 120px !important;
-  }
