@@ -910,19 +910,18 @@ const TodoList = ({ isMobile }) => {
                                 className="task-meta-item-mobile"
                                 sx={{ 
                                   display: 'flex', 
-                                  alignItems: 'center', 
+                                  alignItems: 'flex-start', 
                                   mb: 0.5,
-                                  maxWidth: '100%',
-                                  overflow: 'hidden'
+                                  maxWidth: '100%'
                                 }}
                               >
                                 <span className="emoji-icon" style={{ marginRight: '4px', flexShrink: 0 }}>📁</span>
                                 <span style={{ 
                                   display: 'inline-block', 
                                   maxWidth: 'calc(100% - 20px)',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap'
+                                  wordBreak: 'break-word',
+                                  whiteSpace: 'normal',
+                                  overflow: 'visible'
                                 }}>
                                   {getTaskListName(task)}
                                 </span>
@@ -985,18 +984,17 @@ const TodoList = ({ isMobile }) => {
                             <Box 
                               sx={{ 
                                 display: 'flex', 
-                                alignItems: 'center', 
+                                alignItems: 'flex-start', 
                                 ml: 2,
-                                maxWidth: '200px',
-                                overflow: 'hidden'
+                                maxWidth: '200px'
                               }}
                             >
                               <span className="emoji-icon" style={{ marginRight: '4px', flexShrink: 0 }}>📁</span>
                               <span style={{ 
                                 display: 'inline-block',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
+                                wordBreak: 'break-word',
+                                whiteSpace: 'normal',
+                                overflow: 'visible',
                                 maxWidth: 'calc(100% - 20px)'
                               }}>
                                 {getTaskListName(task)}
