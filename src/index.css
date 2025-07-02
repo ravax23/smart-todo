@@ -71,10 +71,10 @@ code {
   white-space: nowrap;
   word-break: normal;
   overflow-wrap: normal;
-  max-width: 100%;
+  max-width: none;
   display: inline-block;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 /* モバイル画面のダイアログボタン調整 */
