@@ -919,9 +919,10 @@ const TodoList = ({ isMobile }) => {
                                 <span style={{ 
                                   display: 'inline-block', 
                                   maxWidth: 'calc(100% - 20px)',
-                                  wordBreak: 'break-word',
-                                  whiteSpace: 'normal',
-                                  overflow: 'visible'
+                                  wordBreak: 'normal',
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis'
                                 }}>
                                   {getTaskListName(task)}
                                 </span>
@@ -992,9 +993,10 @@ const TodoList = ({ isMobile }) => {
                               <span className="emoji-icon" style={{ marginRight: '4px', flexShrink: 0 }}>📁</span>
                               <span style={{ 
                                 display: 'inline-block',
-                                wordBreak: 'break-word',
-                                whiteSpace: 'normal',
-                                overflow: 'visible',
+                                wordBreak: 'normal',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
                                 maxWidth: 'calc(100% - 20px)'
                               }}>
                                 {getTaskListName(task)}
