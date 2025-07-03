@@ -315,11 +315,20 @@ const TodoList = ({ isMobile }) => {
         if (currentTask && taskDetails.categoryId && currentTask.listId !== taskDetails.categoryId) {
           // マイリストが変更された場合は、moveTaskToListを使用
           console.log(`Moving task from list ${currentTask.listId} to ${taskDetails.categoryId}`);
-          await moveTaskToList(taskDetails.taskId, taskDetails.categoryId);
+          const moveSuccess = await moveTaskToList(taskDetails.taskId, taskDetails.categoryId);
+          
+          // リスト移動が成功した場合は、他の更新は不要（リスト移動時に全データが更新されるため）
+          if (moveSuccess) {
+            console.log('Task moved successfully, skipping additional updates');
+          } else {
+            // リスト移動が失敗した場合は、通常の更新を試みる
+            console.log('Task move failed, attempting normal update');
+            await updateTask(taskDetails.taskId, taskData);
+          }
+        } else {
+          // リスト変更がない場合は通常の更新
+          await updateTask(taskDetails.taskId, taskData);
         }
-        
-        // タスクの他の情報を更新
-        await updateTask(taskDetails.taskId, taskData);
       } else {
         // 新規タスクの作成
         // taskDetails.categoryIdが設定されている場合はそれを使用、そうでなければselectedTaskListを使用

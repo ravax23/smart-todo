@@ -283,6 +283,31 @@ export const TodoProvider = ({ children }) => {
     });
   };
 
+  // タスクIDマッピングイベントのリスナーを設定
+  useEffect(() => {
+    const handleTaskIdMapped = (event) => {
+      const { oldId, newId, newListId } = event.detail;
+      console.log(`Task ID mapped: ${oldId} -> ${newId} in list ${newListId}`);
+      
+      // メモリ内のタスクを更新
+      setTodos(prevTodos => {
+        const updatedTodos = prevTodos.map(task => 
+          task.id === oldId ? { ...task, id: newId, listId: newListId } : task
+        );
+        
+        // フィルタリングとソートを再適用
+        applyFilterAndSort(updatedTodos);
+        return updatedTodos;
+      });
+    };
+    
+    window.addEventListener('taskIdMapped', handleTaskIdMapped);
+    
+    return () => {
+      window.removeEventListener('taskIdMapped', handleTaskIdMapped);
+    };
+  }, []);
+
   // タスクリストが選択されたときにタスクをフィルタリング
   useEffect(() => {
     if (isAuthenticated && selectedTaskList) {
@@ -553,9 +578,20 @@ export const TodoProvider = ({ children }) => {
     try {
       // 移動するタスクを見つける
       const taskToMove = todos.find(task => task.id === taskId);
-      if (!taskToMove) return;
+      if (!taskToMove) {
+        console.error('Task not found:', taskId);
+        return false;
+      }
       
       const sourceListId = taskToMove.listId;
+      
+      // 同じリストへの移動は無視
+      if (sourceListId === targetListId) {
+        console.log(`Task ${taskId} is already in list ${targetListId}`);
+        return true;
+      }
+      
+      console.log(`Moving task ${taskId} from list ${sourceListId} to ${targetListId}`);
       
       // メモリ内のタスクを更新
       const updatedTodos = todos.map(task => 
@@ -567,7 +603,11 @@ export const TodoProvider = ({ children }) => {
       syncService.addToSyncQueue('task', 'update', {
         id: taskId,
         listId: sourceListId,
-        newListId: targetListId
+        newListId: targetListId,
+        title: taskToMove.title,
+        notes: taskToMove.notes || '',
+        due: taskToMove.due,
+        starred: taskToMove.starred
       });
       
       // 即座に同期を実行
@@ -580,9 +620,11 @@ export const TodoProvider = ({ children }) => {
       applyFilterAndSort(updatedTodos);
       
       console.log(`Task ${taskId} moved to list: ${targetListId}`);
+      return true;
     } catch (err) {
       console.error('Failed to move task:', err);
       setError(`タスクの移動に失敗しました。${err.message}`);
+      return false;
     }
   };
 

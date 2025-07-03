@@ -281,6 +281,49 @@ class SyncService {
       try {
         console.log('Updating task:', task);
         
+        // リストの変更を処理
+        if (task.newListId && task.newListId !== task.listId) {
+          console.log(`Task list change detected: ${task.listId} -> ${task.newListId}`);
+          
+          try {
+            // 1. 元のリストからタスクを取得
+            const originalTask = await TasksService.getTask(task.listId, task.id);
+            console.log('Original task:', originalTask);
+            
+            // 2. 新しいリストにタスクを作成
+            const newTaskData = {
+              title: task.title || originalTask.title,
+              notes: task.notes !== undefined ? task.notes : (originalTask.notes || ''),
+              due: task.due !== undefined ? task.due : originalTask.due,
+              starred: task.starred !== undefined ? task.starred : originalTask.starred,
+              status: task.status || originalTask.status
+            };
+            
+            console.log('Creating new task in list', task.newListId, 'with data:', newTaskData);
+            const newTask = await TasksService.createTask(task.newListId, newTaskData);
+            console.log('New task created:', newTask);
+            
+            // 3. 元のタスクを削除
+            await TasksService.deleteTask(task.listId, task.id);
+            console.log(`Original task deleted from list ${task.listId}`);
+            
+            // 4. タスクIDマッピングイベントを発行
+            const mappingEvent = new CustomEvent('taskIdMapped', {
+              detail: {
+                oldId: task.id,
+                newId: newTask.id,
+                newListId: task.newListId
+              }
+            });
+            window.dispatchEvent(mappingEvent);
+            
+            // このタスクの更新は完了したのでcontinue
+            continue;
+          } catch (moveError) {
+            console.error('Error moving task between lists:', moveError);
+          }
+        }
+        
         // タスクの更新データを準備
         const updateData = {};
         
@@ -298,7 +341,7 @@ class SyncService {
         if (task.status !== undefined) updateData.status = task.status;
         if (task.completed !== undefined) updateData.completed = task.completed;
         
-        // タスクを更新
+        // 通常のタスク更新
         await TasksService.updateTask(task.listId, task.id, updateData);
       } catch (error) {
         console.error('Error updating task:', error);
