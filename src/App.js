@@ -178,7 +178,8 @@ const AppContent = () => {
                   flexDirection: 'column',
                   height: '100vh', // 常に画面の高さいっぱいに
                   overflow: 'auto', // スクロール可能に
-                  position: isMobile ? 'fixed' : 'relative' // モバイルでは固定位置に
+                  position: isMobile ? 'fixed' : 'relative', // モバイルでは固定位置に
+                  zIndex: isMobile ? 1200 : 'auto' // モバイルでは高いz-indexを設定
                 }}
               >
                 <Sidebar closeSidebar={closeSidebar} isMobile={isMobile} />
@@ -194,7 +195,8 @@ const AppContent = () => {
                   flexDirection: 'column',
                   width: '100%',
                   height: '100vh', // 画面の高さいっぱいに
-                  overflow: 'auto' // スクロール可能に
+                  overflow: 'auto', // スクロール可能に
+                  paddingBottom: isMobile ? '20px' : '0' // モバイル時の下部余白を追加
                 }}
               >
                 <TodoList isMobile={isMobile} />

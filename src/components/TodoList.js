@@ -73,6 +73,11 @@ const TodoList = ({ isMobile }) => {
   const [deleteTaskDialogOpen, setDeleteTaskDialogOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
   
+  // タスク完了確認ダイアログの状態
+  const [completeTaskDialogOpen, setCompleteTaskDialogOpen] = useState(false);
+  const [taskToComplete, setTaskToComplete] = useState(null);
+  const [taskCurrentStatus, setTaskCurrentStatus] = useState(null);
+  
   // 状態の追加
   const [openDialog, setOpenDialog] = useState(false);
   const [editMode, setEditMode] = useState(false); // 編集モードかどうかを管理
@@ -352,6 +357,37 @@ const TodoList = ({ isMobile }) => {
     });
   };
   
+  // タスクの完了状態を切り替える前に確認ダイアログを表示
+  const handleToggleTaskCompletion = (taskId, currentStatus, e) => {
+    e.stopPropagation(); // イベントの伝播を停止
+    setTaskToComplete(taskId);
+    setTaskCurrentStatus(currentStatus);
+    setCompleteTaskDialogOpen(true);
+  };
+
+  // タスク完了の確認
+  const confirmCompleteTask = async () => {
+    try {
+      if (taskToComplete) {
+        // 既に取得済みのuseTodoコンテキストから完了状態切り替えメソッドを呼び出す
+        await toggleTaskCompletion(taskToComplete, taskCurrentStatus);
+        // ダイアログを閉じてタスクIDをリセット
+        setCompleteTaskDialogOpen(false);
+        setTaskToComplete(null);
+        setTaskCurrentStatus(null);
+      }
+    } catch (err) {
+      console.error('タスクの状態変更に失敗しました:', err);
+    }
+  };
+
+  // タスク完了のキャンセル
+  const cancelCompleteTask = () => {
+    setCompleteTaskDialogOpen(false);
+    setTaskToComplete(null);
+    setTaskCurrentStatus(null);
+  };
+
   // タスクを削除する処理
   const handleDeleteTask = async (taskId) => {
     // 削除するタスクをセットして確認ダイアログを表示
@@ -849,10 +885,7 @@ const TodoList = ({ isMobile }) => {
                       <Box sx={{ display: 'flex', width: '100%', alignItems: 'flex-start' }}>
                         <Checkbox 
                           checked={task.status === 'completed'} 
-                          onChange={(e) => {
-                            e.stopPropagation(); // イベントの伝播を停止
-                            toggleTaskCompletion(task.id, task.status);
-                          }}
+                          onChange={(e) => handleToggleTaskCompletion(task.id, task.status, e)}
                           onClick={(e) => e.stopPropagation()} // クリックイベントの伝播も停止
                           sx={{ 
                             mr: 1,
@@ -937,10 +970,7 @@ const TodoList = ({ isMobile }) => {
                     <>
                       <Checkbox 
                         checked={task.status === 'completed'} 
-                        onChange={(e) => {
-                          e.stopPropagation(); // イベントの伝播を停止
-                          toggleTaskCompletion(task.id, task.status);
-                        }}
+                        onChange={(e) => handleToggleTaskCompletion(task.id, task.status, e)}
                         onClick={(e) => e.stopPropagation()} // クリックイベントの伝播も停止
                         sx={{ 
                           mr: 1,
@@ -1097,6 +1127,31 @@ const TodoList = ({ isMobile }) => {
           <Button onClick={cancelDeleteTask}>キャンセル</Button>
           <Button onClick={confirmDeleteTask} color="error" autoFocus>
             削除する
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* タスク完了確認ダイアログ */}
+      <Dialog
+        open={completeTaskDialogOpen}
+        onClose={cancelCompleteTask}
+        aria-labelledby="complete-task-dialog-title"
+        aria-describedby="complete-task-dialog-description"
+      >
+        <DialogTitle id="complete-task-dialog-title">
+          {taskCurrentStatus === 'completed' ? 'タスクを未完了に戻す' : 'タスクを完了にする'}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="complete-task-dialog-description">
+            {taskCurrentStatus === 'completed' 
+              ? 'このタスクを未完了に戻しますか？' 
+              : 'このタスクを完了にしますか？'}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={cancelCompleteTask}>キャンセル</Button>
+          <Button onClick={confirmCompleteTask} color="primary" autoFocus>
+            {taskCurrentStatus === 'completed' ? '未完了に戻す' : '完了にする'}
           </Button>
         </DialogActions>
       </Dialog>

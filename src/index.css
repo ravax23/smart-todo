@@ -7,17 +7,17 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  height: 100%;
+  height: 100vh;
   overflow: hidden; /* 二重スクロールを防止 */
 }
 
 html {
-  height: 100%;
+  height: 100vh;
   overflow: hidden; /* 二重スクロールを防止 */
 }
 
 #root {
-  height: 100%;
+  height: 100vh;
   overflow: hidden; /* 二重スクロールを防止 */
 }
 
@@ -49,6 +49,14 @@ code {
 /* モバイル表示のタスクリスト関連スタイル */
 .task-item-mobile {
   width: 100%;
+}
+
+/* モバイル表示のメインコンテンツ */
+.main-content-mobile {
+  padding-bottom: env(safe-area-inset-bottom, 20px) !important; /* iOS のセーフエリアに対応 */
+  min-height: 100vh !important; /* 最小高さを画面の高さに設定 */
+  display: flex;
+  flex-direction: column;
 }
 
 .task-title-mobile {
