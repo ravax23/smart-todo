@@ -360,9 +360,16 @@ const TodoList = ({ isMobile }) => {
   // タスクの完了状態を切り替える前に確認ダイアログを表示
   const handleToggleTaskCompletion = (taskId, currentStatus, e) => {
     e.stopPropagation(); // イベントの伝播を停止
-    setTaskToComplete(taskId);
-    setTaskCurrentStatus(currentStatus);
-    setCompleteTaskDialogOpen(true);
+    
+    // 未完了→完了の場合のみダイアログを表示
+    if (currentStatus !== 'completed') {
+      setTaskToComplete(taskId);
+      setTaskCurrentStatus(currentStatus);
+      setCompleteTaskDialogOpen(true);
+    } else {
+      // 完了→未完了の場合は直接実行
+      toggleTaskCompletion(taskId, currentStatus);
+    }
   };
 
   // タスク完了の確認
@@ -1139,19 +1146,17 @@ const TodoList = ({ isMobile }) => {
         aria-describedby="complete-task-dialog-description"
       >
         <DialogTitle id="complete-task-dialog-title">
-          {taskCurrentStatus === 'completed' ? 'タスクを未完了に戻す' : 'タスクを完了にする'}
+          タスクの完了
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="complete-task-dialog-description">
-            {taskCurrentStatus === 'completed' 
-              ? 'このタスクを未完了に戻しますか？' 
-              : 'このタスクを完了にしますか？'}
+            このタスクを完了してもよろしいですか？
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={cancelCompleteTask}>キャンセル</Button>
           <Button onClick={confirmCompleteTask} color="primary" autoFocus>
-            {taskCurrentStatus === 'completed' ? '未完了に戻す' : '完了にする'}
+            完了にする
           </Button>
         </DialogActions>
       </Dialog>
