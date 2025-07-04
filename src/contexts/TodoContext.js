@@ -5,6 +5,7 @@ import syncService from '../services/syncService';
 import { extractStarredStatus } from '../services/tasksUtils';
 import { requestTasksScope, getAccessToken } from '../services/authService';
 import { isToday, isTomorrow, addDays, isBefore, parseISO, startOfDay, isThisWeek } from 'date-fns';
+import tasksApi from '../services/apiService';
 
 const TodoContext = createContext();
 
@@ -204,22 +205,22 @@ export const TodoProvider = ({ children }) => {
       const allTasks = await TasksService.getAllTasks(lists);
       console.log(`Fetched ${allTasks.length} tasks`);
       
-      // スター状態を抽出し、期限値を正規化
-      const tasksWithStarred = allTasks.map(task => ({
-        ...task,
-        starred: extractStarredStatus(task),
-        due: task.due || null, // 期限値を正規化
-        startDate: task.due || null // 正規化されたdueフィールドをstartDateとして設定
-      }));
+      // スター状態を確認し、期限値を正規化
+      const tasksWithStarred = allTasks.map(task => {
+        // スター状態を確認（APIから返されたstarred属性を使用）
+        const isStarred = task.starred === true;
+        if (isStarred) {
+          console.log(`Task ${task.id} is starred from API`);
+        }
+        
+        return {
+          ...task,
+          starred: isStarred,
+          due: task.due || null, // 期限値を正規化
+          startDate: task.due || null // 正規化されたdueフィールドをstartDateとして設定
+        };
+      });
       
-      /*
-      console.log('[DEBUG] タスクデータ例:', tasksWithStarred.length > 0 ? {
-        id: tasksWithStarred[0].id,
-        title: tasksWithStarred[0].title,
-        due: tasksWithStarred[0].due,
-        startDate: tasksWithStarred[0].startDate
-      } : 'タスクなし');
-      */
       // タスクを設定
       setTodos(tasksWithStarred);
       
@@ -331,6 +332,11 @@ export const TodoProvider = ({ children }) => {
       // console.log(`Filter changed to: ${selectedFilter}`);
       applyFilterAndSort();
       
+      // スター付きフィルターが選択された場合、ローカルデータからスター付きタスクをフィルタリング
+      if (selectedFilter === 'starred') {
+        filterStarredTasks();
+      }
+      
       // メイン画面を最上部にスクロール
       window.scrollTo(0, 0);
       
@@ -340,7 +346,7 @@ export const TodoProvider = ({ children }) => {
         mainContent.scrollTop = 0;
       }
     }
-  }, [isAuthenticated, selectedFilter, todos]);
+  }, [isAuthenticated, selectedFilter]);
 
   // タスクが更新されたときにフィルタリング
   useEffect(() => {
@@ -492,7 +498,11 @@ export const TodoProvider = ({ children }) => {
     setSelectedTaskList(taskListId);
     setSelectedFilter(null); // フィルターをリセット
   };
-
+  // 完了タスクの表示/非表示を切り替える
+  const toggleShowCompleted = () => {
+    console.log(`Toggling showCompleted from ${showCompleted} to ${!showCompleted}`);
+    setShowCompleted(!showCompleted);
+  };
   // フィルターの選択
   const selectFilter = (filterId) => {
     console.log(`Selecting filter: ${filterId}`);
@@ -500,9 +510,59 @@ export const TodoProvider = ({ children }) => {
     // フィルター選択時はタスクリストの選択をクリアしない
   };
 
-  // 完了タスクの表示/非表示を切り替え
-  const toggleShowCompleted = () => {
-    setShowCompleted(prev => !prev);
+  // タスクを別のリストに移動
+  const moveTaskToList = async (taskId, targetListId) => {
+    try {
+      // 移動するタスクを見つける
+      const taskToMove = todos.find(task => task.id === taskId);
+      if (!taskToMove) {
+        console.error('Task not found:', taskId);
+        return false;
+      }
+      
+      const sourceListId = taskToMove.listId;
+      
+      // 同じリストへの移動は無視
+      if (sourceListId === targetListId) {
+        console.log(`Task ${taskId} is already in list ${targetListId}`);
+        return true;
+      }
+      
+      console.log(`Moving task ${taskId} from list ${sourceListId} to ${targetListId}`);
+      
+      // メモリ内のタスクを更新
+      const updatedTodos = todos.map(task => 
+        task.id === taskId ? { ...task, listId: targetListId } : task
+      );
+      setTodos(updatedTodos);
+      
+      // 同期キューに追加して即座に同期実行
+      syncService.addToSyncQueue('task', 'update', {
+        id: taskId,
+        listId: sourceListId,
+        newListId: targetListId,
+        title: taskToMove.title,
+        notes: taskToMove.notes || '',
+        due: taskToMove.due,
+        starred: taskToMove.starred
+      });
+      
+      // 即座に同期を実行
+      await syncService.startSync();
+      
+      // 同期状態を更新
+      updateSyncStatus();
+      
+      // フィルタリングとソートを再適用
+      applyFilterAndSort(updatedTodos);
+      
+      console.log(`Task ${taskId} moved to list: ${targetListId}`);
+      return true;
+    } catch (err) {
+      console.error('Failed to move task:', err);
+      setError(`タスクの移動に失敗しました。${err.message}`);
+      return false;
+    }
   };
 
   // タスクリストのタイトル更新
@@ -570,61 +630,6 @@ export const TodoProvider = ({ children }) => {
       setError(`タスクリストの更新に失敗しました。${err.message}`);
     } finally {
       setLoading(false);
-    }
-  };
-
-  // タスクを別のリストに移動
-  const moveTaskToList = async (taskId, targetListId) => {
-    try {
-      // 移動するタスクを見つける
-      const taskToMove = todos.find(task => task.id === taskId);
-      if (!taskToMove) {
-        console.error('Task not found:', taskId);
-        return false;
-      }
-      
-      const sourceListId = taskToMove.listId;
-      
-      // 同じリストへの移動は無視
-      if (sourceListId === targetListId) {
-        console.log(`Task ${taskId} is already in list ${targetListId}`);
-        return true;
-      }
-      
-      console.log(`Moving task ${taskId} from list ${sourceListId} to ${targetListId}`);
-      
-      // メモリ内のタスクを更新
-      const updatedTodos = todos.map(task => 
-        task.id === taskId ? { ...task, listId: targetListId } : task
-      );
-      setTodos(updatedTodos);
-      
-      // 同期キューに追加して即座に同期実行
-      syncService.addToSyncQueue('task', 'update', {
-        id: taskId,
-        listId: sourceListId,
-        newListId: targetListId,
-        title: taskToMove.title,
-        notes: taskToMove.notes || '',
-        due: taskToMove.due,
-        starred: taskToMove.starred
-      });
-      
-      // 即座に同期を実行
-      await syncService.startSync();
-      
-      // 同期状態を更新
-      updateSyncStatus();
-      
-      // フィルタリングとソートを再適用
-      applyFilterAndSort(updatedTodos);
-      
-      console.log(`Task ${taskId} moved to list: ${targetListId}`);
-      return true;
-    } catch (err) {
-      console.error('Failed to move task:', err);
-      setError(`タスクの移動に失敗しました。${err.message}`);
-      return false;
     }
   };
 
@@ -916,6 +921,95 @@ export const TodoProvider = ({ children }) => {
     }
   };
 
+  // スター状態を更新
+  const toggleTaskStar = async (taskId) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // タスクを見つける
+      const taskToUpdate = todos.find(task => task.id === taskId);
+      if (!taskToUpdate) {
+        throw new Error('タスクが見つかりません。');
+      }
+      
+      // タスクのリストIDを取得
+      const listId = taskToUpdate.listId;
+      if (!listId) {
+        throw new Error('タスクリストが見つかりません。');
+      }
+      
+      // 現在のスター状態の反対に切り替える
+      const newStarredStatus = !taskToUpdate.starred;
+      console.log(`Toggling star status for task ${taskId} to ${newStarredStatus}`);
+      
+      // メモリ内のタスクを更新
+      const updatedTodos = todos.map(task => 
+        task.id === taskId ? { ...task, starred: newStarredStatus } : task
+      );
+      setTodos(updatedTodos);
+      
+      try {
+        // タスク更新APIを使用してスター状態を更新
+        const result = await tasksApi.updateTask(listId, taskId, {
+          id: taskId,
+          title: taskToUpdate.title,
+          notes: taskToUpdate.notes || '',
+          due: taskToUpdate.due,
+          starred: newStarredStatus,
+          status: taskToUpdate.status
+        });
+        
+        console.log('Task update API response:', result);
+        
+        // フィルタリングとソートを再適用
+        applyFilterAndSort(updatedTodos);
+        
+        console.log(`Task ${taskId} star status updated to: ${newStarredStatus}`);
+        return result;
+      } catch (apiError) {
+        console.error('API error when updating star status:', apiError);
+        
+        // エラーが発生した場合は元の状態に戻す
+        const originalTodos = [...todos];
+        setTodos(originalTodos);
+        applyFilterAndSort(originalTodos);
+        
+        throw apiError;
+      }
+    } catch (err) {
+      console.error('Failed to update task star status:', err);
+      setError(`タスクのスター状態更新に失敗しました。${err.message}`);
+      
+      // エラーが発生した場合は元の状態に戻す
+      const originalTodos = [...todos];
+      setTodos(originalTodos);
+      applyFilterAndSort(originalTodos);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // スター付きタスクをフィルタリング
+  const filterStarredTasks = () => {
+    console.log('Filtering starred tasks from local data');
+    
+    if (todos.length === 0) {
+      console.log('No tasks available to filter');
+      return [];
+    }
+    
+    // メモリ内のタスクからスター付きのものをフィルタリング
+    const starredTasks = todos.filter(task => task.starred === true);
+    console.log(`Found ${starredTasks.length} starred tasks locally`);
+    
+    // フィルタリングとソートを再適用
+    applyFilterAndSort();
+    
+    return starredTasks;
+  };
+
   return (
     <TodoContext.Provider
       value={{
@@ -939,7 +1033,10 @@ export const TodoProvider = ({ children }) => {
         toggleTaskCompletion,
         updateTask,
         deleteTaskList,
-        manualSync
+        manualSync,
+        toggleTaskStar,
+        filterStarredTasks,
+        isAuthenticated
       }}
     >
       {children}
