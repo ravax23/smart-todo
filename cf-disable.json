@@ -1,5 +1,5 @@
 {
-    "ETag": "E4TGO0PMYLZEV",
+    "ETag": "E1LILWUJ5BSGJ2",
     "DistributionConfig": {
         "CallerReference": "smarttodo-app-2024-06-17",
         "Aliases": {
@@ -10,8 +10,8 @@
             "Quantity": 1,
             "Items": [
                 {
-                    "Id": "S3-smarttodo-app-static-hosting",
-                    "DomainName": "smarttodo-app-static-hosting.s3-website-us-east-1.amazonaws.com",
+                    "Id": "S3-smarttodo-deploy-artifacts",
+                    "DomainName": "smarttodo-deploy-artifacts.s3-website-us-east-1.amazonaws.com",
                     "OriginPath": "",
                     "CustomHeaders": {
                         "Quantity": 0
@@ -42,7 +42,7 @@
             "Quantity": 0
         },
         "DefaultCacheBehavior": {
-            "TargetOriginId": "S3-smarttodo-app-static-hosting",
+            "TargetOriginId": "S3-smarttodo-deploy-artifacts",
             "TrustedSigners": {
                 "Enabled": false,
                 "Quantity": 0
@@ -116,7 +116,7 @@
             "Prefix": ""
         },
         "PriceClass": "PriceClass_100",
-        "Enabled": false,
+        "Enabled": true,
         "ViewerCertificate": {
             "CloudFrontDefaultCertificate": true,
             "SSLSupportMethod": "vip",

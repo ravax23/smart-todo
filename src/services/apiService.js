@@ -6,7 +6,8 @@ import { validateTaskListId, encodeTaskListId } from './tasksUtils';
 
 // API GatewayのベースURL
 // 環境変数から取得
-const API_BASE_URL = `${process.env.REACT_APP_API_GATEWAY_URL || ''}/api/tasks`;
+export const API_BASE_URL = `${process.env.REACT_APP_API_GATEWAY_URL || ''}/api/tasks`;
+export const API_GATEWAY_URL = process.env.REACT_APP_API_GATEWAY_URL || 'https://t3mexbcl3e.execute-api.us-east-1.amazonaws.com/prod';
 
 /**
  * API Gatewayを通じてリクエストを送信する
@@ -49,6 +50,8 @@ export const apiRequest = async (path, method = 'GET', data = null, params = {})
     }
 
     console.log(`Sending ${method} request to: ${url}`);
+    console.log(`Full request URL: ${url}`);
+    console.log('Request options:', JSON.stringify(options));
 
     // リクエストの送信
     const response = await fetch(url, options);
@@ -60,10 +63,12 @@ export const apiRequest = async (path, method = 'GET', data = null, params = {})
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
           const errorData = await response.json();
+          console.error('Error response data:', errorData);
           errorMessage = errorData.error?.message || errorMessage;
         } else {
           // JSONでない場合はテキストとして読み込む
           const errorText = await response.text();
+          console.error('Error response text:', errorText);
           errorMessage = `API error: ${response.status} - ${errorText}`;
         }
       } catch (e) {
@@ -142,7 +147,17 @@ export const tasksApi = {
   getTasks: (taskListId, params = {}) => apiRequest(`/tasks/v1/lists/${taskListId}/tasks`, 'GET', null, params),
   getTask: (taskListId, taskId) => apiRequest(`/tasks/v1/lists/${taskListId}/tasks/${taskId}`),
   createTask: (taskListId, taskData) => apiRequest(`/tasks/v1/lists/${taskListId}/tasks`, 'POST', taskData),
-  updateTask: (taskListId, taskId, updates) => apiRequest(`/tasks/v1/lists/${taskListId}/tasks/${taskId}`, 'PUT', updates),
+  updateTask: (taskListId, taskId, updates) => {
+    console.log(`API Service - updateTask called with taskId: ${taskId}, listId: ${taskListId}`);
+    console.log('Updates:', updates);
+    
+    // スター属性を含む場合、それをログに出力
+    if ('starred' in updates) {
+      console.log(`Task ${taskId} star status being updated to: ${updates.starred}`);
+    }
+    
+    return apiRequest(`/tasks/v1/lists/${taskListId}/tasks/${taskId}`, 'PUT', updates);
+  },
   deleteTask: (taskListId, taskId) => apiRequest(`/tasks/v1/lists/${taskListId}/tasks/${taskId}`, 'DELETE'),
   moveTask: (taskListId, taskId, previousTaskId) => {
     const params = previousTaskId ? { previous: previousTaskId } : {};

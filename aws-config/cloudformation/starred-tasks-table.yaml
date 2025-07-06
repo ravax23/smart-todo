@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for SmartTodoStarredTasks DynamoDB table'
+
+Resources:
+  SmartTodoStarredTasksTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: SmartTodoStarredTasks
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: taskId
+          AttributeType: S
+        - AttributeName: listId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: taskId
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: ListIdIndex
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+            - AttributeName: listId
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: Project
+          Value: SmartTodo
+        - Key: Environment
+          Value: Production
+
+Outputs:
+  TableName:
+    Description: Name of the DynamoDB table
+    Value: !Ref SmartTodoStarredTasksTable
+  TableArn:
+    Description: ARN of the DynamoDB table
+    Value: !GetAtt SmartTodoStarredTasksTable.Arn

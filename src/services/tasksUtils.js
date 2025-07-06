@@ -1,19 +1,20 @@
 /**
  * Google Tasks APIのレスポンスからスター状態を抽出する
- * Google Tasks APIでは、スターの情報はpriorityプロパティに格納されている
+ * @param {Object} taskData - タスクデータ
+ * @returns {boolean} スター状態
  */
 export function extractStarredStatus(taskData) {
-  // Google Tasks APIのレスポンスを詳細に調査
-  console.log('Extracting starred status from:', JSON.stringify(taskData, null, 2));
+  // 明示的なstarredプロパティがある場合はそれを使用
+  if (taskData.starred !== undefined) {
+    return !!taskData.starred;
+  }
   
   // Google Tasks APIでは、優先度プロパティでスター状態を管理
   if (taskData.priority !== undefined) {
     const isStarred = taskData.priority === 'high';
-    console.log(`  Found 'priority' property: ${taskData.priority} -> isStarred: ${isStarred}`);
     return isStarred;
   }
   
-  console.log('  No priority property found, returning false');
   // デフォルトはfalse
   return false;
 }
