@@ -1,31 +1,40 @@
 import React from 'react';
 import { Box, Button, Typography, Paper } from '@mui/material';
+import { useAuth } from '../contexts/AuthContext';
 
 const DebugPanel = () => {
-  // 開発環境でのみ表示
-  if (process.env.NODE_ENV !== 'development') {
+  const { isAuthenticated } = useAuth();
+  
+  // 開発環境かつ認証済みの場合のみ表示
+  if (process.env.NODE_ENV !== 'development' || !isAuthenticated) {
     return null;
   }
 
   const simulateTokenExpiry = () => {
-    console.log('Simulating token expiry...');
+    console.log('Simulating token expiry for authenticated user...');
     
-    // アクセストークンを無効な値に変更
-    localStorage.setItem('google_access_token', 'invalid_token');
-    sessionStorage.setItem('google_access_token', 'invalid_token');
-    
-    // トークン切れイベントを手動で発火
-    const tokenExpiredEvent = new CustomEvent('accessTokenExpired', {
-      detail: { 
-        path: '/test', 
-        method: 'GET', 
-        timestamp: new Date().toISOString(),
-        simulated: true
-      }
-    });
-    window.dispatchEvent(tokenExpiredEvent);
-    
-    console.log('Token expiry simulation completed');
+    // 認証済みユーザーのみシミュレーション実行
+    if (isAuthenticated) {
+      // アクセストークンを無効な値に変更
+      localStorage.setItem('google_access_token', 'invalid_token');
+      sessionStorage.setItem('google_access_token', 'invalid_token');
+      
+      // トークン切れイベントを手動で発火
+      const tokenExpiredEvent = new CustomEvent('accessTokenExpired', {
+        detail: { 
+          path: '/test', 
+          method: 'GET', 
+          timestamp: new Date().toISOString(),
+          simulated: true,
+          userInitiated: true
+        }
+      });
+      window.dispatchEvent(tokenExpiredEvent);
+      
+      console.log('Token expiry simulation completed for authenticated user');
+    } else {
+      console.log('Cannot simulate token expiry - user not authenticated');
+    }
   };
 
   const clearAllTokens = () => {

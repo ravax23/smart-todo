@@ -22,7 +22,8 @@ export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [authError, setAuthError] = useState(null); // 追加
+  const [authError, setAuthError] = useState(null);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false); // ユーザー操作フラグを追加
 
   // Google認証の初期化
   useEffect(() => {
@@ -104,6 +105,7 @@ export function AuthProvider({ children }) {
           const userInfo = getUserInfo();
           console.log('User info retrieved:', userInfo ? 'success' : 'null');
           setUser(userInfo);
+          setHasUserInteracted(true); // 認証済みの場合はユーザー操作済みとみなす
         }
         
         setLoading(false);
@@ -115,28 +117,50 @@ export function AuthProvider({ children }) {
     
     initAuth();
     
-    // トークン切れイベントのリスナーを追加
+    // トークン切れイベントのリスナーを追加（条件付き）
     const handleTokenExpired = (event) => {
       console.log('Access token expired event received:', event.detail);
-      setAuthError('セッションの有効期限が切れました');
-      setIsAuthenticated(false);
-      setUser(null);
       
-      // 3秒後にログイン画面へリダイレクト
-      setTimeout(() => {
-        redirectToLogin('token_expired');
-      }, 3000);
+      // 認証済みかつユーザーが操作を行った場合のみエラーメッセージを表示
+      if (isAuthenticated && hasUserInteracted) {
+        console.log('Showing session expired message for authenticated user');
+        setAuthError('セッションの有効期限が切れました');
+        setIsAuthenticated(false);
+        setUser(null);
+        
+        // 3秒後にログイン画面へリダイレクト
+        setTimeout(() => {
+          redirectToLogin('token_expired');
+        }, 3000);
+      } else {
+        console.log('Ignoring token expired event - user not authenticated or no interaction');
+      }
+    };
+    
+    // ユーザー操作の検出
+    const handleUserInteraction = () => {
+      if (isAuthenticated && !hasUserInteracted) {
+        console.log('User interaction detected');
+        setHasUserInteracted(true);
+      }
     };
     
     window.addEventListener('accessTokenExpired', handleTokenExpired);
+    
+    // ユーザー操作イベントのリスナー追加
+    window.addEventListener('click', handleUserInteraction);
+    window.addEventListener('keydown', handleUserInteraction);
+    window.addEventListener('scroll', handleUserInteraction);
     
     // 認証状態の変更を監視
     const handleAuthChange = (authenticated) => {
       setIsAuthenticated(authenticated);
       if (authenticated) {
         setUser(getUserInfo());
+        setHasUserInteracted(true); // ログイン成功時は操作済みとみなす
       } else {
         setUser(null);
+        setHasUserInteracted(false); // ログアウト時はリセット
       }
     };
     
@@ -144,9 +168,12 @@ export function AuthProvider({ children }) {
     
     return () => {
       window.removeEventListener('accessTokenExpired', handleTokenExpired);
+      window.removeEventListener('click', handleUserInteraction);
+      window.removeEventListener('keydown', handleUserInteraction);
+      window.removeEventListener('scroll', handleUserInteraction);
       removeAuthStateListener(handleAuthChange);
     };
-  }, []);
+  }, [isAuthenticated, hasUserInteracted]); // 依存関係を追加
 
   // ログイン処理
   const signIn = async () => {
@@ -164,10 +191,11 @@ export function AuthProvider({ children }) {
     isAuthenticated,
     user,
     loading,
-    authError, // 追加
+    authError,
+    hasUserInteracted, // 追加
     signIn,
     signOut,
-    clearError: () => setAuthError(null) // 追加
+    clearError: () => setAuthError(null)
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -69,17 +69,31 @@ export const apiRequest = async (path, method = 'GET', data = null, params = {})
     if (!response.ok) {
       // 401エラーの特別処理を追加
       if (response.status === 401) {
-        console.warn('Access token expired, redirecting to login');
+        console.warn('Access token expired during API call');
         
-        // トークン切れイベントを発火
-        const tokenExpiredEvent = new CustomEvent('accessTokenExpired', {
-          detail: { 
-            path, 
-            method, 
-            timestamp: new Date().toISOString() 
-          }
-        });
-        window.dispatchEvent(tokenExpiredEvent);
+        // 実際のAPI呼び出し時のみイベントを発火
+        // （初期化時やページロード時は発火しない）
+        const isUserInitiatedRequest = !path.includes('/init') && 
+                                     !path.includes('/health') &&
+                                     method !== 'OPTIONS' &&
+                                     !path.includes('/status');
+        
+        if (isUserInitiatedRequest) {
+          console.log('Firing accessTokenExpired event for user-initiated request');
+          
+          // トークン切れイベントを発火
+          const tokenExpiredEvent = new CustomEvent('accessTokenExpired', {
+            detail: { 
+              path, 
+              method, 
+              timestamp: new Date().toISOString(),
+              userInitiated: true
+            }
+          });
+          window.dispatchEvent(tokenExpiredEvent);
+        } else {
+          console.log('Skipping accessTokenExpired event for system request');
+        }
         
         // 認証エラーを投げる
         throw new AuthenticationError('アクセストークンの有効期限が切れました。再度ログインしてください。');

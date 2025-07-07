@@ -178,13 +178,27 @@ export const isAuthenticated = () => {
     const token = localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
     const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY) || sessionStorage.getItem(ACCESS_TOKEN_KEY);
     
+    console.log('isAuthenticated check:', {
+      hasToken: !!token,
+      hasAccessToken: !!accessToken,
+      timestamp: new Date().toISOString()
+    });
+    
     if (token) {
       try {
         const decodedToken = jwtDecode(token);
         const currentTime = Date.now() / 1000;
+        const isValid = decodedToken.exp && decodedToken.exp > currentTime;
+        
+        console.log('Token validation:', {
+          exp: decodedToken.exp,
+          currentTime,
+          isValid,
+          timeUntilExpiry: decodedToken.exp ? (decodedToken.exp - currentTime) : null
+        });
         
         // トークンの有効期限をチェック
-        if (decodedToken.exp && decodedToken.exp > currentTime) {
+        if (isValid) {
           return true;
         }
       } catch (e) {
@@ -194,9 +208,11 @@ export const isAuthenticated = () => {
     
     // アクセストークンがある場合も認証済みとみなす
     if (accessToken) {
+      console.log('Access token found, considering authenticated');
       return true;
     }
     
+    console.log('User not authenticated');
     return false;
   } catch (e) {
     console.error('Error checking authentication status:', e);

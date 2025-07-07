@@ -13,14 +13,16 @@ import {
 import { Warning as WarningIcon } from '@mui/icons-material';
 
 const AuthErrorHandler = () => {
-  const { authError, clearError } = useAuth();
+  const { authError, clearError, isAuthenticated } = useAuth();
   const [countdown, setCountdown] = useState(3);
   const [open, setOpen] = useState(false);
   const timerRef = useRef(null);
   const redirectTimerRef = useRef(null);
 
   useEffect(() => {
-    if (authError) {
+    // 認証済みユーザーのエラーのみ表示
+    if (authError && isAuthenticated) {
+      console.log('Showing auth error dialog for authenticated user:', authError);
       setOpen(true);
       setCountdown(3);
       
@@ -49,8 +51,12 @@ const AuthErrorHandler = () => {
           clearTimeout(redirectTimerRef.current);
         }
       };
+    } else if (authError && !isAuthenticated) {
+      // 未認証ユーザーのエラーは無視してクリア
+      console.log('Ignoring auth error for unauthenticated user:', authError);
+      clearError();
     }
-  }, [authError, clearError]);
+  }, [authError, isAuthenticated, clearError]);
 
   const handleClose = () => {
     // タイマーをクリア
@@ -77,6 +83,11 @@ const AuthErrorHandler = () => {
     clearError();
     window.location.reload();
   };
+
+  // 認証済みユーザーのエラーのみダイアログを表示
+  if (!isAuthenticated || !open) {
+    return null;
+  }
 
   return (
     <Dialog 
