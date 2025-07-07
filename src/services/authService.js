@@ -156,8 +156,16 @@ const handleCredentialResponse = (response) => {
       });
       window.dispatchEvent(event);
       
-      // ページをリロード
-      window.location.reload();
+      // 保存されたリターンURLを確認
+      const returnUrl = sessionStorage.getItem('returnUrl');
+      if (returnUrl) {
+        sessionStorage.removeItem('returnUrl');
+        // リターンURLに移動
+        window.location.href = returnUrl;
+      } else {
+        // 通常のリロード
+        window.location.reload();
+      }
     } catch (error) {
       console.error('Error processing credential response:', error);
     }
@@ -441,6 +449,79 @@ export const getAccessToken = () => {
     console.error('Error getting access token:', e);
     return null;
   }
+};
+
+// トークンの有効性をチェック
+export const isTokenValid = () => {
+  try {
+    const token = getAccessToken();
+    if (!token) return false;
+    
+    // JWTの場合は有効期限をチェック
+    if (token.includes('.')) {
+      try {
+        const decodedToken = jwtDecode(token);
+        const currentTime = Date.now() / 1000;
+        return decodedToken.exp && decodedToken.exp > currentTime;
+      } catch (e) {
+        console.error('Error decoding token:', e);
+        return false;
+      }
+    }
+    
+    return true;
+  } catch (e) {
+    console.error('Error checking token validity:', e);
+    return false;
+  }
+};
+
+// 認証情報のクリーンアップ
+export const clearAuthData = () => {
+  try {
+    // すべてのストレージから認証情報を削除
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+    
+    // Cookieからも削除
+    document.cookie = `${ACCESS_TOKEN_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+    document.cookie = `${TOKEN_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+    
+    console.log('Authentication data cleared');
+  } catch (error) {
+    console.error('Error clearing auth data:', error);
+  }
+};
+
+// ログイン画面へのリダイレクト
+export const redirectToLogin = (reason = 'session_expired') => {
+  console.log(`Redirecting to login. Reason: ${reason}`);
+  
+  // 認証情報をクリーンアップ
+  clearAuthData();
+  
+  // 認証状態変更イベントを発火
+  const event = new CustomEvent('googleAuthStateChanged', { 
+    detail: { 
+      isAuthenticated: false,
+      reason: reason
+    } 
+  });
+  window.dispatchEvent(event);
+  
+  // 現在のページURLを保存（ログイン後に戻るため）
+  try {
+    sessionStorage.setItem('returnUrl', window.location.pathname + window.location.search);
+  } catch (e) {
+    console.warn('Could not save return URL:', e);
+  }
+  
+  // ページをリロード（ログイン画面が表示される）
+  window.location.reload();
 };
 
 // 明示的なスコープ承認を要求

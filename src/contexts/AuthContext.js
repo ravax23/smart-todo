@@ -7,7 +7,8 @@ import {
   signOut as googleSignOut,
   addAuthStateListener,
   removeAuthStateListener,
-  getAccessToken
+  getAccessToken,
+  redirectToLogin
 } from '../services/authService';
 
 const AuthContext = createContext();
@@ -21,6 +22,7 @@ export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState(null); // 追加
 
   // Google認証の初期化
   useEffect(() => {
@@ -113,6 +115,21 @@ export function AuthProvider({ children }) {
     
     initAuth();
     
+    // トークン切れイベントのリスナーを追加
+    const handleTokenExpired = (event) => {
+      console.log('Access token expired event received:', event.detail);
+      setAuthError('セッションの有効期限が切れました');
+      setIsAuthenticated(false);
+      setUser(null);
+      
+      // 3秒後にログイン画面へリダイレクト
+      setTimeout(() => {
+        redirectToLogin('token_expired');
+      }, 3000);
+    };
+    
+    window.addEventListener('accessTokenExpired', handleTokenExpired);
+    
     // 認証状態の変更を監視
     const handleAuthChange = (authenticated) => {
       setIsAuthenticated(authenticated);
@@ -126,6 +143,7 @@ export function AuthProvider({ children }) {
     addAuthStateListener(handleAuthChange);
     
     return () => {
+      window.removeEventListener('accessTokenExpired', handleTokenExpired);
       removeAuthStateListener(handleAuthChange);
     };
   }, []);
@@ -146,8 +164,10 @@ export function AuthProvider({ children }) {
     isAuthenticated,
     user,
     loading,
+    authError, // 追加
     signIn,
-    signOut
+    signOut,
+    clearError: () => setAuthError(null) // 追加
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

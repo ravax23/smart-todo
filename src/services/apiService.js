@@ -4,6 +4,15 @@
 import { getAccessToken } from './authService';
 import { validateTaskListId, encodeTaskListId } from './tasksUtils';
 
+// カスタムエラークラスの定義
+class AuthenticationError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'AuthenticationError';
+    this.isAuthError = true;
+  }
+}
+
 // API GatewayのベースURL
 // 環境変数から取得
 export const API_BASE_URL = `${process.env.REACT_APP_API_GATEWAY_URL || ''}/api/tasks`;
@@ -58,6 +67,24 @@ export const apiRequest = async (path, method = 'GET', data = null, params = {})
 
     // レスポンスの処理
     if (!response.ok) {
+      // 401エラーの特別処理を追加
+      if (response.status === 401) {
+        console.warn('Access token expired, redirecting to login');
+        
+        // トークン切れイベントを発火
+        const tokenExpiredEvent = new CustomEvent('accessTokenExpired', {
+          detail: { 
+            path, 
+            method, 
+            timestamp: new Date().toISOString() 
+          }
+        });
+        window.dispatchEvent(tokenExpiredEvent);
+        
+        // 認証エラーを投げる
+        throw new AuthenticationError('アクセストークンの有効期限が切れました。再度ログインしてください。');
+      }
+
       let errorMessage = `API error: ${response.status}`;
       try {
         const contentType = response.headers.get('content-type');
@@ -98,6 +125,12 @@ export const apiRequest = async (path, method = 'GET', data = null, params = {})
     }
   } catch (error) {
     console.error('API request failed:', error);
+    
+    // 認証エラーの場合は特別処理
+    if (error instanceof AuthenticationError) {
+      throw error;
+    }
+    
     throw error;
   }
 };
@@ -166,3 +199,6 @@ export const tasksApi = {
 };
 
 export default tasksApi;
+
+// AuthenticationErrorクラスをエクスポート
+export { AuthenticationError };

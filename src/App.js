@@ -5,6 +5,8 @@ import { CategoryProvider } from './contexts/CategoryContext';
 import LoginButton from './components/LoginButton';
 import TodoList from './components/TodoList';
 import Sidebar from './components/Sidebar';
+import AuthErrorHandler from './components/AuthErrorHandler';
+import DebugPanel from './components/DebugPanel';
 import { Box, Container, CssBaseline, ThemeProvider, createTheme, Typography, IconButton, useMediaQuery } from '@mui/material';
 import { useAuth } from './contexts/AuthContext';
 
@@ -248,6 +250,12 @@ const AppContent = () => {
           </Box>
         </Box>
       )}
+      
+      {/* エラーハンドラーを追加 */}
+      <AuthErrorHandler />
+      
+      {/* デバッグパネル（開発環境のみ） */}
+      <DebugPanel />
     </>
   );
 };

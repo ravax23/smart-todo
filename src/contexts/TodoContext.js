@@ -5,7 +5,7 @@ import syncService from '../services/syncService';
 import { extractStarredStatus } from '../services/tasksUtils';
 import { requestTasksScope, getAccessToken } from '../services/authService';
 import { isToday, isTomorrow, addDays, isBefore, parseISO, startOfDay, isThisWeek } from 'date-fns';
-import tasksApi from '../services/apiService';
+import tasksApi, { AuthenticationError } from '../services/apiService';
 
 const TodoContext = createContext();
 
@@ -20,6 +20,19 @@ export const TodoProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [syncStatus, setSyncStatus] = useState({ isSyncing: false, lastSyncTime: null });
   const { isAuthenticated } = useAuth();
+
+  // API呼び出し時のエラーハンドリング
+  const handleApiError = (error, operation) => {
+    console.error(`Error in ${operation}:`, error);
+    
+    // 認証エラーの場合は特別処理しない（AuthContextで処理される）
+    if (error.isAuthError) {
+      return;
+    }
+    
+    // その他のエラーはユーザーに表示
+    setError(`${operation}中にエラーが発生しました: ${error.message}`);
+  };
 
   // 共通のフィルタリングとソート処理
   const applyFilterAndSort = (tasksToProcess = todos) => {
@@ -232,13 +245,18 @@ export const TodoProvider = ({ children }) => {
     } catch (err) {
       console.error('Initial sync failed:', err);
       
+      // 認証エラーの場合は特別処理しない（AuthContextで処理される）
+      if (err.isAuthError) {
+        return;
+      }
+      
       if (err.message === 'Insufficient permissions') {
         // 権限不足の場合は追加の権限をリクエスト
         try {
           await requestTasksScope();
         } catch (authErr) {
           console.error('Failed to request additional permissions:', authErr);
-          setError('タスクへのアクセス権限が不足しています。再ログインして権限を許可してください。');
+          handleApiError(authErr, 'タスクへのアクセス権限の取得');
         }
       } else if (err.message && (err.message.includes('401') || err.message.includes('invalid authentication credentials'))) {
         // 401認証エラーの場合、ログイン状態をリセットして自動的にログアウト
@@ -266,7 +284,7 @@ export const TodoProvider = ({ children }) => {
           window.location.reload();
         }, 1000);
       } else {
-        setError(`初期同期に失敗しました。${err.message}`);
+        handleApiError(err, '初期同期');
       }
     } finally {
       setLoading(false);
@@ -428,7 +446,7 @@ export const TodoProvider = ({ children }) => {
       await initialSync();
     } catch (err) {
       console.error('Manual sync failed:', err);
-      setError(`手動同期に失敗しました。${err.message}`);
+      handleApiError(err, '手動同期');
     } finally {
       setLoading(false);
     }
@@ -485,7 +503,7 @@ export const TodoProvider = ({ children }) => {
       return newTask;
     } catch (err) {
       console.error('Failed to create task:', err);
-      setError(`タスクの作成に失敗しました。${err.message}`);
+      handleApiError(err, 'タスクの作成');
       throw err;
     } finally {
       setLoading(false);
@@ -560,7 +578,7 @@ export const TodoProvider = ({ children }) => {
       return true;
     } catch (err) {
       console.error('Failed to move task:', err);
-      setError(`タスクの移動に失敗しました。${err.message}`);
+      handleApiError(err, 'タスクの移動');
       return false;
     }
   };
@@ -627,7 +645,7 @@ export const TodoProvider = ({ children }) => {
       console.log(`Task list ${taskListId} title updated to: ${newTitle}`);
     } catch (err) {
       console.error('Failed to update task list title:', err);
-      setError(`タスクリストの更新に失敗しました。${err.message}`);
+      handleApiError(err, 'タスクリストの更新');
     } finally {
       setLoading(false);
     }
@@ -673,7 +691,7 @@ export const TodoProvider = ({ children }) => {
       console.log(`Task ${taskId} deleted successfully`);
     } catch (err) {
       console.error('Failed to delete task:', err);
-      setError(`タスクの削除に失敗しました。${err.message}`);
+      handleApiError(err, 'タスクの削除');
     } finally {
       setLoading(false);
     }
@@ -804,7 +822,7 @@ export const TodoProvider = ({ children }) => {
       console.log(`Task ${taskId} updated successfully`);
     } catch (err) {
       console.error('Failed to update task:', err);
-      setError(`タスクの更新に失敗しました。${err.message}`);
+      handleApiError(err, 'タスクの更新');
     } finally {
       setLoading(false);
     }
@@ -850,7 +868,7 @@ export const TodoProvider = ({ children }) => {
       console.log(`Task list ${listId} deleted successfully`);
     } catch (err) {
       console.error('Failed to delete task list:', err);
-      setError(`タスクリストの削除に失敗しました。${err.message}`);
+      handleApiError(err, 'タスクリストの削除');
     } finally {
       setLoading(false);
     }
@@ -914,7 +932,7 @@ export const TodoProvider = ({ children }) => {
       return newTaskList;
     } catch (err) {
       console.error('Failed to create task list:', err);
-      setError(`タスクリストの作成に失敗しました。${err.message}`);
+      handleApiError(err, 'タスクリストの作成');
       throw err;
     } finally {
       setLoading(false);
@@ -979,7 +997,7 @@ export const TodoProvider = ({ children }) => {
       }
     } catch (err) {
       console.error('Failed to update task star status:', err);
-      setError(`タスクのスター状態更新に失敗しました。${err.message}`);
+      handleApiError(err, 'タスクのスター状態更新');
       
       // エラーが発生した場合は元の状態に戻す
       const originalTodos = [...todos];
